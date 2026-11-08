@@ -276,6 +276,13 @@ export class MinecraftBookViewer {
     }
   }
 
+  public setTheme(theme: 'dark' | 'light' | 'parchment' | 'minimal' | 'transparent'): void {
+    const oldTheme = this.options.theme || 'dark';
+    this.container.classList.remove(`mc-theme-${oldTheme}`);
+    this.options.theme = theme;
+    this.container.classList.add(`mc-theme-${theme}`);
+  }
+
   public destroy(): void {
     this.bookCanvas?.destroy();
     this.container.innerHTML = '';

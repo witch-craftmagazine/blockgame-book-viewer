@@ -24,12 +24,32 @@ window.addEventListener('DOMContentLoaded', async () => {
   const viewer = new MinecraftBookViewer(container, {
     book: welcomeBook,
     baseAssetPath: './assets',
-    theme: 'dark',
+    theme: 'transparent',
     controls: true,
     plugins: [witchcraftPlugin]
   });
 
   await viewer.init();
+
+  // Theme toggle handler (Nectar dark / light)
+  const themeToggle = document.getElementById('theme-toggle') as HTMLButtonElement | null;
+  if (themeToggle) {
+    const updateTheme = (isDark: boolean) => {
+      document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+      themeToggle.textContent = isDark ? '🌙 Dark' : '☀️ Light';
+      themeToggle.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+    };
+
+    const isInitiallyDark =
+      document.documentElement.getAttribute('data-theme') === 'dark' ||
+      (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    updateTheme(isInitiallyDark);
+
+    themeToggle.addEventListener('click', () => {
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      updateTheme(!isDark);
+    });
+  }
 
   // Book selection handler
   const bookSelect = document.getElementById('book-select') as HTMLSelectElement | null;

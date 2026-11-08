@@ -28,9 +28,33 @@
   --mc-shadow: 0 10px 30px rgba(70, 50, 30, 0.15);
 }
 
+.mc-theme-parchment,
+.mc-theme-nectar {
+  --mc-bg: transparent;
+  --mc-panel-bg: var(--plate, rgba(255, 253, 248, 0.96));
+  --mc-border: var(--gold, #a67c1f);
+  --mc-text: var(--ink, #231c14);
+  --mc-text-muted: var(--mut, #5a4c3a);
+  --mc-btn-bg: var(--btn, #2f4a3a);
+  --mc-btn-hover: var(--btn-h, #3b5a48);
+  --mc-btn-border: var(--gold, #a67c1f);
+  --mc-btn-text: var(--gilt, #f7e9b8);
+  --mc-accent: var(--gold, #a67c1f);
+  --mc-shadow: 0 10px 25px rgba(35, 28, 20, 0.15);
+}
+
 .mc-theme-transparent {
   --mc-bg: transparent;
-  --mc-panel-bg: rgba(20, 20, 20, 0.8);
+  --mc-panel-bg: var(--plate, rgba(20, 20, 20, 0.85));
+  --mc-border: var(--gold, #a67c1f);
+  --mc-text: var(--ink, #efe4d2);
+  --mc-text-muted: var(--mut, #b7a69c);
+  --mc-btn-bg: var(--btn, #2f4a3a);
+  --mc-btn-hover: var(--btn-h, #3b5a48);
+  --mc-btn-border: var(--gold, #a67c1f);
+  --mc-btn-text: var(--gilt, #f7e9b8);
+  --mc-accent: var(--gold, #a67c1f);
+  --mc-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
 }
 
 /* Root container */
