@@ -33,21 +33,27 @@ export class WitchcraftPlugin implements BookPlugin {
     this.canvas = canvas;
 
     if (typeof document !== 'undefined') {
-      const gifEl = document.createElement('img');
-      gifEl.className = 'book-blank-page-gif';
-      gifEl.src = this.gifUrl;
-      gifEl.alt = 'StarSweetpea';
-      gifEl.title = 'StarSweetpea ~ Author of Witchcraft Magazine';
-      gifEl.style.display = 'none';
-      gifEl.style.cursor = 'pointer';
-      gifEl.style.pointerEvents = 'auto';
-      gifEl.addEventListener('click', (e) => {
-        e.stopPropagation();
-        this.triggerBlink();
-        soundManager.playWink();
-      });
-      this.gifOverlayElement = gifEl;
-      canvas.getStageElement()?.appendChild(this.gifOverlayElement);
+      const stage = canvas.getStageElement();
+      const existing = stage?.querySelector('.book-blank-page-gif') as HTMLImageElement | null;
+      if (existing) {
+        this.gifOverlayElement = existing;
+      } else {
+        const gifEl = document.createElement('img');
+        gifEl.className = 'book-blank-page-gif';
+        gifEl.src = this.gifUrl;
+        gifEl.alt = 'StarSweetpea';
+        gifEl.title = 'StarSweetpea ~ Author of Witchcraft Magazine';
+        gifEl.style.display = 'none';
+        gifEl.style.cursor = 'pointer';
+        gifEl.style.pointerEvents = 'auto';
+        gifEl.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.triggerBlink();
+          soundManager.playWink();
+        });
+        this.gifOverlayElement = gifEl;
+        stage?.appendChild(this.gifOverlayElement);
+      }
     }
 
     if (typeof Image !== 'undefined') {
@@ -236,12 +242,35 @@ export class WitchcraftPlugin implements BookPlugin {
     if (!this.gifOverlayElement || !this.canvas) return;
     const placement = this.getBlankPageGifPlacement();
     if (placement) {
-      const scale = this.canvas.getScale();
+      const baseW = this.canvas.getViewMode() === 'double' ? 344 : 192;
+      const baseH = 192;
+      const canvasEl = this.canvas.getCanvas();
+      const stageEl = this.canvas.getStageElement();
+      const canvasRect = canvasEl && canvasEl.getBoundingClientRect ? canvasEl.getBoundingClientRect() : null;
+      const stageRect = stageEl && stageEl.getBoundingClientRect ? stageEl.getBoundingClientRect() : null;
+
+      let actualW = baseW * this.canvas.getScale();
+      let actualH = baseH * this.canvas.getScale();
+      let offsetX = 0;
+      let offsetY = 0;
+
+      if (canvasRect && canvasRect.width > 0 && canvasRect.height > 0) {
+        actualW = canvasRect.width;
+        actualH = canvasRect.height;
+        if (stageRect) {
+          offsetX = canvasRect.left - stageRect.left;
+          offsetY = canvasRect.top - stageRect.top;
+        }
+      }
+
+      const scaleX = actualW / baseW;
+      const scaleY = actualH / baseH;
+
       this.gifOverlayElement.style.display = 'block';
-      this.gifOverlayElement.style.left = `${placement.x * scale}px`;
-      this.gifOverlayElement.style.top = `${placement.y * scale}px`;
-      this.gifOverlayElement.style.width = `${placement.w * scale}px`;
-      this.gifOverlayElement.style.height = `${placement.h * scale}px`;
+      this.gifOverlayElement.style.left = `${offsetX + placement.x * scaleX}px`;
+      this.gifOverlayElement.style.top = `${offsetY + placement.y * scaleY}px`;
+      this.gifOverlayElement.style.width = `${placement.w * scaleX}px`;
+      this.gifOverlayElement.style.height = `${placement.h * scaleY}px`;
     } else {
       this.gifOverlayElement.style.display = 'none';
     }

@@ -236,6 +236,10 @@ export class BookCanvas {
 
   private loadImage(src: string): Promise<HTMLImageElement> {
     return new Promise((resolve, reject) => {
+      if (typeof Image === 'undefined') {
+        resolve({ naturalWidth: 256, naturalHeight: 256, width: 256, height: 256 } as any);
+        return;
+      }
       const img = new Image();
       img.onload = () => resolve(img);
       img.onerror = () => reject(new Error(`Failed to load texture: ${src}`));
@@ -411,11 +415,34 @@ export class BookCanvas {
       return;
     }
 
+    const baseW = this.viewMode === 'double' ? TWO_PAGE_WIDTH : 192;
+    const baseH = 192;
+
+    const canvasRect = this.canvas && this.canvas.getBoundingClientRect ? this.canvas.getBoundingClientRect() : null;
+    const stageRect = this.stageElement && this.stageElement.getBoundingClientRect ? this.stageElement.getBoundingClientRect() : null;
+
+    let actualW = baseW * this.scale;
+    let actualH = baseH * this.scale;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    if (canvasRect && canvasRect.width > 0 && canvasRect.height > 0) {
+      actualW = canvasRect.width;
+      actualH = canvasRect.height;
+      if (stageRect) {
+        offsetX = canvasRect.left - stageRect.left;
+        offsetY = canvasRect.top - stageRect.top;
+      }
+    }
+
+    const scaleX = actualW / baseW;
+    const scaleY = actualH / baseH;
+
     this.gifOverlayElement.style.display = 'block';
-    this.gifOverlayElement.style.left = `${placement.x * this.scale}px`;
-    this.gifOverlayElement.style.top = `${placement.y * this.scale}px`;
-    this.gifOverlayElement.style.width = `${placement.w * this.scale}px`;
-    this.gifOverlayElement.style.height = `${placement.h * this.scale}px`;
+    this.gifOverlayElement.style.left = `${offsetX + placement.x * scaleX}px`;
+    this.gifOverlayElement.style.top = `${offsetY + placement.y * scaleY}px`;
+    this.gifOverlayElement.style.width = `${placement.w * scaleX}px`;
+    this.gifOverlayElement.style.height = `${placement.h * scaleY}px`;
   }
 
   public recalculatePages(): void {
@@ -570,16 +597,15 @@ export class BookCanvas {
     this.render();
   }
 
-  public fitToContainer(): void {
-    if (this.isScaleLocked) return;
+  public getMaxFittingScale(): number {
     const parent = this.container;
-    if (!parent || typeof window === 'undefined') return;
+    if (!parent || typeof window === 'undefined') return 6;
 
     const rect = parent.getBoundingClientRect ? parent.getBoundingClientRect() : { width: 0, height: 0 };
     const containerW = rect.width > 0 ? rect.width : (typeof window !== 'undefined' ? window.innerWidth : 0);
     const containerH = rect.height > 0 ? rect.height : (typeof window !== 'undefined' ? window.innerHeight : 0);
 
-    if (containerW <= 0 || containerH <= 0) return;
+    if (containerW <= 0 || containerH <= 0) return 6;
 
     // Allocate margin/padding and space for toolbar
     const availW = Math.max(containerW - 16, 192);
@@ -590,7 +616,12 @@ export class BookCanvas {
 
     const scaleX = Math.floor(availW / baseW);
     const scaleY = Math.floor(availH / baseH);
-    const optimalScale = Math.max(1, Math.min(6, Math.min(scaleX, scaleY)));
+    return Math.max(1, Math.min(6, Math.min(scaleX, scaleY)));
+  }
+
+  public fitToContainer(): void {
+    if (this.isScaleLocked) return;
+    const optimalScale = this.getMaxFittingScale();
 
     if (optimalScale !== this.scale) {
       this.scale = optimalScale;
@@ -604,6 +635,9 @@ export class BookCanvas {
       this.resizeObserver = new ResizeObserver(() => {
         if (!this.isScaleLocked) {
           this.fitToContainer();
+        } else {
+          this.updateGifOverlay();
+          this.notifyPageChange();
         }
       });
       this.resizeObserver.observe(this.container);
@@ -706,6 +740,7 @@ export class BookCanvas {
     this.stageElement.style.height = `${baseH * this.scale}px`;
     this.stageElement.style.maxWidth = '100%';
     this.stageElement.style.maxHeight = '100%';
+    this.stageElement.style.aspectRatio = `${baseW} / ${baseH}`;
 
     this.ctx.imageSmoothingEnabled = false;
     this.updateTextLayer();
@@ -1329,11 +1364,33 @@ export class BookCanvas {
     srHeading.textContent = `Page ${opts.pageIndex + 1} of ${opts.totalPages}`;
     section.appendChild(srHeading);
 
+    const baseW = this.viewMode === 'double' ? TWO_PAGE_WIDTH : 192;
+    const baseH = 192;
+    const canvasRect = this.canvas && this.canvas.getBoundingClientRect ? this.canvas.getBoundingClientRect() : null;
+    const stageRect = this.stageElement && this.stageElement.getBoundingClientRect ? this.stageElement.getBoundingClientRect() : null;
+
+    let actualW = baseW * this.scale;
+    let actualH = baseH * this.scale;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    if (canvasRect && canvasRect.width > 0 && canvasRect.height > 0) {
+      actualW = canvasRect.width;
+      actualH = canvasRect.height;
+      if (stageRect) {
+        offsetX = canvasRect.left - stageRect.left;
+        offsetY = canvasRect.top - stageRect.top;
+      }
+    }
+
+    const scaleX = actualW / baseW;
+    const scaleY = actualH / baseH;
+
     const pageLines = this.paginatedPages[opts.pageIndex] || [];
     for (let i = 0; i < Math.min(LINES_PER_PAGE, pageLines.length); i++) {
       const line = pageLines[i];
-      const lineY = (30 + i * 9) * this.scale;
-      const lineX = opts.textStartX * this.scale;
+      const lineY = offsetY + (30 + i * 9) * scaleY;
+      const lineX = offsetX + opts.textStartX * scaleX;
       const rawText = line.spans.map(s => s.text).join('');
 
       if (rawText.length > 0) {
@@ -1342,9 +1399,9 @@ export class BookCanvas {
         lineDiv.setAttribute('role', 'text');
         lineDiv.style.left = `${lineX}px`;
         lineDiv.style.top = `${lineY}px`;
-        lineDiv.style.height = `${9 * this.scale}px`;
-        lineDiv.style.fontSize = `${9 * this.scale}px`;
-        lineDiv.style.lineHeight = `${9 * this.scale}px`;
+        lineDiv.style.height = `${9 * scaleY}px`;
+        lineDiv.style.fontSize = `${9 * scaleY}px`;
+        lineDiv.style.lineHeight = `${9 * scaleY}px`;
         lineDiv.textContent = stripFormatting(rawText);
         section.appendChild(lineDiv);
       }
@@ -1356,10 +1413,10 @@ export class BookCanvas {
       prevBtn.className = 'accessible-nav-btn accessible-prev-btn';
       prevBtn.setAttribute('aria-label', `Turn back to page ${opts.pageIndex}`);
       prevBtn.setAttribute('title', 'Previous Page (Left Arrow)');
-      prevBtn.style.left = `${opts.backwardButtonX * this.scale}px`;
-      prevBtn.style.top = `${157 * this.scale}px`;
-      prevBtn.style.width = `${23 * this.scale}px`;
-      prevBtn.style.height = `${13 * this.scale}px`;
+      prevBtn.style.left = `${offsetX + opts.backwardButtonX * scaleX}px`;
+      prevBtn.style.top = `${offsetY + 157 * scaleY}px`;
+      prevBtn.style.width = `${23 * scaleX}px`;
+      prevBtn.style.height = `${13 * scaleY}px`;
       prevBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         this.prevPage();
@@ -1373,10 +1430,10 @@ export class BookCanvas {
       nextBtn.className = 'accessible-nav-btn accessible-next-btn';
       nextBtn.setAttribute('aria-label', `Turn forward to page ${opts.pageIndex + 2}`);
       nextBtn.setAttribute('title', 'Next Page (Right Arrow)');
-      nextBtn.style.left = `${opts.forwardButtonX * this.scale}px`;
-      nextBtn.style.top = `${157 * this.scale}px`;
-      nextBtn.style.width = `${23 * this.scale}px`;
-      nextBtn.style.height = `${13 * this.scale}px`;
+      nextBtn.style.left = `${offsetX + opts.forwardButtonX * scaleX}px`;
+      nextBtn.style.top = `${offsetY + 157 * scaleY}px`;
+      nextBtn.style.width = `${23 * scaleX}px`;
+      nextBtn.style.height = `${13 * scaleY}px`;
       nextBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         this.nextPage();

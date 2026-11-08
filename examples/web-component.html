@@ -296,11 +296,49 @@
 
     <div class="code-card">
 &lt;minecraft-book
-  src="../assets/books/intro.stendhal"
   view-mode="double"
   base-path="../assets"
   theme="transparent"
   controls="true"&gt;
+  &lt;script type="text/plain"&gt;
+title: Web Component Guide
+author: Minecraft Book Engine
+pages:
+#- §0§lCustom Element§r
+
+This book is embedded
+directly inline inside
+the custom tag!
+
+No external files or
+complex setup required.
+
+§8Turn page to explore§r
+#- §1§lEngine Features§r
+
+§0• §2Pixel-perfect§0 rendering
+• Vanilla 16x textures
+• Responsive auto-scaling
+• Single &amp; double spread
+• Stendhal / JSON import
+• Copy / export commands
+#- §4§lFormatting§r
+
+§cRed §6Gold §eYellow
+§aGreen §bAqua §9Blue
+§dPink §fWhite §8Gray
+
+§l§nBold &amp; Underline§r
+§o§mItalic Strikethrough§r
+§0§kMagic Obfuscated§r
+#- §5§lTry It Out!§r
+
+§0Use the toolbar controls
+below to change zoom,
+switch view modes, or
+open your own book
+with the 📂 button.
+  &lt;/script&gt;
 &lt;/minecraft-book&gt;
     </div>
 
@@ -308,11 +346,49 @@
       <figure class="shot">
         <div class="component-container">
           <minecraft-book
-            src="../assets/books/intro.stendhal"
             view-mode="double"
             base-path="../assets"
             theme="transparent"
             controls="true">
+            <script type="text/plain">
+title: Web Component Guide
+author: Minecraft Book Engine
+pages:
+#- §0§lCustom Element§r
+
+This book is embedded
+directly inline inside
+the custom tag!
+
+No external files or
+complex setup required.
+
+§8Turn page to explore§r
+#- §1§lEngine Features§r
+
+§0• §2Pixel-perfect§0 rendering
+• Vanilla 16x textures
+• Responsive auto-scaling
+• Single & double spread
+• Stendhal / JSON import
+• Copy / export commands
+#- §4§lFormatting§r
+
+§cRed §6Gold §eYellow
+§aGreen §bAqua §9Blue
+§dPink §fWhite §8Gray
+
+§l§nBold & Underline§r
+§o§mItalic Strikethrough§r
+§0§kMagic Obfuscated§r
+#- §5§lTry It Out!§r
+
+§0Use the toolbar controls
+below to change zoom,
+switch view modes, or
+open your own book
+with the 📂 button.
+            </script>
           </minecraft-book>
         </div>
         <figcaption>Standalone &lt;minecraft-book&gt; element responding dynamically to parent dimensions</figcaption>

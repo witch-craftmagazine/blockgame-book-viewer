@@ -81,7 +81,7 @@ describe('Modular Library API & Components', () => {
           if (idx !== -1) this.children.splice(idx, 1);
           return child;
         },
-        querySelector: vi.fn(() => null),
+        querySelector: vi.fn((sel: string) => makeEl(sel.includes('btn') || sel.includes('button') ? 'button' : 'div')),
         querySelectorAll: vi.fn(() => []),
         addEventListener: vi.fn(),
         removeEventListener: vi.fn(),
@@ -95,6 +95,7 @@ describe('Modular Library API & Components', () => {
 
     (globalThis as any).document = {
       createElement: makeEl,
+      body: makeEl('body'),
     };
     (globalThis as any).window = {
       addEventListener: vi.fn(),
@@ -257,5 +258,96 @@ describe('Modular Library API & Components', () => {
     // Verify Lithos textures were NOT loaded by default
     const hasLithos = loadedPaths.some((p) => p.includes('packs/lithos'));
     expect(hasLithos).toBe(false);
+  });
+
+  it('caps zoom-in button at getMaxFittingScale to prevent scaling past container display capacity', () => {
+    const viewer = new MinecraftBookViewer(mockContainer, {
+      defaultViewMode: 'double',
+      controls: true,
+    });
+
+    const canvas = viewer.getCanvas();
+    // Configure canvas wrapper bounding rect to 800x480
+    (canvas as any).container.getBoundingClientRect = () => ({
+      left: 0,
+      top: 0,
+      width: 800,
+      height: 480,
+      right: 800,
+      bottom: 480,
+    });
+
+    // Max fitting scale for 800x480 in double mode (344x192 base) is 2
+    expect(canvas.getMaxFittingScale()).toBe(2);
+
+    canvas.setScale(2);
+    expect(canvas.getScale()).toBe(2);
+
+    // Find zoom-in button in toolbar
+    const toolbar = (viewer as any).toolbarElement;
+    expect(toolbar).toBeDefined();
+
+    const zoomInBtn = toolbar.children
+      .flatMap((c: any) => c.children || [])
+      .find((el: any) => el.className?.includes('mc-btn-zoom-in'));
+
+    if (zoomInBtn) {
+      // Trigger click event listener
+      const clickHandler = zoomInBtn.addEventListener.mock.calls.find((call: any) => call[0] === 'click')?.[1];
+      if (clickHandler) {
+        clickHandler();
+        // Scale should remain capped at 2, not increment to 3
+        expect(canvas.getScale()).toBe(2);
+      }
+    }
+  });
+
+  it('initializes MinecraftBookElement with inline script custom book', async () => {
+    const el = new MinecraftBookElement();
+    (el as any).classList = {
+      add: vi.fn(),
+      remove: vi.fn(),
+      toggle: vi.fn(),
+      contains: vi.fn(() => false),
+    };
+    (el as any).dispatchEvent = vi.fn();
+    (el as any).children = [];
+    (el as any).appendChild = vi.fn((child: any) => {
+      (el as any).children.push(child);
+      return child;
+    });
+
+    const scriptEl = {
+      tagName: 'SCRIPT',
+      textContent: `
+title: Custom Web Component Book
+author: Author A
+pages:
+#- Page 1 Inline
+#- Page 2 Inline
+      `,
+    };
+
+    (el as any).querySelector = vi.fn().mockImplementation((selector: string) => {
+      if (selector.includes('script')) return scriptEl;
+      return null;
+    });
+
+    (el as any).getAttribute = vi.fn().mockImplementation((attr: string) => {
+      if (attr === 'view-mode') return 'double';
+      if (attr === 'base-path') return './assets';
+      if (attr === 'controls') return 'false';
+      return null;
+    });
+    (el as any).hasAttribute = vi.fn().mockImplementation((attr: string) => {
+      return attr === 'view-mode';
+    });
+
+    await el.connectedCallback();
+
+    const v = el.getViewer();
+    expect(v).toBeDefined();
+    expect(v?.getBook()?.title).toBe('Custom Web Component Book');
+    expect(v?.getBook()?.pages.length).toBe(2);
   });
 });

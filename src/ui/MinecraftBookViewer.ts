@@ -191,11 +191,18 @@ export class MinecraftBookViewer {
     });
 
     this.toolbarElement.querySelector('.mc-btn-zoom-in')?.addEventListener('click', () => {
-      this.bookCanvas.setScale(this.bookCanvas.getScale() + 1);
+      const maxScale = Math.max(1, this.bookCanvas.getMaxFittingScale());
+      const currentScale = this.bookCanvas.getScale();
+      if (currentScale < maxScale) {
+        this.bookCanvas.setScale(currentScale + 1);
+      }
     });
 
     this.toolbarElement.querySelector('.mc-btn-zoom-out')?.addEventListener('click', () => {
-      this.bookCanvas.setScale(this.bookCanvas.getScale() - 1);
+      const currentScale = this.bookCanvas.getScale();
+      if (currentScale > 1) {
+        this.bookCanvas.setScale(currentScale - 1);
+      }
     });
 
     this.toolbarElement.querySelector('.mc-btn-export')?.addEventListener('click', () => {

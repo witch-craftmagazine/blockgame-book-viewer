@@ -387,4 +387,50 @@ Normal page 2 text`;
     expect(canvas.getCurrentPage()).toBe(2);
     expect(canvas.getBlankPageGifPlacement()).toBeNull();
   });
+
+  it('scales gif overlay matching canvas bounding rect when canvas is clamped smaller than scale', () => {
+    const canvas = new BookCanvas({ container: mockContainer, defaultViewMode: 'double', scale: 4 });
+    (canvas as any).bookBg = { naturalWidth: 256, naturalHeight: 256 };
+
+    const book: MinecraftBook = {
+      title: 'Witchcraft Magazine Clamped Test',
+      author: 'StarSweetpea',
+      pages: ['Only 1 page of content here!'],
+    };
+
+    canvas.setBook(book);
+    const canvasEl = canvas.getCanvas();
+    const stageEl = canvas.getStageElement();
+    const gifEl = stageEl.children.find((c: any) => c.className === 'book-blank-page-gif');
+    expect(gifEl).toBeDefined();
+
+    // Mock clamped bounding client rect: scale is 4, but container clamps canvas to 688x384 (scale 2 equivalent)
+    canvasEl.getBoundingClientRect = () => ({
+      left: 20,
+      top: 30,
+      width: 688,
+      height: 384,
+      right: 708,
+      bottom: 414,
+    });
+    stageEl.getBoundingClientRect = () => ({
+      left: 20,
+      top: 30,
+      width: 688,
+      height: 384,
+      right: 708,
+      bottom: 414,
+    });
+
+    canvas.updateGifOverlay();
+
+    // In double mode, baseW = 344, baseH = 192.
+    // scaleX = 688 / 344 = 2, scaleY = 384 / 192 = 2.
+    // Placement is x: 201, y: 43, w: 88, h: 100.
+    // Therefore, gif overlay should be sized to 2x (w: 176, h: 200), NOT 4x (w: 352, h: 400).
+    expect(gifEl.style.width).toBe('176px');
+    expect(gifEl.style.height).toBe('200px');
+    expect(gifEl.style.left).toBe(`${201 * 2}px`);
+    expect(gifEl.style.top).toBe(`${43 * 2}px`);
+  });
 });
