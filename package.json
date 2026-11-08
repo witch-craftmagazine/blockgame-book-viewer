@@ -1,0 +1,52 @@
+{
+  "name": "minecraft-book-viewer",
+  "version": "1.0.0",
+  "description": "High-fidelity, modular Minecraft written book web emulator, renderer, and web component.",
+  "type": "module",
+  "main": "./dist/minecraft-book-viewer.umd.cjs",
+  "module": "./dist/minecraft-book-viewer.js",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/minecraft-book-viewer.js",
+      "require": "./dist/minecraft-book-viewer.umd.cjs"
+    },
+    "./style.css": "./dist/style.css"
+  },
+  "files": [
+    "dist",
+    "public"
+  ],
+  "keywords": [
+    "minecraft",
+    "book",
+    "viewer",
+    "emulator",
+    "canvas",
+    "web-component",
+    "stendhal",
+    "cmi",
+    "bookcopy"
+  ],
+  "author": "",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && vite build --config vite.config.lib.ts && tsc -p tsconfig.build.json",
+    "build:app": "vite build",
+    "build:lib": "vite build --config vite.config.lib.ts && tsc -p tsconfig.build.json",
+    "preview": "vite preview",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/jszip": "^3.4.0",
+    "typescript": "^5.7.0",
+    "vite": "^6.0.0",
+    "vitest": "^3.0.0"
+  },
+  "dependencies": {
+    "@fontsource/unifont": "^5.3.0",
+    "jszip": "^3.10.2"
+  }
+}

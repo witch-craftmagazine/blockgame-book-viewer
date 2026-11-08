@@ -1,0 +1,1 @@
+{"pack":{"pack_format":32,"min_format":32,"max_format":999,"supported_formats":{"min_inclusive":32,"max_inclusive":999},"description":"Craftadia Resource Pack"},"overlays":{"entries":[{"directory":"overlay_1_21_2","min_format":36,"max_format":999,"formats":[36,999]}]},"sodium":{"ignored_shaders":["rendertype_entity_translucent.fsh","rendertype_entity_translucent.vsh"]}}

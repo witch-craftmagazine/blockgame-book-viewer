@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>witchcraft...magazine (Modular Engine Replica)</title>
+  <link rel="icon" type="image/png" href="../assets/packs/lithos/textures/gui/book.png" />
+  <link rel="stylesheet" href="../src/styles/viewer.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sorts+Mill+Goudy:ital@0;1&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: #000;
+      color: #f0f0f0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      user-select: none;
+    }
+    #app {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background-color: #000;
+    }
+    .reader-viewport {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .ascii-ambient-wrapper {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .ascii-ambient-wrapper pre {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 11px;
+      line-height: 11px;
+      letter-spacing: 0px;
+      color: rgba(215, 195, 255, 0.75);
+      white-space: pre;
+    }
+    .canvas-wrapper {
+      position: relative;
+      z-index: 2;
+    }
+    .magazine-nav {
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      background: linear-gradient(180deg, #d8cbaf 0%, #c4b595 100%);
+      border: 1px solid #5a4128;
+      border-radius: 28px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.85);
+      padding: 6px 14px;
+    }
+    .magazine-nav-inner {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .magazine-brand {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #2b1d0e;
+      text-decoration: none;
+      font-family: 'Sorts Mill Goudy', serif;
+      font-style: italic;
+      font-size: 17px;
+      font-weight: bold;
+    }
+    .magazine-selector-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      max-width: 320px;
+    }
+    .issue-scroll-container {
+      overflow-x: auto;
+      scrollbar-width: none;
+      display: flex;
+    }
+    .issue-scroll-container::-webkit-scrollbar { display: none; }
+    .issue-scroll-track {
+      display: flex;
+      gap: 6px;
+    }
+    .issue-chip {
+      background: rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(0, 0, 0, 0.2);
+      border-radius: 12px;
+      padding: 3px 10px;
+      color: #2b1d0e;
+      font-size: 12px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .issue-chip.active {
+      background: #2b1d0e;
+      color: #ede4d4;
+      font-weight: bold;
+    }
+    .nav-arrow-btn, .nav-icon-btn {
+      background: none;
+      border: none;
+      color: #2b1d0e;
+      cursor: pointer;
+      font-size: 14px;
+      padding: 2px 6px;
+    }
+    .magazine-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      color: #2b1d0e;
+      font-weight: 500;
+    }
+    .back-link {
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      z-index: 10;
+      color: #aaa;
+      text-decoration: none;
+      font-size: 12px;
+      background: rgba(20, 20, 20, 0.8);
+      padding: 5px 10px;
+      border-radius: 4px;
+      border: 1px solid #333;
+    }
+    .back-link:hover { color: #fff; }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <a href="../index.html" class="back-link">← Back to Playground</a>
+  <script type="module" src="./witchcraft-replica.ts"></script>
+</body>
+</html>
