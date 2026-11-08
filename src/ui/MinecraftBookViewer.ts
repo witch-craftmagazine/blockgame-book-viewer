@@ -56,7 +56,8 @@ export class MinecraftBookViewer {
     const baseAssetPath = options.baseAssetPath || './assets';
     this.packManager = new ResourcePackManager(baseAssetPath);
 
-    const isNarrow = typeof window !== 'undefined' && window.innerWidth < 680;
+    const containerW = container.clientWidth || (typeof window !== 'undefined' ? window.innerWidth : 1024);
+    const isNarrow = containerW < 680;
     const defaultMode = this.options.defaultViewMode || (isNarrow ? 'single' : 'double');
 
     // Setup wrapper layout

@@ -31,8 +31,8 @@ export class MinecraftBookElement extends BaseElement {
     if (viewMode === 'single' || viewMode === 'double') {
       initialMode = viewMode;
     } else {
-      const isNarrow = typeof window !== 'undefined' && window.innerWidth < 680;
-      initialMode = isNarrow ? 'single' : 'double';
+      const containerW = this.clientWidth || (typeof window !== 'undefined' ? window.innerWidth : 1024);
+      initialMode = containerW < 680 ? 'single' : 'double';
     }
 
     this.viewer = new MinecraftBookViewer(this, {

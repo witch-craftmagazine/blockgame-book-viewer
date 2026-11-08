@@ -19,6 +19,7 @@ export interface BookCanvasOptions {
   defaultViewMode?: ViewMode;
   showPageIndicator?: boolean;
   textSelectionEnabled?: boolean;
+  scale?: number;
   plugins?: BookPlugin[];
   includeWitchcraftPlugin?: boolean;
 }
@@ -38,6 +39,8 @@ export class BookCanvas {
   private currentPage = 0; // 0-indexed
   private viewMode: ViewMode = 'double';
   private scale = 3; // Integer scaling factor
+  private isScaleLocked = false;
+  private resizeObserver: any = null;
   private showPageIndicator = false;
   private textSelectionEnabled = false; // Off by default
 
@@ -90,6 +93,10 @@ export class BookCanvas {
     if (options.defaultViewMode) {
       this.viewMode = options.defaultViewMode;
     }
+    if (options.scale !== undefined) {
+      this.scale = Math.max(1, Math.min(6, options.scale));
+      this.isScaleLocked = true;
+    }
 
     for (const ch of this.randomCharPool) {
       const adv = this.atlas.getAdvance(ch, false);
@@ -112,8 +119,8 @@ export class BookCanvas {
     this.canvas.style.imageRendering = 'pixelated';
     this.canvas.style.display = 'block';
     this.canvas.style.margin = '0 auto';
-    this.canvas.style.maxWidth = '96vw';
-    this.canvas.style.maxHeight = 'calc(100vh - 70px)';
+    this.canvas.style.maxWidth = '100%';
+    this.canvas.style.maxHeight = '100%';
     this.canvas.style.objectFit = 'contain';
 
     const context = this.canvas.getContext('2d');
@@ -191,11 +198,11 @@ export class BookCanvas {
     await Promise.all([
       this.atlas.load(this.baseAssetPath),
       this.loadTexturesFromPaths({
-        book: `${this.baseAssetPath}/packs/lithos/textures/gui/book.png`,
-        pageForward: `${this.baseAssetPath}/packs/lithos/textures/gui/page_forward.png`,
-        pageForwardHover: `${this.baseAssetPath}/packs/lithos/textures/gui/page_forward_highlighted.png`,
-        pageBackward: `${this.baseAssetPath}/packs/lithos/textures/gui/page_backward.png`,
-        pageBackwardHover: `${this.baseAssetPath}/packs/lithos/textures/gui/page_backward_highlighted.png`,
+        book: `${this.baseAssetPath}/textures/gui/book.png`,
+        pageForward: `${this.baseAssetPath}/textures/gui/page_forward.png`,
+        pageForwardHover: `${this.baseAssetPath}/textures/gui/page_forward_highlighted.png`,
+        pageBackward: `${this.baseAssetPath}/textures/gui/page_backward.png`,
+        pageBackwardHover: `${this.baseAssetPath}/textures/gui/page_backward_highlighted.png`,
       }),
       this.loadImage(this.starSweetPeaGifUrl)
         .then((img) => {
@@ -205,9 +212,11 @@ export class BookCanvas {
       soundManager.load(this.baseAssetPath),
     ]);
 
+    this.fitToContainer();
     this.updateCanvasDimensions();
     this.render();
     this.startAnimLoop();
+    this.setupResizeObserver();
   }
 
   public async applyResourcePack(pack: ResourcePackInfo): Promise<void> {
@@ -462,6 +471,7 @@ export class BookCanvas {
         this.currentPage--;
       }
       this.updateHasEyeOnCurrentPage();
+      this.fitToContainer();
       this.updateCanvasDimensions();
       this.notifyPageChange();
       this.render();
@@ -551,10 +561,53 @@ export class BookCanvas {
     return this.textSelectionEnabled;
   }
 
-  public setScale(scale: number): void {
+  public setScale(scale: number, lockScale = true): void {
+    if (lockScale) {
+      this.isScaleLocked = true;
+    }
     this.scale = Math.max(1, Math.min(6, scale));
     this.updateCanvasDimensions();
     this.render();
+  }
+
+  public fitToContainer(): void {
+    if (this.isScaleLocked) return;
+    const parent = this.container;
+    if (!parent || typeof window === 'undefined') return;
+
+    const rect = parent.getBoundingClientRect ? parent.getBoundingClientRect() : { width: 0, height: 0 };
+    const containerW = rect.width > 0 ? rect.width : (typeof window !== 'undefined' ? window.innerWidth : 0);
+    const containerH = rect.height > 0 ? rect.height : (typeof window !== 'undefined' ? window.innerHeight : 0);
+
+    if (containerW <= 0 || containerH <= 0) return;
+
+    // Allocate margin/padding and space for toolbar
+    const availW = Math.max(containerW - 16, 192);
+    const availH = Math.max(containerH - 64, 192);
+
+    const baseW = this.viewMode === 'double' ? TWO_PAGE_WIDTH : 192;
+    const baseH = 192;
+
+    const scaleX = Math.floor(availW / baseW);
+    const scaleY = Math.floor(availH / baseH);
+    const optimalScale = Math.max(1, Math.min(6, Math.min(scaleX, scaleY)));
+
+    if (optimalScale !== this.scale) {
+      this.scale = optimalScale;
+      this.updateCanvasDimensions();
+      this.render();
+    }
+  }
+
+  private setupResizeObserver(): void {
+    if (typeof ResizeObserver !== 'undefined' && this.container) {
+      this.resizeObserver = new ResizeObserver(() => {
+        if (!this.isScaleLocked) {
+          this.fitToContainer();
+        }
+      });
+      this.resizeObserver.observe(this.container);
+    }
   }
 
   public getScale(): number {
@@ -646,9 +699,13 @@ export class BookCanvas {
     this.canvas.height = baseH * this.scale;
     this.canvas.style.width = `${baseW * this.scale}px`;
     this.canvas.style.height = `${baseH * this.scale}px`;
+    this.canvas.style.maxWidth = '100%';
+    this.canvas.style.maxHeight = '100%';
 
     this.stageElement.style.width = `${baseW * this.scale}px`;
     this.stageElement.style.height = `${baseH * this.scale}px`;
+    this.stageElement.style.maxWidth = '100%';
+    this.stageElement.style.maxHeight = '100%';
 
     this.ctx.imageSmoothingEnabled = false;
     this.updateTextLayer();
@@ -1331,6 +1388,7 @@ export class BookCanvas {
   }
 
   private startAnimLoop(): void {
+    if (typeof requestAnimationFrame === 'undefined') return;
     const tick = (now: number) => {
       let needsRender = false;
 
@@ -1411,6 +1469,10 @@ export class BookCanvas {
   }
 
   public destroy(): void {
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+      this.resizeObserver = null;
+    }
     if (this.animFrameId !== null) {
       cancelAnimationFrame(this.animFrameId);
     }

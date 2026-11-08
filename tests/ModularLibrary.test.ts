@@ -206,4 +206,56 @@ describe('Modular Library API & Components', () => {
     expect(cmd).toContain('/give @p written_book');
     expect(cmd).toContain('Guide Book');
   });
+
+  it('auto-fits scale to container dimensions in double-page mode without cutting off', () => {
+    mockContainer.getBoundingClientRect = () => ({
+      left: 0,
+      top: 0,
+      width: 800,
+      height: 480,
+    });
+
+    const canvas = new BookCanvas({
+      container: mockContainer,
+      defaultViewMode: 'double',
+    });
+
+    canvas.fitToContainer();
+    // In 800x480 container with toolbar:
+    // TWO_PAGE_WIDTH = 344, Height = 192.
+    // scale 3 is 1032x576 (overflows 800x480)
+    // scale 2 is 688x384 (fits comfortably within 800x480)
+    expect(canvas.getScale()).toBe(2);
+    expect(344 * canvas.getScale()).toBeLessThanOrEqual(800);
+    expect(192 * canvas.getScale()).toBeLessThanOrEqual(480);
+  });
+
+  it('loads vanilla Minecraft textures by default instead of Lithos', async () => {
+    const loadedPaths: string[] = [];
+    const canvas = new BookCanvas({
+      container: mockContainer,
+      baseAssetPath: './assets',
+    });
+
+    (canvas as any).loadImage = vi.fn().mockImplementation((src: string) => {
+      loadedPaths.push(src);
+      return Promise.resolve({
+        naturalWidth: 256,
+        naturalHeight: 256,
+      });
+    });
+
+    (canvas as any).atlas.load = vi.fn().mockResolvedValue(undefined);
+
+    await canvas.init();
+
+    // Verify vanilla textures were requested
+    expect(loadedPaths).toContain('./assets/textures/gui/book.png');
+    expect(loadedPaths).toContain('./assets/textures/gui/page_forward.png');
+    expect(loadedPaths).toContain('./assets/textures/gui/page_backward.png');
+
+    // Verify Lithos textures were NOT loaded by default
+    const hasLithos = loadedPaths.some((p) => p.includes('packs/lithos'));
+    expect(hasLithos).toBe(false);
+  });
 });
