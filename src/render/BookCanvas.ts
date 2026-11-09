@@ -846,9 +846,11 @@ export class BookCanvas {
       return 6;
     }
 
-    // Allocate margin/padding and space for toolbar
+    // Allocate margin/padding and space for toolbar if directly within parent
+    const hasInternalToolbar = !!(parent.querySelector && parent.querySelector('.mc-book-toolbar'));
+    const toolbarOffset = hasInternalToolbar ? 48 : 0;
     const availW = Math.max(containerW - 16, 192);
-    const availH = Math.max(containerH - 64, 192);
+    const availH = Math.max(containerH - 16 - toolbarOffset, 192);
 
     const baseDim = this.getBaseDimensions();
     const baseW = baseDim.width;

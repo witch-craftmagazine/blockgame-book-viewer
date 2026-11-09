@@ -1,132 +1,98 @@
 # Minecraft Book Viewer Roadmap
 
-This roadmap outlines upcoming milestones and technical specifications for `minecraft-book-viewer`, informed by local Minecraft Java & Bedrock sources and the mod codebases in `~/Documents/Applications/minecraftprojects/bookstuff/`.
+This roadmap outlines the technical architecture, milestones, and implementation specifications for `minecraft-book-viewer`.
 
 ---
 
-## 🏛️ Architectural Strategy: Decoupling Appearance from Engine
+## 🏛️ Architectural Strategy: Web-First Document Fidelity
 
-> **Key Design Tenet**: Most books people want to view are Java Edition books.
+> **Core Tenet**: While Minecraft in-game books are constrained by modal inventory GUIs and discrete button-click page turns, **web readers and document consumers prioritize continuous vertical scrolling**.
 > 
-> Therefore, **Bedrock Appearance** (visual GUI theme) and **Bedrock Engine** (text boundary & metrics) are strictly decoupled:
-> - **`appearance` (`'java' | 'bedrock'`)**: Controls GUI chrome, parchment textures, buttons, close 'X', spine gutter, and page indicators.
-> - **`engine` (`'java' | 'bedrock'`)**: Controls line boundary ($114\text{px}$ vs $122\text{px}$), wrapping logic, and pagination.
-> 
-> By defaulting to `engine: 'java'`, users can view any standard Minecraft Java book with 100% pagination fidelity ($114\text{px}$, matching in-game `StringSplitter.java` and preserving ASCII art) inside the Bedrock GUI shell—just like the on-device `bedrock-books` mod does in Minecraft Java Edition.
+> By decoupling the rendering engine from the display mode, `minecraft-book-viewer` delivers:
+> 1. **100% Vanilla Engine Fidelity**: Exact $114\text{px}$ Java / $122\text{px}$ Bedrock line bounds, 14 lines per page, space advance metrics, formatting codes, and ASCII art preservation.
+> 2. **Modern Web-First Reading Modes**: Discrete flip-book modes (`single`, `double`) alongside **PDF-style continuous scrolling** (`scroll-single`, `scroll-double`), fluid trackpad/wheel scrolling, touch swiping, and viewport virtualization.
 
 ---
 
-## 🎯 Priority 1: Bedrock Edition Appearance (GUI Shell) - [Completed]
+## ✅ Completed Milestones
 
-The primary objective is first-class, authentic Bedrock Edition book GUI styling that can wrap either Java or Bedrock books.
+### Priority 1: Bedrock Edition Appearance & Decoupled Architecture - [Completed in v1.1]
+- **Bedrock GUI Shell**: $512 \times 256\text{px}$ two-page spread parchment textures, authentic 24x24 turn buttons, 9x9 top-right close 'X', centered parchment tan (`#BCA387`) page indicators.
+- **Engine Decoupling**: Separated visual chrome (`appearance: 'java' | 'bedrock'`) from layout geometry (`engine: 'java' | 'bedrock'`), allowing Java books to be read in the Bedrock shell with zero line overflow.
+- **Bedrock Engine**: $122\text{px}$ layout boundary, 14 lines per page, and full Bedrock formatting palette (`§g` Minecoin Gold, `§h` Quartz, `§i` Iron, `§j` Netherite, `§p` Gold, `§q` Emerald, `§s` Diamond, `§t` Lapis, `§u` Amethyst).
 
-### 1.1 Authentic Bedrock GUI Textures & Layout
-- **Assets to integrate** (from [`bedrock-books`](file://~/Documents/Applications/minecraftprojects/bookstuff/bedrock-books/src/main/resources/assets/eg_bedrock_books/textures/gui/book/)):
-  - `view_background.png` ($512 \times 256\text{px}$ 2-page spread).
-  - `edit_background.png` (interactive authoring view).
-  - Sprites:
-    - 24x24 square turn buttons: `page_backward.png` and `page_forward.png` with hover/focus states.
-    - 9x9 top-right close 'X': `close.png` / `close_hover.png`.
-    - Centered bottom "Done" button ($200\text{px}$ wide).
-- **Coordinate & Spacing Parity**:
-  - Spine center gutter: `CENTER_PADDING = 22px`.
-  - Page indicator: Centered above each page column (e.g. `1 of 10` on left, `2 of 10` on right) rendered in `#BCA387` (parchment tan), rather than Java's top-right right-aligned position.
-  - Page button offsets: Bottom outer margins ($y = \text{height}/2 + 47$).
-  - Text area: $114\text{px}$ centered inside each page panel when running the Java engine.
-
-### 1.2 High-Contrast Bedrock Accessibility Theme
-- Support Bedrock's built-in High-Contrast mode (from `bedrock-books/resourcepacks/high_contrast`):
-  - Inverted dark slate background texture.
-  - `#FFFFFF` high-contrast page text.
-  - `#FFFF55` (soft yellow) page numbers and navigation indicators.
-
-### 1.3 API & Component Ergonomics
-- Add `appearance="bedrock" | "java"` and `engine="java" | "bedrock"` attributes to `<minecraft-book>`.
-- Add appearance switch in playground UI toolbar to easily toggle between Java and Bedrock rendering.
+### Priority 2: Lossless Text Ingestion & Opt-In Progress - [Completed in v1.2]
+- **`LosslessSplit` Engine**: Zero-loss invariant guarantee (`join(pages) === text`), UTF-16 surrogate-pair protection, section-sign (`§`) splitting guards, and bounded soft rollback (paragraphs `\n\n`, newlines `\n`, whitespace `' '`).
+- **Web Component Text Ingestion**: `<minecraft-book text="..." split-mode="lossless">` and `.setText()` supporting inline text, raw text, and `<pre>` markup.
+- **`PageMemoryManager`**: Deterministic FNV-1a content hashing for `localStorage` progress persistence, strictly opt-in (`persistReadingProgress: false` by default) so landing pages and tutorials reset cleanly on reload.
+- **Mobile Export & Web Share**: Native canvas image export and Web Share API integration with PNG download fallback.
 
 ---
 
-## 📐 Priority 2: Bedrock Engine (Dedicated Layout Mode)
+## 🚀 Active Priority: PDF-Style Continuous Scroll Engine (v1.3)
 
-For native Bedrock books and export:
+Rather than clicking buttons to flip pages, continuous scroll provides a modern document reading experience tailored for articles, long-form stories, and magazine publications (such as Witchcraft Magazine).
 
-### 2.1 Line Width ($122\text{px}$) & Wrapping
-- When `engine: 'bedrock'` is explicitly requested:
-  - Line boundary expands from $114\text{px}$ to **$122\text{px}$** (as measured in `Gutencraft.kt` and `bedrock-books`).
-  - Max 14 lines per page maintained.
-- When `engine: 'java'` (default) is active:
-  - Preserves exact vanilla $114\text{px}$ text boundary, ensuring ASCII art and existing book layouts never overflow.
+### 1. Continuous Scroll Display Modes
+- **One-Page Continuous Scroll (`view-mode="scroll-single"`)**:
+  - Pages are stacked in a single vertical column with authentic parchment margins and subtle page separation gutters.
+  - Native browser scrolling via mouse wheel, trackpad, and touch swipe.
+  - Natural fit for mobile viewports, embedded article sidebars, and responsive containers.
+- **Two-Page Spread Continuous Scroll (`view-mode="scroll-double"`)**:
+  - Two-page spreads (left + right page with center spine gutter) are stacked vertically with page separators between spreads.
+  - Emulates PDF reader "Two Page Scrolling" (e.g. Adobe Acrobat / PDF.js).
+  - Responsive reflow: automatically falls back to `scroll-single` on viewports $< 680\text{px}$.
+- **Web Component API**:
+  - `view-mode="single" | "double" | "scroll-single" | "scroll-double" | "auto"`
+  - JavaScript API: `viewer.setViewMode(mode)`, `viewer.getViewMode()`.
+  - Programmatic scroll control: `viewer.scrollToPage(pageNumber, { behavior: 'smooth' | 'auto' })`.
 
-### 2.2 Bedrock Formatting Colors
-Full visual parity for Bedrock-specific color codes:
-- `§g`: Minecoin Gold (`#DDD605`)
-- `§h`: Quartz (`#E3D4D1`)
-- `§i`: Iron (`#CECACA`)
-- `§j`: Netherite (`#443A3B`)
-- `§p`: Gold Material (`#DEB12D`)
-- `§q`: Emerald (`#47A036`)
-- `§s`: Diamond (`#2CBAA8`)
-- `§t`: Lapis (`#21497B`)
-- `§u`: Amethyst (`#9A5CC6`)
+### 2. Viewport Virtualization & Memory Efficiency
+- **Problem**: Books with 50–100+ pages (or long imported documents) will crash mobile GPU memory if 100 full-resolution canvases are instantiated simultaneously.
+- **Solution**:
+  - Lightweight scroll container (`.mc-book-scroll-viewport`) containing page wrapper placeholders with fixed aspect ratios ($192 \times 192\text{px}$ or $384 \times 192\text{px}$ scaled).
+  - `IntersectionObserver` dynamically mounts canvas rendering only for visible pages plus a 1-spread buffer above and below.
+  - Off-screen pages release heavy canvas contexts, keeping memory constant regardless of page count.
 
----
+### 3. Floating Reader Chrome & Progress Sync
+- **Dynamic Floating Page Badge**:
+  - In continuous scroll modes, discrete turn arrows fade out.
+  - Replaced by an unobtrusive floating page pill (e.g., `Page 14 of 48` or `Spread 7 of 24`) positioned at the bottom or top center.
+  - Updates in real-time as the reader scrolls past page intersection thresholds.
+- **Seamless `PageMemoryManager` Integration**:
+  - When `persistReadingProgress: true` is active, the highest visible page is automatically saved to `localStorage` during scroll (debounced).
+  - When reloading the page, the viewer restores reading position by auto-scrolling directly to the saved page.
 
-## 🧩 Priority 3: Unicode Art & Evaluated Extensions
-
-### 3.1 Braille Graphic Art Support & Samples
-- **Source**: `BrailleBooks` (`Examples/Commands/`).
-- **Feature**:
-  - Integrate test fixtures and sample books demonstrating 76x56 Unicode Braille (`\u2800`–`\u28FF`) pixel art.
-  - 100% vanilla written book compatible without mods or custom resource packs.
-  - Add Braille art generator utility into playground tools.
-
-### 3.2 Evaluated Media Extensions (Out of Scope / Not Supported in Core)
-- **`DrawInBooks` (Hand-Drawn 3-Bit Sketches)**:
-  - *Status*: **Evaluated — Possible via Custom `BookPlugin`, but NOT Supported in Core**.
-  - *Rationale*: Requires custom binary payload in `minecraft:custom_data` and is not part of vanilla Minecraft. Excluded from core to preserve lightweight bundle size and pure vanilla fidelity. Third parties can implement via `onAfterRenderPage` hook if desired.
-- **`ImagineBook` (Inline Images `[url,x,y,w,h,rot]`)**:
-  - *Status*: **Evaluated — Possible via Custom `BookPlugin`, but NOT Supported in Core**.
-  - *Rationale*: Mod-specific inline image tagging deviates from vanilla formatting. Excluded from core; developers requiring image rendering can implement a custom `BookPlugin`.
+### 4. Interactive Event Preservation
+- JSON text components (`clickEvent: open_url`, `run_command`, `hoverEvent: show_text`) remain fully interactive across all virtualized and scrolled pages.
+- Focus and keyboard accessibility: smooth scrolling with `ArrowUp` / `ArrowDown` / `PageUp` / `PageDown` / `Space`.
 
 ---
 
-## ⚡ Priority 4: Navigation, Ergonomics & Multi-Resolution Scaling
+## ⚡ Future Priorities
 
-### 4.1 Advanced Navigation Controls (from `book-tweaks`)
-- Add fast navigation buttons in toolbar:
-  - Jump to Start (`|<`) and Jump to End (`>|`).
-  - Fast page skipping (`<<` and `>>` for 2-page or 10-page jumps).
+### Priority 4: Themes & Accessibility (v1.4)
+- **Bedrock High-Contrast Accessibility Theme**:
+  - High-contrast slate background texture (`bedrock-books/resourcepacks/high_contrast`), `#FFFFFF` high-contrast page text, and `#FFFF55` yellow navigation accents, respecting `prefers-contrast` media queries.
+  - Dark mode theme integration for websites embedding `<minecraft-book>`.
+- *(Note on MC-61489: Evaluated and rejected as not applicable — MC-61489 was an in-game OpenGL/LWJGL projection matrix bug in vanilla Minecraft's `BookScreen.java` odd-height screen division; HTML5 canvas rendering in the browser uses standard CSS pixel ratio scaling and is unaffected).*
 
-### 4.2 `PageMemoryManager` (Configurable Opt-In Reading Progress)
-- **Optional & Off by Default**: `persistReadingProgress?: boolean` (default: `false`).
-- **Developer Control**:
-  - Embedders and website developers often want books to reset to page 1 when the page reloads (e.g. for landing pages, portfolio showcases, or documentation tutorials).
-  - When explicitly enabled (`persistReadingProgress: true` or `<minecraft-book persist-progress>`), saves reading position in `localStorage` keyed by book title or hash.
-  - Supports programmatic reset: `viewer.clearReadingProgress()`.
+### Priority 5: Format Expansion & Interchange (v1.5)
+- **Bedrock Book JSON (`WritableBookContent`)**:
+  - Native import/export for Bedrock client data and Bedrock server schemas.
+- **Spigot & Server Formats**:
+  - `cocoapebbles-book` JSON format support.
+  - `flexibook` Pack JSON support.
 
-### 4.3 Scholar-Style Bookmarks & Covers (from `Scholar`)
-- 16 Minecraft dye colors for book covers and spines.
-- Visual bookmark ribbons hanging from the bottom of open books.
-
-### 4.4 MC-61489 Anti-Jitter Subpixel Alignment (from `FixBookGUI`)
-- Prevent vertical 1px text jitter during viewport resize by anchoring canvas scaling to even pixel boundaries.
-
----
-
-## 📦 Priority 5: Advanced Splitting & Interchange
-
-### 5.1 Lossless Text-to-Page Splitting (from `CopyPasteBooks`)
-- Upgrade plain-text auto-pagination with `LosslessSplit`:
-  - **Zero-Loss Invariant**: Guarantees `String.join("", pages) === originalText`.
-  - **Surrogate-Pair Safety**: Eliminates corrupt glyph crashes (e.g. `\uFFFD`) caused by slicing 4-byte Unicode characters (emojis `😀`, `💎`) between high and low surrogates.
-  - **Soft Rollback Heuristics**: Automatically cuts at natural paragraph breaks (`\n\n`) or words (` `) instead of awkwardly splitting words across page turns (e.g., "dis-" on page 1, "cussion" on page 2).
-  - **Bounded Starvation Prevention**: Never rolls back more than a fraction of a page, ensuring pages remain well-utilized even when dealing with long paragraphs.
-  - **Lossless Round-Trip**: Enables users to paste long documents or import raw text files and export them to Minecraft `/give` commands or JSON without losing spaces, newlines, or formatting.
-
-### 5.2 Format Support Expansion
-- **Bedrock Book JSON**: Import/export compatible with Bedrock `WritableBookContent` schemas.
-- **`cocoapebbles-book` JSON**: Support Spigot web server book format.
-- **`flexibook` Pack JSON**: Candidate for rich component-based book loading.
+### Priority 6: Aesthetic & Art Extensions (Backlog)
+- **Scholar-Style Dye Covers & Bookmarks (from `Scholar`)**:
+  - 16 Minecraft dye colors for leather covers and spines.
+  - Visual bookmark ribbons hanging from the bottom of open books.
+- **Braille Graphic Art Support (from `BrailleBooks`)**:
+  - Demo fixtures demonstrating 76x56 Unicode Braille (`\u2800`–`\u28FF`) pixel art.
+  - Playground Braille art generator tool.
+- **Evaluated Media Extensions (Out of Scope in Core)**:
+  - `DrawInBooks` (3-bit sketches) & `ImagineBook` (inline images) flagged as out of scope for core; available via custom `BookPlugin` hooks.
 
 ---
 
@@ -134,7 +100,8 @@ Full visual parity for Bedrock-specific color codes:
 
 | Phase | Milestone | Focus Areas | Target Capabilities |
 | :---: | :--- | :--- | :--- |
-| **v1.1** | **Bedrock Edition GUI** | Appearance & Layout | $512\times256$ Bedrock textures, $122\text{px}$ line wrapping, Bedrock buttons, close 'X', centered page indicators |
-| **v1.2** | **Bedrock High-Contrast & Themes** | Accessibility & Fonts | High-contrast Bedrock mode, Bedrock color palette completion, theme switcher |
-| **v1.3** | **Navigation & Ergonomics** | Navigation & Progress | Jump-to-start/end buttons, optional `PageMemoryManager` (`persistReadingProgress`), Braille art sample fixtures |
-| **v1.4** | **Lossless Splitting & Interchange** | Engine & Pagination | `LosslessSplit` engine (`join(pages) === text`), Bedrock JSON import/export, Spigot format support |
+| **v1.1** | **Bedrock Edition GUI & Engine** | Appearance & Parity | $512\times256$ Bedrock textures, decoupled engine, $122\text{px}$ line wrapping, Bedrock color codes (`§g`–`§u`) |
+| **v1.2** | **Lossless Splitting & Ingestion** | Engine & Web Component | `LosslessSplit` engine (`join(pages) === text`), `<minecraft-book text="...">`, opt-in `PageMemoryManager` |
+| **v1.3** | **Continuous Scroll Reader** | Web UX & Ergonomics | PDF-style `scroll-single` and `scroll-double` continuous scroll, DOM virtualization, floating page badge, scroll persistence |
+| **v1.4** | **Themes & Accessibility** | Accessibility & UX | Bedrock high-contrast accessibility theme, dark mode parchment, `prefers-contrast` support |
+| **v1.5** | **Format Interchange** | Serialization | Bedrock Book JSON (`WritableBookContent`), Spigot JSON, Scholar cover customization |
