@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { GlyphAtlas } from '../src/engine/GlyphAtlas';
 import { ResourcePackManager } from '../src/engine/ResourcePackManager';
+import { createLithosPack, createCraftadiaPack } from '../src/presets/example-packs';
 import { splitTextToLines } from '../src/engine/StringSplitter';
 
 describe('Lithos Font Textures & Spacing Fidelity', () => {
@@ -45,8 +46,14 @@ describe('Lithos Font Textures & Spacing Fidelity', () => {
     expect(l4).toBe('    ★MAGAZINE★');
   });
 
-  it('configures Lithos and Craftadia packs with Lithos font textures', () => {
+  it('configures Lithos and Craftadia packs with Lithos font textures when registered', () => {
     const manager = new ResourcePackManager('./assets');
+    expect(manager.getAvailablePacks()).toHaveLength(1);
+    expect(manager.getPack('vanilla')).toBeDefined();
+
+    manager.registerPack(createLithosPack('./assets'));
+    manager.registerPack(createCraftadiaPack('./assets'));
+
     const lithos = manager.getPack('lithos');
     const craftadia = manager.getPack('craftadia');
     const vanilla = manager.getPack('vanilla');

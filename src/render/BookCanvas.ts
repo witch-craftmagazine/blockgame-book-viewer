@@ -19,7 +19,7 @@ import {
 } from '../engine/StringSplitter';
 import { parseFormattedText, stripFormatting } from '../engine/Formatting';
 import { soundManager } from './SoundEffects';
-import { ResourcePackInfo } from '../engine/ResourcePackManager';
+import { ResourcePackInfo, BookTextures, CompositeResourcePack } from '../engine/ResourcePackManager';
 import { BookPlugin, PageRect } from '../plugin/BookPlugin';
 import { ContinuousScrollView } from './ContinuousScrollView';
 
@@ -382,16 +382,44 @@ export class BookCanvas {
     this.setupResizeObserver();
   }
 
-  public async applyResourcePack(pack: ResourcePackInfo): Promise<void> {
-    await this.loadTexturesFromPaths(pack.textures);
-    if (pack.fontTextures) {
-      await this.atlas.loadFontTextures(pack.fontTextures);
+  public async applyResourcePack(pack: ResourcePackInfo | CompositeResourcePack): Promise<void> {
+    if (pack.textures) {
+      await this.loadTexturesFromPaths(pack.textures as BookTextures);
     }
-    if (pack.fontBaseUrl) {
-      await this.atlas.loadFromFontDirectory(pack.fontBaseUrl);
-    } else if (pack.fontProviders && pack.fontTextureResolver) {
-      await this.atlas.loadBitmapProviders(pack.fontProviders, pack.fontTextureResolver);
+
+    // Reset custom bitmap glyphs and caches so no ghost overrides persist across pack switches
+    this.atlas.resetCustomGlyphs();
+
+    const composite = pack as CompositeResourcePack;
+    if (composite.fontProvidersList && composite.fontProvidersList.length > 0) {
+      if (composite.fontTextures) {
+        await this.atlas.loadFontTextures(composite.fontTextures);
+      } else {
+        this.atlas.restoreVanillaFontTextures();
+      }
+
+      // Apply layered font providers in stack order (lower first, higher overrides)
+      for (const entry of composite.fontProvidersList) {
+        if (entry.baseUrl) {
+          await this.atlas.loadFromFontDirectory(entry.baseUrl);
+        } else if (entry.providers && entry.resolver) {
+          await this.atlas.loadBitmapProviders(entry.providers, entry.resolver);
+        }
+      }
+    } else {
+      if (pack.fontTextures) {
+        await this.atlas.loadFontTextures(pack.fontTextures);
+      } else {
+        this.atlas.restoreVanillaFontTextures();
+      }
+
+      if (pack.fontBaseUrl) {
+        await this.atlas.loadFromFontDirectory(pack.fontBaseUrl);
+      } else if (pack.fontProviders && pack.fontTextureResolver) {
+        await this.atlas.loadBitmapProviders(pack.fontProviders, pack.fontTextureResolver);
+      }
     }
+
     // Re-paginate pages with updated character advances
     this.recalculatePages();
     this.render();

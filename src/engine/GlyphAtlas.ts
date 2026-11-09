@@ -104,6 +104,7 @@ export class GlyphAtlas {
   private glyphMap: Map<string, GlyphMapEntry> = new Map();
   private customGlyphs: Map<string, CustomBitmapGlyphEntry> = new Map();
   private sheets: Record<string, HTMLImageElement> = {};
+  private vanillaSheets: Record<string, HTMLImageElement> = {};
   private tintedSheets: Map<string, HTMLCanvasElement> = new Map();
   private fallbackCache: Map<string, GlyphDrawInfo> = new Map();
   private isLoaded = false;
@@ -202,7 +203,7 @@ export class GlyphAtlas {
   }
 
   /**
-   * Measures the pixel width for any arbitrary Unicode character (matching Symbol Chat and Unifont).
+   * Measures the pixel width for any arbitrary Unicode character (matching Minecraft Unicode & Unifont spec).
    * Uses 1-bit pixel bounding box mask matching Minecraft's UnihexProvider.
    */
   private measureUnicodeAdvance(char: string): number {
@@ -210,7 +211,7 @@ export class GlyphAtlas {
     if (this.isCombining(char)) return 0;
     const code = char.codePointAt(0) || 0;
 
-    // Fast lookups for common ranges based on Unifont / Symbol Chat:
+    // Fast lookups for common ranges based on Minecraft Unifont coverage:
     // CJK, Fullwidth forms, Emojis, Enclosed Alphanumerics
     if (
       (code >= 0x2E80 && code <= 0x9FFF) ||   // CJK radicals & ideographs
@@ -291,6 +292,10 @@ export class GlyphAtlas {
       this.sheets['ascii'] = asciiImg;
       if (accentedImg) this.sheets['accented'] = accentedImg;
       if (nonlatinImg) this.sheets['nonlatin'] = nonlatinImg;
+
+      this.vanillaSheets['ascii'] = asciiImg;
+      if (accentedImg) this.vanillaSheets['accented'] = accentedImg;
+      if (nonlatinImg) this.vanillaSheets['nonlatin'] = nonlatinImg;
 
       // Map providers from default.json (ascii, accented, nonlatin_european)
       if (defaultJson && defaultJson.providers) {
@@ -456,6 +461,28 @@ export class GlyphAtlas {
     }
 
     await Promise.all(promises);
+    this.tintedSheets.clear();
+    this.fallbackCache.clear();
+  }
+
+  /**
+   * Clears all custom bitmap provider glyphs and cached tinted textures.
+   * Leaves base vanilla sheets and calibrated symbol advances intact.
+   */
+  public resetCustomGlyphs(): void {
+    this.customGlyphs.clear();
+    this.tintedSheets.clear();
+    this.fallbackCache.clear();
+  }
+
+  /**
+   * Restores base vanilla font textures (ascii, accented, nonlatin) if previously
+   * replaced by a custom resource pack.
+   */
+  public restoreVanillaFontTextures(): void {
+    if (this.vanillaSheets['ascii']) this.sheets['ascii'] = this.vanillaSheets['ascii'];
+    if (this.vanillaSheets['accented']) this.sheets['accented'] = this.vanillaSheets['accented'];
+    if (this.vanillaSheets['nonlatin']) this.sheets['nonlatin'] = this.vanillaSheets['nonlatin'];
     this.tintedSheets.clear();
     this.fallbackCache.clear();
   }
@@ -633,7 +660,7 @@ export class GlyphAtlas {
   /**
    * Retrieves glyph rendering information.
    * If the character exists in Minecraft's bitmap font sheets, blits from the sheet.
-   * If the character is any extended Unicode symbol (e.g. from Symbol Chat),
+   * If the character is any extended Unicode symbol (Unifont, CJK, runes, math symbols),
    * dynamically generates a pixelated fallback glyph matching Minecraft's Unifont style!
    */
   public getGlyphDrawInfo(char: string, colorHex: string, isBold: boolean): GlyphDrawInfo | null {
@@ -684,7 +711,7 @@ export class GlyphAtlas {
       }
     }
 
-    // 3. Dynamic Unicode Fallback (covers Symbol Chat, CJK, Math, Runes, Emojis, etc.)
+    // 3. Dynamic Unicode Fallback (covers Unifont, CJK, Math, Runes, Emojis, etc.)
     return this.getOrCreateFallbackGlyph(char, colorHex, isBold);
   }
 

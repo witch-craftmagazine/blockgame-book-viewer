@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { GlyphAtlas, defaultGlyphAtlas } from '../src/engine/GlyphAtlas';
 import { splitTextToLines, BOOK_TEXT_WIDTH } from '../src/engine/StringSplitter';
 
-describe('Unicode & Symbol Chat Support', () => {
-  it('provides valid advances for Symbol Chat symbols', () => {
+describe('Unicode & Unifont Support', () => {
+  it('provides valid advances for extended Unicode symbols', () => {
     const symbols = ['♩', '♪', '♫', '♬', '⚔', '🛡', '★', '⚡', '✓', '①', '②'];
     for (const sym of symbols) {
       const adv = defaultGlyphAtlas.getAdvance(sym);
@@ -12,7 +12,7 @@ describe('Unicode & Symbol Chat Support', () => {
     }
   });
 
-  it('provides exact accurate advances for Minecraft / Symbol Chat box drawing and magazine symbols', () => {
+  it('provides exact accurate advances for Minecraft box drawing and magazine symbols', () => {
     // Box drawing and borders (matching Minecraft official glyphs.json and glyph_sizes.bin)
     expect(defaultGlyphAtlas.getAdvance('╔')).toBe(9);
     expect(defaultGlyphAtlas.getAdvance('═')).toBe(9);

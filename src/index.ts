@@ -44,7 +44,15 @@ export {
 } from './engine/Formatting';
 
 export { GlyphAtlas, defaultGlyphAtlas, type GlyphMapEntry, type CustomBitmapGlyphEntry, MINECRAFT_SYMBOL_ADVANCES } from './engine/GlyphAtlas';
-export { ResourcePackManager, type ResourcePackInfo, type FontTexturePaths } from './engine/ResourcePackManager';
+export {
+  ResourcePackManager,
+  type ResourcePackInfo,
+  type FontTexturePaths,
+  type BookTextures,
+  type CompositeResourcePack,
+  type CompositeFontProviderEntry,
+} from './engine/ResourcePackManager';
+export { createLithosPack, createCraftadiaPack } from './presets/example-packs';
 
 export {
   splitTextLossless,

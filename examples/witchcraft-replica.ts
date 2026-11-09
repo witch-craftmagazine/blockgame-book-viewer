@@ -1,5 +1,6 @@
 import { BookCanvas } from '../src/render/BookCanvas';
 import { ResourcePackManager } from '../src/engine/ResourcePackManager';
+import { createCraftadiaPack } from '../src/presets/example-packs';
 import { WitchcraftPlugin } from '../src/plugins/WitchcraftPlugin';
 import { AsciiAmbientManager } from '../src/ambient/AsciiAmbientManager';
 import { WITCHCRAFT_MAGAZINE_ISSUES } from '../src/samples/sampleBooks';
@@ -54,12 +55,12 @@ class WitchcraftApp {
       this.loadIssue(this.currentIssueId, 1),
     ]);
 
-    const craftadiaPack = this.packManager.getPack('craftadia');
-    if (craftadiaPack) {
-      await this.bookCanvas.applyResourcePack(craftadiaPack).catch((err) => {
-        console.warn('Could not apply server resource pack:', err);
-      });
-    }
+    const craftadiaPack = createCraftadiaPack('../assets');
+    this.packManager.registerPack(craftadiaPack);
+    this.packManager.activatePack('craftadia');
+    await this.bookCanvas.applyResourcePack(this.packManager.getCompositePack()).catch((err) => {
+      console.warn('Could not apply server resource pack:', err);
+    });
   }
 
   private buildLayout(): void {

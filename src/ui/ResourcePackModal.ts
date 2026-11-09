@@ -80,9 +80,10 @@ export class ResourcePackModal {
 
   private async handleZipUpload(file: File): Promise<void> {
     try {
-      const pack = await this.packManager.loadZipResourcePack(file);
+      await this.packManager.loadZipResourcePack(file);
+      const composite = this.packManager.getCompositePack();
       this.refreshPackList();
-      this.onPackSelect(pack);
+      this.onPackSelect(composite);
     } catch (err: any) {
       alert(`Failed to load resource pack: ${err?.message || err}`);
     }
@@ -93,11 +94,26 @@ export class ResourcePackModal {
     list.innerHTML = '';
 
     const packs = this.packManager.getAvailablePacks();
-    const current = this.packManager.getCurrentPack();
+    const activeStack = this.packManager.getActiveStack();
 
     for (const pack of packs) {
+      const isActive = this.packManager.isPackActive(pack.id);
+      const isVanilla = pack.id === 'vanilla';
+      const stackIndex = activeStack.indexOf(pack.id);
+
       const item = document.createElement('div');
-      item.className = `pack-item ${pack.id === current.id ? 'active' : ''}`;
+      item.className = `pack-item ${isActive ? 'active' : ''}`;
+      
+      let buttonLabel = 'Enable';
+      let buttonClass = 'btn-secondary';
+      if (isVanilla) {
+        buttonLabel = activeStack.length === 1 ? 'Default Baseline' : 'Reset to Vanilla';
+        buttonClass = activeStack.length === 1 ? 'btn-success' : 'btn-secondary';
+      } else if (isActive) {
+        buttonLabel = activeStack.length > 2 ? `Active (#${stackIndex})` : 'Active';
+        buttonClass = 'btn-success';
+      }
+
       item.innerHTML = `
         <div class="pack-icon-wrapper">
           ${pack.iconUrl ? `<img src="${pack.iconUrl}" alt="${pack.name}" class="pack-icon" />` : `<span class="pack-icon-fallback">📖</span>`}
@@ -106,17 +122,24 @@ export class ResourcePackModal {
           <div class="pack-title">${pack.name}</div>
           <div class="pack-desc">${pack.description}</div>
         </div>
-        <button class="btn btn-sm ${pack.id === current.id ? 'btn-success' : 'btn-secondary'}">
-          ${pack.id === current.id ? 'Active' : 'Apply'}
+        <button class="btn btn-sm ${buttonClass}">
+          ${buttonLabel}
         </button>
       `;
 
       item.onclick = () => {
-        const applied = this.packManager.setPack(pack.id);
-        if (applied) {
-          this.refreshPackList();
-          this.onPackSelect(applied);
+        if (isVanilla) {
+          if (activeStack.length > 1) {
+            this.packManager.deactivateAllCustom();
+          }
+        } else if (isActive) {
+          this.packManager.deactivatePack(pack.id);
+        } else {
+          this.packManager.activatePack(pack.id);
         }
+        const composite = this.packManager.getCompositePack();
+        this.refreshPackList();
+        this.onPackSelect(composite);
       };
 
       list.appendChild(item);

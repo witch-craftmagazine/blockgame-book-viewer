@@ -2,7 +2,7 @@
 
 A modular, pixel-perfect, zero-dependency Minecraft written book web emulator, renderer, and Web Component. Designed to allow any website to embed and render authentic Minecraft books with custom resource packs, accurate typography, page-turn sounds, and multi-format import/export.
 
-![Demo](public/assets/packs/lithos/textures/gui/book.png)
+![Demo](public/assets/textures/gui/book.png)
 
 ## Features
 
@@ -11,11 +11,11 @@ A modular, pixel-perfect, zero-dependency Minecraft written book web emulator, r
   - Exact 114px line wrapping and 14 lines/page pagination matching vanilla `StringSplitter.java`.
   - Full support for Minecraft formatting codes (`§0`–`§f`, `§l`, `§o`, `§n`, `§m`, `§k` animated obfuscation, `§r`).
   - Extended color support for Bedrock Edition and hex colors (`§x...`).
-  - Accurate glyph advances and side-bearings for Unicode, CJK, and Symbol Chat glyphs.
+  - Accurate glyph advances and side-bearings for Unicode, CJK, and Unifont glyphs.
 - 🎨 **Resource Pack System**:
-  - Built-in support for Default 16x, Lithos 32x (HD), and server packs.
+  - Minecraft-faithful prioritized resource pack stack (`[Vanilla, ...CustomPacks]`) with cascading texture and font conflict resolution.
   - Dynamically load any Minecraft resource pack `.zip` file from disk or remote URL.
-  - Custom bitmap font provider support.
+  - Custom bitmap font provider and HD texture sheet support.
 - 📦 **Multi-Format Book I/O**:
   - **Stendhal** (`.stendhal` files)
   - **BookCopy** (`.json` files)
