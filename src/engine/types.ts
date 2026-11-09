@@ -1,4 +1,5 @@
 export interface MinecraftBook {
+  id?: string;         // Optional server-assigned identifier (e.g. Spigot cocoapebbles-book)
   title: string;
   author: string;
   generation?: number; // 0 = Original, 1 = Copy of original, 2 = Copy of copy, 3 = Tattered
@@ -38,6 +39,43 @@ export interface GlyphDrawInfo {
   ascent: number;
 }
 
-export type ViewMode = 'single' | 'double';
+export type ViewMode = 'single' | 'double' | 'scroll-single' | 'scroll-double';
 export type BookAppearance = 'java' | 'bedrock';
 export type BookEngine = 'java' | 'bedrock';
+
+export type MinecraftDyeColor =
+  | 'white'
+  | 'orange'
+  | 'magenta'
+  | 'light_blue'
+  | 'yellow'
+  | 'lime'
+  | 'pink'
+  | 'gray'
+  | 'light_gray'
+  | 'cyan'
+  | 'purple'
+  | 'blue'
+  | 'brown'
+  | 'green'
+  | 'red'
+  | 'black';
+
+export const MINECRAFT_DYE_HEX: Record<MinecraftDyeColor, string> = {
+  white: '#F9FFFE',
+  orange: '#F9801D',
+  magenta: '#C74EBD',
+  light_blue: '#3AB3DA',
+  yellow: '#FED83D',
+  lime: '#80C71F',
+  pink: '#F38BAA',
+  gray: '#474F52',
+  light_gray: '#9D9D97',
+  cyan: '#169C9C',
+  purple: '#8932B8',
+  blue: '#3C44AA',
+  brown: '#835432',
+  green: '#5E7C16',
+  red: '#B02E26',
+  black: '#1D1D21',
+};

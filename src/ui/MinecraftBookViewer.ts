@@ -1,4 +1,4 @@
-import { MinecraftBook, ViewMode, BookAppearance, BookEngine } from '../engine/types';
+import { MinecraftBook, ViewMode, BookAppearance, BookEngine, MinecraftDyeColor } from '../engine/types';
 import { BookCanvas, BookCanvasOptions } from '../render/BookCanvas';
 import { soundManager } from '../render/SoundEffects';
 import { ResourcePackManager } from '../engine/ResourcePackManager';
@@ -31,8 +31,11 @@ export interface MinecraftBookViewerOptions {
   appearance?: BookAppearance;
   engine?: BookEngine;
   highContrast?: boolean;
+  coverColor?: MinecraftDyeColor | string;
+  showBookmark?: boolean;
+  bookmarkColor?: string;
   onClose?: () => void;
-  theme?: 'dark' | 'light' | 'parchment' | 'minimal' | 'transparent';
+  theme?: 'dark' | 'light' | 'parchment' | 'minimal' | 'transparent' | 'high-contrast';
   controls?: boolean | ViewerControlsOptions;
   scale?: number;
   plugins?: BookPlugin[];
@@ -83,9 +86,17 @@ export class MinecraftBookViewer {
       appearance: this.options.appearance,
       engine: this.options.engine,
       highContrast: this.options.highContrast,
+      coverColor: this.options.coverColor,
+      showBookmark: this.options.showBookmark,
+      bookmarkColor: this.options.bookmarkColor,
       onClose: this.options.onClose,
       plugins: this.options.plugins,
       includeWitchcraftPlugin: this.options.includeWitchcraftPlugin ?? false,
+      onProgressSave: (page) => {
+        if (this.pageMemory.isEnabled()) {
+          this.pageMemory.save(this.currentBook, page);
+        }
+      },
       onPageChange: (page, total) => {
         this.updatePageIndicator(page, total);
         if (this.pageMemory.isEnabled()) {
@@ -205,8 +216,11 @@ export class MinecraftBookViewer {
 
     this.viewModeBtn?.addEventListener('click', () => {
       const current = this.bookCanvas.getViewMode();
-      this.bookCanvas.setViewMode(current === 'double' ? 'single' : 'double');
-      this.updateZoomButtons();
+      const nextMode: ViewMode =
+        current === 'single' ? 'double' :
+        current === 'double' ? 'scroll-single' :
+        current === 'scroll-single' ? 'scroll-double' : 'single';
+      this.setViewMode(nextMode);
     });
 
     this.soundBtn?.addEventListener('click', () => {
@@ -286,7 +300,11 @@ export class MinecraftBookViewer {
     if (!preservePage && this.pageMemory.isEnabled()) {
       const savedPage = this.pageMemory.load(book);
       if (savedPage !== null && savedPage > 0) {
-        this.bookCanvas.setPage(savedPage);
+        if (this.bookCanvas.isScrollMode()) {
+          this.bookCanvas.scrollToPage(savedPage + 1, { behavior: 'auto' });
+        } else {
+          this.bookCanvas.setPage(savedPage);
+        }
       }
     }
     this.updatePageIndicator(this.bookCanvas.getCurrentPage(), this.bookCanvas.getTotalPages());
@@ -294,6 +312,43 @@ export class MinecraftBookViewer {
     if (this.options.onBookChange) {
       this.options.onBookChange(book, this);
     }
+  }
+
+  public scrollToPage(pageNumber: number, options?: { behavior?: 'smooth' | 'auto' }): void {
+    this.bookCanvas.scrollToPage(pageNumber, options);
+  }
+
+  public setViewMode(mode: ViewMode): void {
+    this.bookCanvas.setViewMode(mode);
+    this.updateZoomButtons();
+  }
+
+  public getViewMode(): ViewMode {
+    return this.bookCanvas.getViewMode();
+  }
+
+  public setCoverColor(color?: MinecraftDyeColor | string): void {
+    this.bookCanvas.setCoverColor(color);
+  }
+
+  public getCoverColor(): MinecraftDyeColor | string | undefined {
+    return this.bookCanvas.getCoverColor();
+  }
+
+  public setShowBookmark(show: boolean): void {
+    this.bookCanvas.setShowBookmark(show);
+  }
+
+  public isBookmarkVisible(): boolean {
+    return this.bookCanvas.isBookmarkVisible();
+  }
+
+  public setBookmarkColor(color?: string): void {
+    this.bookCanvas.setBookmarkColor(color);
+  }
+
+  public getBookmarkColor(): string | undefined {
+    return this.bookCanvas.getBookmarkColor();
   }
 
   public setText(text: string, title = 'Imported Text', author = 'Author'): void {

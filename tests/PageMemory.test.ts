@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'bun:test';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { PageMemoryManager, getBookStorageKey } from '../src/engine/PageMemoryManager';
 import { MinecraftBook } from '../src/engine/types';
 

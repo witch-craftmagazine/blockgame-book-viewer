@@ -7,6 +7,8 @@ import {
   exportToGiveCommandModern,
   exportToGiveCommandLegacy,
   exportToUrlHash,
+  exportToBedrockJson,
+  exportToCocoapebblesJson,
 } from '../io/BookExporter';
 
 export class ExportModal {
@@ -30,6 +32,8 @@ export class ExportModal {
         <div class="modal-body">
           <div class="export-tabs">
             <button class="tab-btn active" data-tab="give">/give Command</button>
+            <button class="tab-btn" data-tab="bedrock">Bedrock JSON</button>
+            <button class="tab-btn" data-tab="spigot">Spigot JSON</button>
             <button class="tab-btn" data-tab="stendhal">Stendhal</button>
             <button class="tab-btn" data-tab="scribble">Scribble JSON</button>
             <button class="tab-btn" data-tab="json">BookCopy JSON</button>
@@ -46,6 +50,24 @@ export class ExportModal {
             </div>
             <textarea id="export-give-text" readonly></textarea>
             <button class="btn btn-primary" id="copy-give-btn">Copy /give Command</button>
+          </div>
+
+          <div class="tab-content" id="tab-bedrock" style="display: none;">
+            <p class="tab-sub">Bedrock Edition Book JSON (WritableBookContent format):</p>
+            <textarea id="export-bedrock-text" readonly></textarea>
+            <div class="btn-row">
+              <button class="btn btn-secondary" id="copy-bedrock-btn">Copy Bedrock JSON</button>
+              <button class="btn btn-primary" id="download-bedrock-btn">Download .json</button>
+            </div>
+          </div>
+
+          <div class="tab-content" id="tab-spigot" style="display: none;">
+            <p class="tab-sub">Spigot cocoapebbles-book web plugin format:</p>
+            <textarea id="export-spigot-text" readonly></textarea>
+            <div class="btn-row">
+              <button class="btn btn-secondary" id="copy-spigot-btn">Copy Spigot JSON</button>
+              <button class="btn btn-primary" id="download-spigot-btn">Download .json</button>
+            </div>
           </div>
 
           <div class="tab-content" id="tab-stendhal" style="display: none;">
@@ -140,6 +162,8 @@ export class ExportModal {
 
     // Copy buttons
     this.setupCopyButton('#copy-give-btn', '#export-give-text');
+    this.setupCopyButton('#copy-bedrock-btn', '#export-bedrock-text');
+    this.setupCopyButton('#copy-spigot-btn', '#export-spigot-text');
     this.setupCopyButton('#copy-stendhal-btn', '#export-stendhal-text');
     this.setupCopyButton('#copy-scribble-btn', '#export-scribble-text');
     this.setupCopyButton('#copy-json-btn', '#export-json-text');
@@ -147,6 +171,24 @@ export class ExportModal {
     this.setupCopyButton('#copy-share-btn', '#export-share-url');
 
     // Download buttons
+    const downloadBedrockBtn = this.backdrop.querySelector('#download-bedrock-btn') as HTMLElement;
+    if (downloadBedrockBtn) {
+      downloadBedrockBtn.onclick = () => {
+        if (!this.currentBook) return;
+        const data = exportToBedrockJson(this.currentBook);
+        this.triggerDownload(`${this.sanitizeFilename(this.currentBook.title || 'bedrock')}.json`, data, 'application/json');
+      };
+    }
+
+    const downloadSpigotBtn = this.backdrop.querySelector('#download-spigot-btn') as HTMLElement;
+    if (downloadSpigotBtn) {
+      downloadSpigotBtn.onclick = () => {
+        if (!this.currentBook) return;
+        const data = exportToCocoapebblesJson(this.currentBook);
+        this.triggerDownload(`${this.sanitizeFilename(this.currentBook.title || 'spigot')}.json`, data, 'application/json');
+      };
+    }
+
     const downloadStendhalBtn = this.backdrop.querySelector('#download-stendhal-btn') as HTMLElement;
     downloadStendhalBtn.onclick = () => {
       if (!this.currentBook) return;
@@ -246,6 +288,16 @@ export class ExportModal {
   public show(book: MinecraftBook): void {
     this.currentBook = book;
     this.updateGiveCommand();
+
+    const bedrockArea = this.backdrop.querySelector('#export-bedrock-text') as HTMLTextAreaElement;
+    if (bedrockArea) {
+      bedrockArea.value = exportToBedrockJson(book);
+    }
+
+    const spigotArea = this.backdrop.querySelector('#export-spigot-text') as HTMLTextAreaElement;
+    if (spigotArea) {
+      spigotArea.value = exportToCocoapebblesJson(book);
+    }
 
     const stendhalArea = this.backdrop.querySelector('#export-stendhal-text') as HTMLTextAreaElement;
     stendhalArea.value = exportToStendhal(book);

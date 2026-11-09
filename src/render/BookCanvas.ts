@@ -1,4 +1,13 @@
-import { LineLayout, MinecraftBook, ViewMode, BookAppearance, BookEngine, FormattedSpan } from '../engine/types';
+import {
+  LineLayout,
+  MinecraftBook,
+  ViewMode,
+  BookAppearance,
+  BookEngine,
+  FormattedSpan,
+  MinecraftDyeColor,
+  MINECRAFT_DYE_HEX,
+} from '../engine/types';
 import { defaultGlyphAtlas, GlyphAtlas } from '../engine/GlyphAtlas';
 import {
   splitTextToLines,
@@ -12,6 +21,7 @@ import { parseFormattedText, stripFormatting } from '../engine/Formatting';
 import { soundManager } from './SoundEffects';
 import { ResourcePackInfo } from '../engine/ResourcePackManager';
 import { BookPlugin, PageRect } from '../plugin/BookPlugin';
+import { ContinuousScrollView } from './ContinuousScrollView';
 
 // Dimensions and layout
 const TWO_PAGE_OVERLAP = 40; // Exact touch at spine seam with 0 overlapping non-transparent pixels
@@ -30,11 +40,15 @@ export interface BookCanvasOptions {
   container: HTMLElement;
   atlas?: GlyphAtlas;
   onPageChange?: (page: number, total: number) => void;
+  onProgressSave?: (page: number) => void;
   baseAssetPath?: string;
   defaultViewMode?: ViewMode;
   appearance?: BookAppearance;
   engine?: BookEngine;
   highContrast?: boolean;
+  coverColor?: MinecraftDyeColor | string;
+  showBookmark?: boolean;
+  bookmarkColor?: string;
   onClose?: () => void;
   showPageIndicator?: boolean;
   textSelectionEnabled?: boolean;
@@ -52,6 +66,12 @@ export class BookCanvas {
   private atlas: GlyphAtlas;
   private baseAssetPath: string;
   private plugins: BookPlugin[] = [];
+  private continuousScrollView?: ContinuousScrollView;
+
+  // Aesthetic & Art Extensions (Scholar covers & bookmarks)
+  private coverColor?: MinecraftDyeColor | string;
+  private showBookmark = false;
+  private bookmarkColor?: string;
 
   private book: MinecraftBook = { title: '', author: '', pages: [''] };
   private paginatedPages: LineLayout[][] = [];
@@ -128,6 +148,9 @@ export class BookCanvas {
     this.appearance = options.appearance || 'java';
     this.engine = options.engine || 'java';
     this.highContrast = options.highContrast || false;
+    this.coverColor = options.coverColor;
+    this.showBookmark = options.showBookmark ?? false;
+    this.bookmarkColor = options.bookmarkColor;
     this.onClose = options.onClose;
     if (options.defaultViewMode) {
       this.viewMode = options.defaultViewMode;
@@ -189,6 +212,27 @@ export class BookCanvas {
 
     this.container.appendChild(this.stageElement);
     this.setupListeners();
+
+    // Initialize Continuous Scroll View
+    this.continuousScrollView = new ContinuousScrollView({
+      container: this.container,
+      bookCanvas: this,
+      onPageChange: (page) => {
+        this.currentPage = page;
+        this.notifyPageChange();
+      },
+      onProgressSave: (page) => {
+        if (options.onProgressSave) {
+          options.onProgressSave(page);
+        }
+      },
+    });
+
+    if (this.viewMode === 'scroll-single' || this.viewMode === 'scroll-double') {
+      this.stageElement.style.display = 'none';
+      this.continuousScrollView.setViewMode(this.viewMode);
+      this.continuousScrollView.show();
+    }
 
     if (options.plugins) {
       for (const p of options.plugins) {
@@ -440,7 +484,11 @@ export class BookCanvas {
       }
     }
     this.notifyPageChange();
-    this.render();
+    if (this.isScrollMode()) {
+      this.continuousScrollView?.setBookData(this.paginatedPages, this.currentPage);
+    } else {
+      this.render();
+    }
   }
 
   private detectWitchcraftMagazine(book: MinecraftBook): boolean {
@@ -658,18 +706,87 @@ export class BookCanvas {
     }
   }
 
+  public isScrollMode(): boolean {
+    return this.viewMode === 'scroll-single' || this.viewMode === 'scroll-double';
+  }
+
   public setViewMode(mode: ViewMode): void {
     if (this.viewMode !== mode) {
       this.viewMode = mode;
-      if (mode === 'double' && this.currentPage % 2 !== 0) {
-        this.currentPage--;
+      const isScroll = mode === 'scroll-single' || mode === 'scroll-double';
+      if (isScroll) {
+        this.stageElement.style.display = 'none';
+        this.continuousScrollView?.setViewMode(mode);
+        this.continuousScrollView?.setBookData(this.paginatedPages, this.currentPage);
+        this.continuousScrollView?.show();
+        this.continuousScrollView?.scrollToPage(this.currentPage + 1, { behavior: 'auto' });
+        this.notifyPageChange();
+      } else {
+        this.continuousScrollView?.hide();
+        this.stageElement.style.display = 'inline-block';
+        if (mode === 'double' && this.currentPage % 2 !== 0) {
+          this.currentPage--;
+        }
+        this.updateHasEyeOnCurrentPage();
+        this.fitToContainer();
+        this.updateCanvasDimensions();
+        this.notifyPageChange();
+        this.render();
       }
-      this.updateHasEyeOnCurrentPage();
-      this.fitToContainer();
-      this.updateCanvasDimensions();
+    }
+  }
+
+  public getContinuousScrollView(): ContinuousScrollView | undefined {
+    return this.continuousScrollView;
+  }
+
+  public scrollToPage(pageNumber: number, options?: { behavior?: 'smooth' | 'auto' }): void {
+    if (this.isScrollMode()) {
+      this.currentPage = Math.max(0, Math.min(this.paginatedPages.length - 1, pageNumber - 1));
+      this.continuousScrollView?.scrollToPage(pageNumber, options);
       this.notifyPageChange();
+    } else {
+      this.setPage(pageNumber - 1);
+    }
+  }
+
+  public setCoverColor(color?: MinecraftDyeColor | string): void {
+    this.coverColor = color;
+    if (this.isScrollMode()) {
+      this.continuousScrollView?.setBookData(this.paginatedPages, this.currentPage);
+    } else {
       this.render();
     }
+  }
+
+  public getCoverColor(): MinecraftDyeColor | string | undefined {
+    return this.coverColor;
+  }
+
+  public setShowBookmark(show: boolean): void {
+    this.showBookmark = show;
+    if (this.isScrollMode()) {
+      this.continuousScrollView?.setBookData(this.paginatedPages, this.currentPage);
+    } else {
+      this.render();
+    }
+  }
+
+  public isBookmarkVisible(): boolean {
+    return this.showBookmark;
+  }
+
+  public setBookmarkColor(color?: string): void {
+    this.bookmarkColor = color;
+    if (this.isScrollMode()) {
+      this.continuousScrollView?.setBookData(this.paginatedPages, this.currentPage);
+    } else {
+      this.render();
+    }
+  }
+
+  public getBookmarkColor(): string | undefined {
+    return this.bookmarkColor;
   }
 
   public getViewMode(): ViewMode {
@@ -1115,6 +1232,13 @@ export class BookCanvas {
       }
     }
 
+    if (this.coverColor) {
+      this.renderCoverTint(this.ctx, isDouble ? TWO_PAGE_WIDTH : 192, 192);
+    }
+    if (this.showBookmark || this.bookmarkColor) {
+      this.renderBookmarkRibbon(this.ctx, isDouble ? 152 : 18, 192);
+    }
+
     // Draw StarSweetpea blank page easter egg on canvas if active
     const gifPlacement = this.getBlankPageGifPlacement();
     if (gifPlacement && this.starSweetPeaImg) {
@@ -1133,14 +1257,164 @@ export class BookCanvas {
   }
 
   /**
+   * Renders an isolated single page onto a target canvas element.
+   */
+  public renderPageToCanvas(
+    pageIndex: number,
+    targetCanvas: HTMLCanvasElement,
+    targetScale = this.scale,
+    options?: { isMirrored?: boolean }
+  ): void {
+    const ctx = targetCanvas.getContext('2d');
+    if (!ctx) return;
+    ctx.imageSmoothingEnabled = false;
+    ctx.clearRect(0, 0, targetCanvas.width, targetCanvas.height);
+    ctx.save();
+    ctx.scale(targetScale, targetScale);
+
+    this.renderSinglePage({
+      ctx,
+      destX: 0,
+      pageIndex,
+      textStartX: 36,
+      pageIndicatorRightX: 148,
+      backwardButtonX: 43,
+      forwardButtonX: 116,
+      isMirrored: options?.isMirrored ?? false,
+      allowForward: false,
+      allowBackward: false,
+    });
+
+    if (this.coverColor) {
+      this.renderCoverTint(ctx, 192, 192);
+    }
+    if (this.showBookmark || this.bookmarkColor) {
+      this.renderBookmarkRibbon(ctx, 18, 192);
+    }
+
+    ctx.restore();
+  }
+
+  /**
+   * Renders an authentic two-page spread onto a target canvas element.
+   */
+  public renderSpreadToCanvas(
+    leftPageIndex: number,
+    targetCanvas: HTMLCanvasElement,
+    targetScale = this.scale
+  ): void {
+    const ctx = targetCanvas.getContext('2d');
+    if (!ctx) return;
+    ctx.imageSmoothingEnabled = false;
+    ctx.clearRect(0, 0, targetCanvas.width, targetCanvas.height);
+    ctx.save();
+    ctx.scale(targetScale, targetScale);
+
+    if (this.appearance === 'bedrock') {
+      this.renderBedrockSpread(ctx, leftPageIndex);
+    } else {
+      // 1. Render Left Page (Mirrored background, binding in middle)
+      this.renderSinglePage({
+        ctx,
+        destX: 0,
+        pageIndex: leftPageIndex,
+        textStartX: 42,
+        pageIndicatorRightX: 150,
+        backwardButtonX: 53,
+        forwardButtonX: 116,
+        isMirrored: true,
+        allowForward: false,
+        allowBackward: false,
+      });
+
+      // 2. Render Right Page (Standard background, moved closer to meet central spine)
+      if (leftPageIndex + 1 < this.paginatedPages.length) {
+        this.renderSinglePage({
+          ctx,
+          destX: RIGHT_PAGE_X,
+          pageIndex: leftPageIndex + 1,
+          textStartX: RIGHT_PAGE_X + 36,
+          pageIndicatorRightX: RIGHT_PAGE_X + 148,
+          backwardButtonX: RIGHT_PAGE_X + 53,
+          forwardButtonX: RIGHT_PAGE_X + 116,
+          isMirrored: false,
+          allowForward: false,
+          allowBackward: false,
+        });
+      } else if (this.bookBg) {
+        const srcW = Math.round(this.bookBg.naturalWidth * 0.75);
+        const srcH = Math.round(this.bookBg.naturalHeight * 0.75);
+        ctx.drawImage(this.bookBg, 0, 0, srcW, srcH, RIGHT_PAGE_X, 0, 192, 192);
+      }
+
+      if (this.coverColor) {
+        this.renderCoverTint(ctx, TWO_PAGE_WIDTH, 192);
+      }
+      if (this.showBookmark || this.bookmarkColor) {
+        this.renderBookmarkRibbon(ctx, 152, 192);
+      }
+    }
+
+    ctx.restore();
+  }
+
+  public renderCoverTint(ctx: CanvasRenderingContext2D, width: number, height: number): void {
+    if (!this.coverColor) return;
+    const hex = MINECRAFT_DYE_HEX[this.coverColor as MinecraftDyeColor] || this.coverColor;
+
+    ctx.save();
+    ctx.strokeStyle = hex;
+    ctx.lineWidth = 3;
+    ctx.globalAlpha = 0.65;
+    ctx.strokeRect(1.5, 1.5, width - 3, height - 3);
+    ctx.restore();
+  }
+
+  public renderBookmarkRibbon(ctx: CanvasRenderingContext2D, spineX: number, bottomY = 192): void {
+    if (!this.showBookmark && !this.bookmarkColor) return;
+    const ribbonColor = this.bookmarkColor
+      ? (MINECRAFT_DYE_HEX[this.bookmarkColor as MinecraftDyeColor] || this.bookmarkColor)
+      : '#B02E26';
+
+    ctx.save();
+    const ribbonW = 8;
+    const rx = spineX - Math.floor(ribbonW / 2);
+    const topY = bottomY - 22;
+    const dropH = 26;
+    const endY = topY + dropH;
+
+    ctx.fillStyle = ribbonColor;
+    ctx.beginPath();
+    ctx.moveTo(rx, topY);
+    ctx.lineTo(rx + ribbonW, topY);
+    ctx.lineTo(rx + ribbonW, endY);
+    ctx.lineTo(rx + ribbonW / 2, endY - 4); // pointed ribbon tail notch
+    ctx.lineTo(rx, endY);
+    ctx.closePath();
+    ctx.fill();
+
+    // Subtle 1px shine on left edge
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+    ctx.fillRect(rx, topY, 1, dropH - 4);
+
+    // Subtle 1px shadow on right edge
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+    ctx.fillRect(rx + ribbonW - 1, topY, 1, dropH - 4);
+
+    ctx.restore();
+  }
+
+  /**
    * Renders the authentic Bedrock Edition two-page spread (308x192px canvas region).
    */
-  private renderBedrockSpread(): void {
+  private renderBedrockSpread(customCtx?: CanvasRenderingContext2D, customLeftIdx?: number): void {
+    const ctx = customCtx || this.ctx;
+    const isCustom = customCtx !== undefined;
     const bg = this.highContrast ? (this.bedrockBgHc || this.bedrockBg) : (this.bedrockBg || this.bookBg);
     if (bg) {
       if (bg.naturalWidth >= 512) {
         // Crop non-transparent (102, 16, 308, 192) book region from 512x256 texture
-        this.ctx.drawImage(
+        ctx.drawImage(
           bg,
           BEDROCK_TEX_X,
           BEDROCK_TEX_Y,
@@ -1152,32 +1426,34 @@ export class BookCanvas {
           BEDROCK_BASE_HEIGHT
         );
       } else {
-        this.ctx.drawImage(bg, 0, 0, BEDROCK_BASE_WIDTH, BEDROCK_BASE_HEIGHT);
+        ctx.drawImage(bg, 0, 0, BEDROCK_BASE_WIDTH, BEDROCK_BASE_HEIGHT);
       }
     }
 
     const totalPages = this.paginatedPages.length;
-    const leftIdx = this.currentPage - (this.currentPage % 2);
+    const leftIdx = customLeftIdx !== undefined ? customLeftIdx : (this.currentPage - (this.currentPage % 2));
     const rightIdx = leftIdx + 1;
 
     // 1. Close 'X' Button at (285, 11, 9, 9)
-    const closeImg = this.hoveredButton === 'close'
-      ? (this.bedrockCloseHoverBtn || this.bedrockCloseBtn)
-      : this.bedrockCloseBtn;
-    if (closeImg) {
-      this.ctx.drawImage(closeImg, 285, 11, 9, 9);
+    if (!isCustom) {
+      const closeImg = this.hoveredButton === 'close'
+        ? (this.bedrockCloseHoverBtn || this.bedrockCloseBtn)
+        : this.bedrockCloseBtn;
+      if (closeImg) {
+        ctx.drawImage(closeImg, 285, 11, 9, 9);
+      }
     }
 
     // 2. Navigation Turn Buttons (24x24)
-    const allowBack = leftIdx > 0;
-    const allowForward = leftIdx + 2 < totalPages;
+    const allowBack = !isCustom && leftIdx > 0;
+    const allowForward = !isCustom && leftIdx + 2 < totalPages;
 
     if (allowBack) {
       const bwdImg = this.hoveredButton === 'backward'
         ? (this.bedrockBackwardHoverBtn || this.bedrockBackwardBtn)
         : this.bedrockBackwardBtn;
       if (bwdImg) {
-        this.ctx.drawImage(bwdImg, 7, 159, 24, 24);
+        ctx.drawImage(bwdImg, 7, 159, 24, 24);
       }
     }
 
@@ -1186,7 +1462,7 @@ export class BookCanvas {
         ? (this.bedrockForwardHoverBtn || this.bedrockForwardBtn)
         : this.bedrockForwardBtn;
       if (fwdImg) {
-        this.ctx.drawImage(fwdImg, 277, 159, 24, 24);
+        ctx.drawImage(fwdImg, 277, 159, 24, 24);
       }
     }
 
@@ -1195,13 +1471,13 @@ export class BookCanvas {
     const leftIndicatorText = `${leftIdx + 1} of ${Math.max(totalPages, 1)}`;
     const leftSpans = parseFormattedText(leftIndicatorText);
     const leftIndicatorW = measureLineWidth(leftSpans, this.atlas);
-    this.renderSpans(leftSpans, Math.round(82 - leftIndicatorW / 2), 13, indicatorColor);
+    this.renderSpans(leftSpans, Math.round(82 - leftIndicatorW / 2), 13, indicatorColor, undefined, ctx);
 
     if (rightIdx < totalPages) {
       const rightIndicatorText = `${rightIdx + 1} of ${totalPages}`;
       const rightSpans = parseFormattedText(rightIndicatorText);
       const rightIndicatorW = measureLineWidth(rightSpans, this.atlas);
-      this.renderSpans(rightSpans, Math.round(226 - rightIndicatorW / 2), 13, indicatorColor);
+      this.renderSpans(rightSpans, Math.round(226 - rightIndicatorW / 2), 13, indicatorColor, undefined, ctx);
     }
 
     // 4. Text Content (Left Page X = 25, Right Page X = 169)
@@ -1212,7 +1488,7 @@ export class BookCanvas {
     for (let i = 0; i < Math.min(leftLines.length, LINES_PER_PAGE); i++) {
       const line = leftLines[i];
       const y = 33 + i * LINE_HEIGHT;
-      this.renderSpans(line.spans, 25, y, defaultColor, leftIdx);
+      this.renderSpans(line.spans, 25, y, defaultColor, leftIdx, ctx);
     }
 
     // Right Page Lines
@@ -1221,8 +1497,15 @@ export class BookCanvas {
       for (let i = 0; i < Math.min(rightLines.length, LINES_PER_PAGE); i++) {
         const line = rightLines[i];
         const y = 33 + i * LINE_HEIGHT;
-        this.renderSpans(line.spans, 169, y, defaultColor, rightIdx);
+        this.renderSpans(line.spans, 169, y, defaultColor, rightIdx, ctx);
       }
+    }
+
+    if (this.coverColor) {
+      this.renderCoverTint(ctx, BEDROCK_BASE_WIDTH, BEDROCK_BASE_HEIGHT);
+    }
+    if (this.showBookmark || this.bookmarkColor) {
+      this.renderBookmarkRibbon(ctx, 154, BEDROCK_BASE_HEIGHT);
     }
   }
 
@@ -1231,8 +1514,10 @@ export class BookCanvas {
     startX: number,
     y: number,
     fallbackColor = '#000000',
-    pageIndex?: number
+    pageIndex?: number,
+    customCtx?: CanvasRenderingContext2D
   ): void {
+    const ctx = customCtx || this.ctx;
     let cursorX = startX;
     for (const span of spans) {
       const color = span.color || fallbackColor;
@@ -1254,7 +1539,7 @@ export class BookCanvas {
         if (pageIndex !== undefined) {
           for (const plugin of this.plugins) {
             if (plugin.onRenderChar) {
-              const res = plugin.onRenderChar(this.ctx, {
+              const res = plugin.onRenderChar(ctx, {
                 char: charToDraw,
                 x: cursorX,
                 y,
@@ -1276,11 +1561,11 @@ export class BookCanvas {
           const drawY = y + (glyphInfo.yOffset ?? 0);
 
           if (span.italic) {
-            this.ctx.save();
-            this.ctx.transform(1, 0, -0.15, 1, (drawY + destH) * 0.15, 0);
+            ctx.save();
+            ctx.transform(1, 0, -0.15, 1, (drawY + destH) * 0.15, 0);
           }
 
-          this.ctx.drawImage(
+          ctx.drawImage(
             glyphInfo.image,
             glyphInfo.sx,
             glyphInfo.sy,
@@ -1292,18 +1577,32 @@ export class BookCanvas {
             destH
           );
 
+          if (span.bold) {
+            ctx.drawImage(
+              glyphInfo.image,
+              glyphInfo.sx,
+              glyphInfo.sy,
+              glyphInfo.sWidth,
+              glyphInfo.sHeight,
+              cursorX + 1,
+              drawY,
+              destW,
+              destH
+            );
+          }
+
           if (span.italic) {
-            this.ctx.restore();
+            ctx.restore();
           }
 
           const adv = forceAdvance ?? glyphInfo.advance;
           if (span.strikethrough) {
-            this.ctx.fillStyle = color;
-            this.ctx.fillRect(cursorX, y + 4, adv, 1);
+            ctx.fillStyle = color;
+            ctx.fillRect(cursorX, y + 4, adv, 1);
           }
           if (span.underlined) {
-            this.ctx.fillStyle = color;
-            this.ctx.fillRect(cursorX, y + 8, adv, 1);
+            ctx.fillStyle = color;
+            ctx.fillRect(cursorX, y + 8, adv, 1);
           }
           cursorX += adv;
         } else {
@@ -1317,6 +1616,7 @@ export class BookCanvas {
    * Renders a single book page with customizable geometry and mirroring.
    */
   private renderSinglePage(opts: {
+    ctx?: CanvasRenderingContext2D;
     destX: number;
     pageIndex: number;
     textStartX: number;
@@ -1329,6 +1629,7 @@ export class BookCanvas {
   }): void {
     if (!this.bookBg) return;
 
+    const ctx = opts.ctx || this.ctx;
     const {
       destX,
       pageIndex,
@@ -1348,34 +1649,34 @@ export class BookCanvas {
 
     // 1. Draw Background (mirrored or standard)
     if (isMirrored) {
-      this.ctx.save();
-      this.ctx.translate(destX + 192, 0);
-      this.ctx.scale(-1, 1);
-      this.ctx.drawImage(this.bookBg, 0, 0, srcW, srcH, 0, 0, 192, 192);
-      this.ctx.restore();
+      ctx.save();
+      ctx.translate(destX + 192, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(this.bookBg, 0, 0, srcW, srcH, 0, 0, 192, 192);
+      ctx.restore();
     } else {
-      this.ctx.drawImage(this.bookBg, 0, 0, srcW, srcH, destX, 0, 192, 192);
+      ctx.drawImage(this.bookBg, 0, 0, srcW, srcH, destX, 0, 192, 192);
     }
 
     const side = isMirrored ? 'left' : (destX === 0 ? 'single' : 'right');
     const pageRect: PageRect = { x: destX, y: 0, w: 192, h: 192 };
     for (const plugin of this.plugins) {
       if (plugin.onBeforeRenderPage) {
-        plugin.onBeforeRenderPage(this.ctx, pageIndex, side, pageRect);
+        plugin.onBeforeRenderPage(ctx, pageIndex, side, pageRect);
       }
     }
 
     // 2. Draw Page Indicator ("Page X of Y") - toggleable, off by default
     if (this.showPageIndicator) {
       const pageMsg = `Page ${pageIndex + 1} of ${Math.max(1, this.paginatedPages.length)}`;
-      this.renderTextLineRightAligned(pageMsg, pageIndicatorRightX, 16, '#000000');
+      this.renderTextLineRightAligned(pageMsg, pageIndicatorRightX, 16, '#000000', ctx);
     }
 
     // 3. Draw text lines (up to 14 lines, clipped strictly to book page area)
-    this.ctx.save();
-    this.ctx.beginPath();
-    this.ctx.rect(textStartX - 2, 26, BOOK_TEXT_WIDTH + 8, LINES_PER_PAGE * 9 + 4);
-    this.ctx.clip();
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(textStartX - 2, 26, BOOK_TEXT_WIDTH + 8, LINES_PER_PAGE * 9 + 4);
+    ctx.clip();
 
     const pageLines = this.paginatedPages[pageIndex] || [];
     for (let i = 0; i < Math.min(LINES_PER_PAGE, pageLines.length); i++) {
@@ -1401,7 +1702,7 @@ export class BookCanvas {
 
           for (const plugin of this.plugins) {
             if (plugin.onRenderChar) {
-              const res = plugin.onRenderChar(this.ctx, {
+              const res = plugin.onRenderChar(ctx, {
                 char: charToDraw,
                 x: cursorX,
                 y,
@@ -1422,11 +1723,11 @@ export class BookCanvas {
             const drawY = y + (glyphInfo.yOffset ?? 0);
 
             if (span.italic) {
-              this.ctx.save();
-              this.ctx.transform(1, 0, -0.15, 1, (drawY + destH) * 0.15, 0);
+              ctx.save();
+              ctx.transform(1, 0, -0.15, 1, (drawY + destH) * 0.15, 0);
             }
 
-            this.ctx.drawImage(
+            ctx.drawImage(
               glyphInfo.image,
               glyphInfo.sx,
               glyphInfo.sy,
@@ -1439,7 +1740,7 @@ export class BookCanvas {
             );
 
             if (span.bold) {
-              this.ctx.drawImage(
+              ctx.drawImage(
                 glyphInfo.image,
                 glyphInfo.sx,
                 glyphInfo.sy,
@@ -1453,19 +1754,19 @@ export class BookCanvas {
             }
 
             if (span.italic) {
-              this.ctx.restore();
+              ctx.restore();
             }
 
             const charAdvance = forceAdvance !== null ? forceAdvance : glyphInfo.advance;
 
             if (span.underlined) {
-              this.ctx.fillStyle = span.color;
-              this.ctx.fillRect(cursorX - 1, y + 8, charAdvance + 1, 1);
+              ctx.fillStyle = span.color;
+              ctx.fillRect(cursorX - 1, y + 8, charAdvance + 1, 1);
             }
 
             if (span.strikethrough) {
-              this.ctx.fillStyle = span.color;
-              this.ctx.fillRect(cursorX - 1, y + 4, charAdvance + 1, 1);
+              ctx.fillStyle = span.color;
+              ctx.fillRect(cursorX - 1, y + 4, charAdvance + 1, 1);
             }
 
             cursorX += charAdvance;
@@ -1475,67 +1776,70 @@ export class BookCanvas {
         }
       }
     }
-    this.ctx.restore();
+    ctx.restore();
 
     // 3.5. Draw Debug Layout Grid (if inspector grid toggle active)
     if (this.showLayoutGrid) {
-      this.ctx.save();
-      // Draw 114px right margin guide line
-      this.ctx.strokeStyle = 'rgba(230, 40, 40, 0.45)';
-      this.ctx.lineWidth = 1;
-      this.ctx.setLineDash([2, 2]);
-      this.ctx.beginPath();
-      this.ctx.moveTo(textStartX + BOOK_TEXT_WIDTH, 26);
-      this.ctx.lineTo(textStartX + BOOK_TEXT_WIDTH, 30 + LINES_PER_PAGE * 9);
-      this.ctx.stroke();
+      ctx.save();
+      ctx.strokeStyle = 'rgba(230, 40, 40, 0.45)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([2, 2]);
+      ctx.beginPath();
+      ctx.moveTo(textStartX + BOOK_TEXT_WIDTH, 26);
+      ctx.lineTo(textStartX + BOOK_TEXT_WIDTH, 30 + LINES_PER_PAGE * 9);
+      ctx.stroke();
 
-      // Draw horizontal line baselines and highlight selected line
       for (let i = 0; i < LINES_PER_PAGE; i++) {
         const lineY = 30 + i * 9;
         const isHighlighted = this.highlightedLineIndex === i;
 
         if (isHighlighted) {
-          this.ctx.fillStyle = 'rgba(255, 170, 0, 0.28)';
-          this.ctx.fillRect(textStartX - 2, lineY - 1, BOOK_TEXT_WIDTH + 4, 10);
+          ctx.fillStyle = 'rgba(255, 170, 0, 0.28)';
+          ctx.fillRect(textStartX - 2, lineY - 1, BOOK_TEXT_WIDTH + 4, 10);
         }
 
-        this.ctx.strokeStyle = isHighlighted ? 'rgba(255, 170, 0, 0.8)' : 'rgba(120, 120, 120, 0.2)';
-        this.ctx.setLineDash(isHighlighted ? [] : [1, 3]);
-        this.ctx.beginPath();
-        this.ctx.moveTo(textStartX, lineY + 8);
-        this.ctx.lineTo(textStartX + BOOK_TEXT_WIDTH, lineY + 8);
-        this.ctx.stroke();
+        ctx.strokeStyle = isHighlighted ? 'rgba(255, 170, 0, 0.8)' : 'rgba(120, 120, 120, 0.2)';
+        ctx.setLineDash(isHighlighted ? [] : [1, 3]);
+        ctx.beginPath();
+        ctx.moveTo(textStartX, lineY + 8);
+        ctx.lineTo(textStartX + BOOK_TEXT_WIDTH, lineY + 8);
+        ctx.stroke();
       }
-      this.ctx.restore();
+      ctx.restore();
     }
 
     // 4. Draw Navigation Buttons
-    // Backward button (bottom-left)
     const canGoBack = pageIndex > 0;
     if (allowBackward && canGoBack) {
       const bwdImg = (this.hoveredButton === 'backward') ? this.pageBackwardHoverBtn : this.pageBackwardBtn;
       if (bwdImg) {
-        this.ctx.drawImage(bwdImg, 0, 0, bwdImg.naturalWidth, bwdImg.naturalHeight, backwardButtonX, 157, 23, 13);
+        ctx.drawImage(bwdImg, 0, 0, bwdImg.naturalWidth, bwdImg.naturalHeight, backwardButtonX, 157, 23, 13);
       }
     }
 
-    // Forward button (bottom-right)
     const canGoForward = pageIndex < this.paginatedPages.length - 1;
     if (allowForward && canGoForward) {
       const fwdImg = (this.hoveredButton === 'forward') ? this.pageForwardHoverBtn : this.pageForwardBtn;
       if (fwdImg) {
-        this.ctx.drawImage(fwdImg, 0, 0, fwdImg.naturalWidth, fwdImg.naturalHeight, forwardButtonX, 157, 23, 13);
+        ctx.drawImage(fwdImg, 0, 0, fwdImg.naturalWidth, fwdImg.naturalHeight, forwardButtonX, 157, 23, 13);
       }
     }
 
     for (const plugin of this.plugins) {
       if (plugin.onAfterRenderPage) {
-        plugin.onAfterRenderPage(this.ctx, pageIndex, side, pageRect);
+        plugin.onAfterRenderPage(ctx, pageIndex, side, pageRect);
       }
     }
   }
 
-  private renderTextLineRightAligned(text: string, rightEdgeX: number, y: number, color: string): void {
+  private renderTextLineRightAligned(
+    text: string,
+    rightEdgeX: number,
+    y: number,
+    color: string,
+    customCtx?: CanvasRenderingContext2D
+  ): void {
+    const ctx = customCtx || this.ctx;
     let totalWidth = 0;
     for (const ch of text) {
       totalWidth += this.atlas.getAdvance(ch, false);
@@ -1549,7 +1853,7 @@ export class BookCanvas {
         const destH = glyphInfo.dHeight ?? glyphInfo.sHeight;
         const drawY = y + (glyphInfo.yOffset ?? 0);
 
-        this.ctx.drawImage(
+        ctx.drawImage(
           glyphInfo.image,
           glyphInfo.sx,
           glyphInfo.sy,
@@ -2072,6 +2376,7 @@ export class BookCanvas {
   }
 
   public destroy(): void {
+    this.continuousScrollView?.destroy();
     if (this.resizeObserver) {
       this.resizeObserver.disconnect();
       this.resizeObserver = null;

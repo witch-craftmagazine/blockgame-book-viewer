@@ -10,6 +10,7 @@ export { BookEditorModal, WYSIWYG_BOOK_EDITOR_ENABLED } from './ui/BookEditorMod
 
 // Canvas & Rendering
 export { BookCanvas, type BookCanvasOptions } from './render/BookCanvas';
+export { ContinuousScrollView, type ContinuousScrollViewOptions } from './render/ContinuousScrollView';
 export { SoundManager, soundManager } from './render/SoundEffects';
 
 // Plugin System
@@ -64,6 +65,8 @@ export {
   parseRawTextLossless,
   parseStendhalBook,
   parseScribbleBook,
+  parseBedrockBook,
+  parseCocoapebblesBook,
   componentToFormattedString,
 } from './io/BookParser';
 
@@ -74,6 +77,8 @@ export {
   exportToCmiText,
   exportToGiveCommandModern,
   exportToGiveCommandLegacy,
+  exportToBedrockJson,
+  exportToCocoapebblesJson,
   exportToUrlHash,
   importFromUrlHash,
 } from './io/BookExporter';
@@ -88,4 +93,7 @@ export type {
   ViewMode,
   BookAppearance,
   BookEngine,
+  MinecraftDyeColor,
 } from './engine/types';
+
+export { MINECRAFT_DYE_HEX } from './engine/types';

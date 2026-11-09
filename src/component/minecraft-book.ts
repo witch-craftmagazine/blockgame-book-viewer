@@ -26,6 +26,9 @@ export class MinecraftBookElement extends BaseElement {
       'appearance',
       'engine',
       'high-contrast',
+      'cover-color',
+      'bookmark',
+      'bookmark-color',
     ];
   }
 
@@ -46,13 +49,16 @@ export class MinecraftBookElement extends BaseElement {
     const appearance = (this.getAttribute('appearance') || 'java') as BookAppearance;
     const engine = (this.getAttribute('engine') || 'java') as BookEngine;
     const highContrast = this.hasAttribute('high-contrast') && this.getAttribute('high-contrast') !== 'false';
+    const coverColor = this.getAttribute('cover-color') || undefined;
+    const showBookmark = this.hasAttribute('bookmark') && this.getAttribute('bookmark') !== 'false';
+    const bookmarkColor = this.getAttribute('bookmark-color') || undefined;
     const persistProgress = this.hasAttribute('persist-progress') && this.getAttribute('persist-progress') !== 'false';
     const splitMode = this.getAttribute('split-mode') || 'lossless';
     const bookTitle = this.getAttribute('book-title') || undefined;
     const author = this.getAttribute('author') || undefined;
 
     let initialMode: ViewMode = 'double';
-    if (viewMode === 'single' || viewMode === 'double') {
+    if (viewMode === 'single' || viewMode === 'double' || viewMode === 'scroll-single' || viewMode === 'scroll-double') {
       initialMode = viewMode;
     } else {
       const containerW = this.clientWidth || (typeof window !== 'undefined' ? window.innerWidth : 1024);
@@ -65,6 +71,9 @@ export class MinecraftBookElement extends BaseElement {
       appearance,
       engine,
       highContrast,
+      coverColor,
+      showBookmark,
+      bookmarkColor,
       persistReadingProgress: persistProgress,
       scale,
       controls: showControls,
@@ -141,8 +150,14 @@ export class MinecraftBookElement extends BaseElement {
       this.viewer.setPersistReadingProgress(newValue !== null && newValue !== 'false');
     } else if (name === 'page' && newValue) {
       this.viewer.setPage(parseInt(newValue, 10) - 1);
-    } else if (name === 'view-mode' && (newValue === 'single' || newValue === 'double')) {
-      this.viewer.getCanvas().setViewMode(newValue as ViewMode);
+    } else if (name === 'view-mode' && (newValue === 'single' || newValue === 'double' || newValue === 'scroll-single' || newValue === 'scroll-double')) {
+      this.viewer.setViewMode(newValue as ViewMode);
+    } else if (name === 'cover-color') {
+      this.viewer.setCoverColor(newValue || undefined);
+    } else if (name === 'bookmark') {
+      this.viewer.setShowBookmark(newValue !== null && newValue !== 'false');
+    } else if (name === 'bookmark-color') {
+      this.viewer.setBookmarkColor(newValue || undefined);
     } else if (name === 'appearance' && (newValue === 'java' || newValue === 'bedrock')) {
       this.viewer.setAppearance(newValue as BookAppearance);
     } else if (name === 'engine' && (newValue === 'java' || newValue === 'bedrock')) {
@@ -229,6 +244,70 @@ export class MinecraftBookElement extends BaseElement {
 
   public prevPage(): boolean {
     return this.viewer ? this.viewer.prevPage() : false;
+  }
+
+  get viewMode(): ViewMode {
+    return this.viewer ? this.viewer.getViewMode() : ((this.getAttribute('view-mode') || 'double') as ViewMode);
+  }
+
+  set viewMode(val: ViewMode) {
+    this.setAttribute('view-mode', val);
+    if (this.viewer) this.viewer.setViewMode(val);
+  }
+
+  get coverColor(): string | undefined {
+    return this.viewer ? this.viewer.getCoverColor() : (this.getAttribute('cover-color') || undefined);
+  }
+
+  set coverColor(val: string | undefined) {
+    if (val) {
+      this.setAttribute('cover-color', val);
+    } else {
+      this.removeAttribute('cover-color');
+    }
+    if (this.viewer) this.viewer.setCoverColor(val);
+  }
+
+  get bookmark(): boolean {
+    return this.viewer ? this.viewer.isBookmarkVisible() : this.hasAttribute('bookmark');
+  }
+
+  set bookmark(val: boolean) {
+    if (val) {
+      this.setAttribute('bookmark', '');
+    } else {
+      this.removeAttribute('bookmark');
+    }
+    if (this.viewer) this.viewer.setShowBookmark(val);
+  }
+
+  get bookmarkColor(): string | undefined {
+    return this.viewer ? this.viewer.getBookmarkColor() : (this.getAttribute('bookmark-color') || undefined);
+  }
+
+  set bookmarkColor(val: string | undefined) {
+    if (val) {
+      this.setAttribute('bookmark-color', val);
+    } else {
+      this.removeAttribute('bookmark-color');
+    }
+    if (this.viewer) this.viewer.setBookmarkColor(val);
+  }
+
+  public setViewMode(mode: ViewMode): void {
+    if (this.viewer) {
+      this.viewer.setViewMode(mode);
+    }
+  }
+
+  public getViewMode(): ViewMode {
+    return this.viewer ? this.viewer.getViewMode() : ((this.getAttribute('view-mode') || 'double') as ViewMode);
+  }
+
+  public scrollToPage(pageNumber: number, options?: { behavior?: 'smooth' | 'auto' }): void {
+    if (this.viewer) {
+      this.viewer.scrollToPage(pageNumber, options);
+    }
   }
 
   public goToPage(pageOneIndexed: number): void {

@@ -8,6 +8,38 @@ function escapeSnbtSingleQuoted(str: string): string {
 }
 
 /**
+ * Exports book to Bedrock Book JSON (WritableBookContent) format.
+ * Compatible with Bedrock Dedicated Server and client writable books.
+ */
+export function exportToBedrockJson(book: MinecraftBook): string {
+  return JSON.stringify(
+    {
+      title: book.title || 'Bedrock Book',
+      author: book.author || 'Player',
+      pages: book.pages.map(text => ({ text })),
+    },
+    null,
+    2
+  );
+}
+
+/**
+ * Exports book to Spigot cocoapebbles-book web plugin JSON format.
+ */
+export function exportToCocoapebblesJson(book: MinecraftBook, id?: string): string {
+  return JSON.stringify(
+    {
+      id: id || book.id || 'book-1',
+      title: book.title || 'Spigot Book',
+      author: book.author || 'Player',
+      pages: book.pages,
+    },
+    null,
+    2
+  );
+}
+
+/**
  * Exports book to BookCopy JSON format.
  */
 export function exportToBookCopyJson(book: MinecraftBook): string {

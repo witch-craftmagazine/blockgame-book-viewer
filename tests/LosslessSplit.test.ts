@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'bun:test';
+import { describe, it, expect } from 'vitest';
 import { splitTextLossless, paginateTextLossless, isSafeSplitBoundary, getSafeSplitBoundary } from '../src/engine/LosslessSplit';
 import { splitTextToLines } from '../src/engine/StringSplitter';
 

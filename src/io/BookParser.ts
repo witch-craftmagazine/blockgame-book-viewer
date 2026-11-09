@@ -339,6 +339,82 @@ export function parseScribbleBook(input: string): MinecraftBook | null {
 }
 
 /**
+ * Parses Bedrock Book JSON (WritableBookContent format):
+ * { "title": "...", "author": "...", "pages": [ { "text": "...", "photoname": "..." } ] }
+ */
+export function parseBedrockBook(input: string): MinecraftBook | null {
+  try {
+    const trimmed = input.trim();
+    if (!trimmed.startsWith('{') || !trimmed.endsWith('}')) return null;
+    const parsed = JSON.parse(trimmed);
+    if (parsed && Array.isArray(parsed.pages)) {
+      const isBedrock = parsed.pages.length === 0 || (
+        typeof parsed.pages[0] === 'object' && parsed.pages[0] !== null && 'text' in parsed.pages[0]
+      );
+      if (isBedrock) {
+        const pages = parsed.pages.map((p: any) => {
+          if (typeof p === 'object' && p !== null && typeof p.text === 'string') {
+            return componentToFormattedString(p.text);
+          }
+          return componentToFormattedString(p);
+        });
+        return {
+          title: typeof parsed.title === 'string' && parsed.title ? parsed.title : 'Bedrock Book',
+          author: typeof parsed.author === 'string' && parsed.author ? parsed.author : 'Player',
+          generation: typeof parsed.generation === 'number' ? parsed.generation : 0,
+          pages: pages.length > 0 ? pages : [''],
+        };
+      }
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+/**
+ * Parses Spigot cocoapebbles-book JSON format:
+ * { "id": "...", "title": "...", "author": "...", "pages": [ "..." ] }
+ * Also supports forced page breaks via <br/> tags.
+ */
+export function parseCocoapebblesBook(input: string): MinecraftBook | null {
+  try {
+    const trimmed = input.trim();
+    if (!trimmed.startsWith('{') || !trimmed.endsWith('}')) return null;
+    const parsed = JSON.parse(trimmed);
+    if (parsed && (Array.isArray(parsed.pages) || typeof parsed.id === 'string')) {
+      const rawPages: any[] = Array.isArray(parsed.pages) ? parsed.pages : [];
+      const expandedPages: string[] = [];
+
+      for (const p of rawPages) {
+        const str = typeof p === 'object' && p !== null && typeof p.text === 'string'
+          ? p.text
+          : componentToFormattedString(p);
+        
+        // If page contains <br/> tags indicating page breaks in web book editors
+        if (/<br\s*\/?>/i.test(str)) {
+          const split = str.split(/<br\s*\/?>/i).map((s: string) => s.trim());
+          expandedPages.push(...split);
+        } else {
+          expandedPages.push(str);
+        }
+      }
+
+      return {
+        id: typeof parsed.id === 'string' ? parsed.id : undefined,
+        title: typeof parsed.title === 'string' && parsed.title ? parsed.title : 'Spigot Book',
+        author: typeof parsed.author === 'string' && parsed.author ? parsed.author : 'Player',
+        generation: typeof parsed.generation === 'number' ? parsed.generation : 0,
+        pages: expandedPages.length > 0 ? expandedPages : [''],
+      };
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+/**
  * Parses raw unformatted or continuous text using the LosslessSplit engine,
  * guaranteeing String.join("", pages) === text and surrogate-pair safety.
  */
@@ -366,21 +442,44 @@ export function parseBook(
 ): MinecraftBook {
   const trimmed = input.trim();
 
-  // 1. Check for JSON (Scribble format, BookCopy format, or text component)
+  // 1. Check for JSON formats (Bedrock JSON, Spigot JSON, Scribble format, BookCopy format)
   if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
     try {
+      const bedrock = parseBedrockBook(trimmed);
+      if (bedrock) return bedrock;
+
+      const cocoapebbles = parseCocoapebblesBook(trimmed);
+      if (cocoapebbles && (cocoapebbles.id || trimmed.includes('<br'))) return cocoapebbles;
+
       const parsed = JSON.parse(trimmed);
       if (parsed.pages && Array.isArray(parsed.pages)) {
+        const pages = parsed.pages.map((p: any) => {
+          if (typeof p === 'object' && p !== null && typeof p.text === 'string') {
+            return componentToFormattedString(p.text);
+          }
+          return componentToFormattedString(p);
+        });
         return {
+          id: parsed.id || undefined,
           title: parsed.title || 'Scribble Book',
           author: parsed.author || 'Anonymous',
           generation: typeof parsed.generation === 'number' ? parsed.generation : 0,
-          pages: parsed.pages.map((p: any) => componentToFormattedString(p)),
+          pages: pages.length > 0 ? pages : [''],
         };
       }
     } catch {
       // Not JSON, continue
     }
+  }
+
+  // 1.5. Check for <br/> page breaks in continuous/web editor text
+  if (/<br\s*\/?>/i.test(trimmed) && !trimmed.startsWith('{')) {
+    const pages = trimmed.split(/<br\s*\/?>/i).map(p => p.trim());
+    return {
+      title: 'Imported Book',
+      author: 'Author',
+      pages: pages.length > 0 ? pages : [''],
+    };
   }
 
   // 2. Check for Stendhal format (.stendhal)
