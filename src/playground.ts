@@ -45,7 +45,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
   };
 
-  const viewer = new MinecraftBookViewer(container, {
+  let viewer: MinecraftBookViewer;
+  viewer = new MinecraftBookViewer(container, {
     book: welcomeBook,
     baseAssetPath: './assets',
     theme: 'transparent',
@@ -55,8 +56,11 @@ window.addEventListener('DOMContentLoaded', async () => {
     onPageChange: (page, total) => {
       updatePageDisplay(page, total);
     },
-    onBookChange: (_book) => {
-      updatePageDisplay(viewer.getCurrentPage(), viewer.getTotalPages());
+    onBookChange: (_book, v) => {
+      const activeViewer = v || viewer;
+      if (activeViewer) {
+        updatePageDisplay(activeViewer.getCurrentPage(), activeViewer.getTotalPages());
+      }
     }
   });
 
@@ -157,6 +161,32 @@ window.addEventListener('DOMContentLoaded', async () => {
     themeToggle.addEventListener('click', () => {
       const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
       updateTheme(!isDark);
+    });
+  }
+
+  // Book selection handler
+  const bookSelect = document.getElementById('book-select') as HTMLSelectElement | null;
+  if (bookSelect) {
+    bookSelect.addEventListener('change', async (e) => {
+      const val = (e.target as HTMLSelectElement).value;
+      if (val === 'welcome') {
+        viewer.setBook(welcomeBook);
+        if (textarea) textarea.value = exportToStendhal(welcomeBook);
+      } else {
+        try {
+          const resp = await fetch(`./assets/books/${val}.stendhal`);
+          if (resp.ok) {
+            const text = await resp.text();
+            const parsed = parseBook(text);
+            if (parsed) {
+              viewer.setBook(parsed);
+              if (textarea) textarea.value = text;
+            }
+          }
+        } catch (err) {
+          console.error('Failed to load sample book:', err);
+        }
+      }
     });
   }
 });

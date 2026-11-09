@@ -32,7 +32,7 @@ export interface MinecraftBookViewerOptions {
   plugins?: BookPlugin[];
   includeWitchcraftPlugin?: boolean;
   onPageChange?: (page: number, total: number) => void;
-  onBookChange?: (book: MinecraftBook) => void;
+  onBookChange?: (book: MinecraftBook, viewer?: MinecraftBookViewer) => void;
 }
 
 export class MinecraftBookViewer {
@@ -264,7 +264,7 @@ export class MinecraftBookViewer {
     this.updatePageIndicator(this.bookCanvas.getCurrentPage(), this.bookCanvas.getTotalPages());
     this.updateZoomButtons();
     if (this.options.onBookChange) {
-      this.options.onBookChange(book);
+      this.options.onBookChange(book, this);
     }
   }
 

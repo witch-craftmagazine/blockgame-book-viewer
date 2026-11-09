@@ -367,52 +367,6 @@
       gap: 12px;
     }
 
-    .live-editor-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid var(--rule);
-      padding-bottom: 10px;
-    }
-
-    .live-editor-title-group {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .live-editor-icon {
-      font-size: 1.4rem;
-    }
-
-    .live-editor-title {
-      font-size: 1.15rem;
-      font-weight: normal;
-      margin: 0;
-      color: var(--ink);
-      line-height: 1.2;
-    }
-
-    .live-editor-badge {
-      font-size: 0.8rem;
-      font-style: italic;
-      color: var(--gold-ink);
-    }
-
-    .live-status-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 0.78rem;
-      color: #2e7d32;
-      font-family: ui-monospace, SFMono-Regular, monospace;
-      background: rgba(46, 125, 50, 0.12);
-      border: 1px solid rgba(46, 125, 50, 0.25);
-      padding: 3px 8px;
-      border-radius: 12px;
-      letter-spacing: 0.02em;
-    }
-
     .palette-group {
       display: flex;
       flex-wrap: wrap;
@@ -482,23 +436,10 @@
 
     .live-editor-footer {
       display: flex;
-      justify-content: space-between;
+      justify-content: flex-end;
       align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-      padding-top: 4px;
-    }
-
-    .live-editor-info {
-      font-style: italic;
-      font-size: 0.85rem;
-      color: var(--mut);
-    }
-
-    .live-editor-actions {
-      display: flex;
       gap: 10px;
-      align-items: center;
+      padding-top: 4px;
     }
 
     /* Fleuron Divider */
@@ -646,17 +587,6 @@
 
         <div class="showcase-editor-column">
           <div class="live-editor-card">
-            <div class="live-editor-header">
-              <div class="live-editor-title-group">
-                <span class="live-editor-icon">📝</span>
-                <div>
-                  <h3 class="live-editor-title">Live Markup Editor</h3>
-                  <span class="live-editor-badge">Stendhal format</span>
-                </div>
-              </div>
-              <span class="live-status-pill">● Live Sync</span>
-            </div>
-
             <div class="markup-toolbar">
               <div class="palette-group colors-palette">
                 <button type="button" class="tag-btn pill-color" data-code="§0" style="background: #000000; color: #fff;" title="Black (§0)">§0</button>
@@ -688,16 +618,11 @@
               </div>
             </div>
 
-            <textarea id="live-markup-textarea" class="live-markup-textarea" spellcheck="false" aria-label="Live book markup text"></textarea>
+            <textarea id="live-markup-textarea" class="live-markup-textarea" spellcheck="false" placeholder="Type book markup here (supports § color codes and #- page breaks)..." aria-label="Live book markup text"></textarea>
 
             <div class="live-editor-footer">
-              <div class="live-editor-info">
-                <span>Type directly in the box to update the book live</span>
-              </div>
-              <div class="live-editor-actions">
-                <button id="live-reset-btn" class="btn alt" type="button">Reset Sample</button>
-                <button id="live-copy-give-btn" class="btn" type="button">Copy /give</button>
-              </div>
+              <button id="live-reset-btn" class="btn alt" type="button">Reset Sample</button>
+              <button id="live-copy-give-btn" class="btn" type="button">Copy /give</button>
             </div>
           </div>
         </div>
