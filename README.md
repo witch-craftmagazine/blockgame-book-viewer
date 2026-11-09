@@ -43,16 +43,17 @@ Include the script and stylesheet, then use the `<minecraft-book>` tag:
 <link rel="stylesheet" href="https://unpkg.com/minecraft-book-viewer/dist/style.css" />
 <script type="module" src="https://unpkg.com/minecraft-book-viewer/dist/minecraft-book-viewer.js"></script>
 
-<!-- Load from a remote .stendhal, .json, or .txt file -->
+<!-- Embedded with PDF continuous scroll, Bedrock GUI, Scholar cover dye, and silk bookmark -->
 <minecraft-book
-  src="./assets/books/rules.stendhal"
-  view-mode="double"
+  view-mode="scroll-double"
+  appearance="bedrock"
+  engine="bedrock"
+  cover-color="purple"
+  bookmark="true"
+  bookmark-color="#8B0000"
+  persist-progress="true"
   controls="true"
-  sound="true">
-</minecraft-book>
-
-<!-- Or embed inline book content -->
-<minecraft-book view-mode="double">
+  base-path="./assets">
   <script type="text/plain">
     title: Server Rules
     author: Steve
@@ -63,6 +64,26 @@ Include the script and stylesheet, then use the `<minecraft-book>` tag:
   </script>
 </minecraft-book>
 ```
+
+#### `<minecraft-book>` Supported Attributes
+
+| Attribute | Type / Values | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `view-mode` | `'single'` \| `'double'` \| `'scroll-single'` \| `'scroll-double'` \| `'auto'` | `'auto'` | Flipbook modes or PDF-style continuous vertical scrolling |
+| `appearance` | `'java'` \| `'bedrock'` | `'java'` | Visual GUI texture shell ($512\times256$ Bedrock or Java parchment) |
+| `engine` | `'java'` \| `'bedrock'` | `'java'` | Layout engine: $114\text{px}$ Java vs $122\text{px}$ Bedrock line width and `§g`–`§u` palette |
+| `theme` | `'transparent'` \| `'dark'` \| `'classic'` \| `'high-contrast'` | `'dark'` | Reader container backdrop styling |
+| `high-contrast` | boolean (`high-contrast`) | `false` | Bedrock high-contrast slate background texture and white text |
+| `cover-color` | 16 Minecraft dye colors (e.g. `'purple'`, `'cyan'`) | un-dyed | Scholar-style dyed leather cover and spine |
+| `bookmark` | boolean (`bookmark`) | `false` | Authentic hanging silk ribbon bookmark |
+| `bookmark-color`| CSS color / hex (e.g. `'#8B0000'`) | `'#8B0000'` | Color of the silk ribbon bookmark |
+| `persist-progress` | boolean (`persist-progress`) | `false` | Opt-in `localStorage` reading progress memory |
+| `split-mode` | `'lossless'` \| `'legacy'` | `'lossless'` | Continuous text splitting engine |
+| `text` | string | `""` | Raw text attribute for direct continuous pagination |
+| `src` | URL / path | `undefined` | Remote book file (`.stendhal`, `.json`, `.txt`) |
+| `controls` | boolean (`true` \| `false`) | `true` | Built-in reader toolbar |
+| `scale` | integer | auto | Canvas scaling factor |
+| `page` | 1-indexed number | `1` | Initial active page number |
 
 ### 2. JavaScript / TypeScript API
 

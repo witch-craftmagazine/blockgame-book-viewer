@@ -167,7 +167,9 @@ export class ContinuousScrollView {
     for (let i = 0; i < count; i++) {
       const wrapper = document.createElement('div');
       wrapper.className = isDouble ? 'mc-book-scroll-spread' : 'mc-book-scroll-page';
+      if (!wrapper.dataset) wrapper.dataset = {} as any;
       wrapper.dataset.index = String(i);
+      wrapper.setAttribute('data-index', String(i));
       wrapper.style.width = `${itemWidth}px`;
       wrapper.style.height = `${itemHeight}px`;
       wrapper.style.minHeight = `${itemHeight}px`;
@@ -177,12 +179,14 @@ export class ContinuousScrollView {
         const leftPage = i * 2;
         const rightPage = leftPage + 1;
         wrapper.dataset.pageStart = String(leftPage);
+        wrapper.setAttribute('data-page-start', String(leftPage));
         wrapper.setAttribute('aria-label', rightPage < this.totalPages
           ? `Spread: Pages ${leftPage + 1} and ${rightPage + 1} of ${this.totalPages}`
           : `Spread: Page ${leftPage + 1} of ${this.totalPages}`
         );
       } else {
         wrapper.dataset.pageIndex = String(i);
+        wrapper.setAttribute('data-page-index', String(i));
         wrapper.setAttribute('aria-label', `Page ${i + 1} of ${this.totalPages}`);
       }
 

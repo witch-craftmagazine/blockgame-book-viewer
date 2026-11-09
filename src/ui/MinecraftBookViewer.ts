@@ -150,6 +150,9 @@ export class MinecraftBookViewer {
   private buildDOM(): void {
     const theme = this.options.theme || 'dark';
     this.container.classList.add('mc-book-viewer-root', `mc-theme-${theme}`);
+    if (this.options.highContrast) {
+      this.container.classList.add('mc-theme-high-contrast');
+    }
 
     // Create Canvas wrapper
     this.canvasWrapper = document.createElement('div');
@@ -476,6 +479,11 @@ export class MinecraftBookViewer {
 
   public setHighContrast(highContrast: boolean): void {
     this.bookCanvas.setHighContrast(highContrast);
+    if (highContrast) {
+      this.container.classList.add('mc-theme-high-contrast');
+    } else {
+      this.container.classList.remove('mc-theme-high-contrast');
+    }
   }
 
   public isHighContrast(): boolean {
@@ -496,11 +504,14 @@ export class MinecraftBookViewer {
     }
   }
 
-  public setTheme(theme: 'dark' | 'light' | 'parchment' | 'minimal' | 'transparent'): void {
+  public setTheme(theme: 'dark' | 'light' | 'parchment' | 'minimal' | 'transparent' | 'high-contrast'): void {
     const oldTheme = this.options.theme || 'dark';
     this.container.classList.remove(`mc-theme-${oldTheme}`);
     this.options.theme = theme;
     this.container.classList.add(`mc-theme-${theme}`);
+    if (theme === 'high-contrast') {
+      this.setHighContrast(true);
+    }
   }
 
   public destroy(): void {

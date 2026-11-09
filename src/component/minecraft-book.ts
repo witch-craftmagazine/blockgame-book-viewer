@@ -158,6 +158,8 @@ export class MinecraftBookElement extends BaseElement {
       this.viewer.setShowBookmark(newValue !== null && newValue !== 'false');
     } else if (name === 'bookmark-color') {
       this.viewer.setBookmarkColor(newValue || undefined);
+    } else if (name === 'theme' && newValue) {
+      this.viewer.setTheme(newValue as any);
     } else if (name === 'appearance' && (newValue === 'java' || newValue === 'bedrock')) {
       this.viewer.setAppearance(newValue as BookAppearance);
     } else if (name === 'engine' && (newValue === 'java' || newValue === 'bedrock')) {

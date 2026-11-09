@@ -4,7 +4,6 @@ import { MinecraftBook } from '../src/engine/types';
 import { splitTextToLines, getTextWidthForEngine, BEDROCK_BOOK_TEXT_WIDTH, JAVA_BOOK_TEXT_WIDTH } from '../src/engine/StringSplitter';
 import { defaultGlyphAtlas } from '../src/engine/GlyphAtlas';
 import { MinecraftBookElement } from '../src/component/minecraft-book';
-import { soundManager } from '../src/render/SoundEffects';
 
 describe('Bedrock Edition Appearance & Decoupled Engine', () => {
   let mockContainer: any;
@@ -143,8 +142,8 @@ describe('Bedrock Edition Appearance & Decoupled Engine', () => {
     const canvas = new BookCanvas({
       container: mockContainer,
       appearance: 'bedrock',
-      book: fourPageBook,
     });
+    canvas.setBook(fourPageBook);
 
     const dim = canvas.getBaseDimensions();
     expect(dim.width).toBe(308);
@@ -158,8 +157,8 @@ describe('Bedrock Edition Appearance & Decoupled Engine', () => {
       container: mockContainer,
       appearance: 'java',
       defaultViewMode: 'single',
-      book: fourPageBook,
     });
+    canvas.setBook(fourPageBook);
 
     expect(canvas.getBaseDimensions().width).toBe(192);
     expect(canvas.getBaseDimensions().height).toBe(192);
@@ -273,8 +272,8 @@ describe('Bedrock Edition Appearance & Decoupled Engine', () => {
       container: mockContainer,
       appearance: 'bedrock',
       highContrast: false,
-      book: fourPageBook,
     });
+    canvas.setBook(fourPageBook);
 
     expect(canvas.isHighContrast()).toBe(false);
 

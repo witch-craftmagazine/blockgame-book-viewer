@@ -84,7 +84,7 @@ describe('Page Export & Mobile Share API', () => {
         addEventListener: vi.fn(),
         removeEventListener: vi.fn(),
         getBoundingClientRect: () => ({ left: 0, top: 0, width: 344, height: 180 }),
-        dispatchEvent: vi.fn((evt: any) => true),
+        dispatchEvent: vi.fn((_evt: any) => true),
         click: vi.fn(),
         remove: vi.fn(),
       };
@@ -212,14 +212,14 @@ describe('Page Export & Mobile Share API', () => {
     await viewer.exportCurrentPage();
 
     expect(bodyAppendSpy).toHaveBeenCalled();
-    const appendedEl = bodyAppendSpy.mock.calls[0][0];
+    const appendedEl = bodyAppendSpy.mock.calls[0][0] as any;
     expect(appendedEl.tagName).toBe('A');
     expect(appendedEl.download).toBe('download_book-page-1.png');
     expect(appendedEl.click).toHaveBeenCalled();
   });
 
   it('renders .mc-btn-export-page in toolbar when exportPageButton control option is true', () => {
-    const viewer = new MinecraftBookViewer(mockContainer, {
+    new MinecraftBookViewer(mockContainer, {
       book: { title: 'Toolbar Book', author: 'Author', pages: ['Page 1'] },
       controls: { exportPageButton: true },
     });

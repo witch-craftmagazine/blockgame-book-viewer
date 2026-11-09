@@ -333,10 +333,10 @@ describe('PDF-Style Continuous Scroll Engine (v1.3)', () => {
       scrolledBy += opts.top;
     }) as any;
 
-    viewport.dispatchEvent({ type: 'keydown', key: 'ArrowDown', preventDefault: () => {} });
+    viewport.dispatchEvent({ type: 'keydown', key: 'ArrowDown', preventDefault: () => {} } as any);
     expect(scrolledBy).toBe(140);
 
-    viewport.dispatchEvent({ type: 'keydown', key: 'ArrowUp', preventDefault: () => {} });
+    viewport.dispatchEvent({ type: 'keydown', key: 'ArrowUp', preventDefault: () => {} } as any);
     expect(scrolledBy).toBe(0);
   });
 

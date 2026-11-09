@@ -401,7 +401,7 @@ Normal page 2 text`;
     canvas.setBook(book);
     const canvasEl = canvas.getCanvas();
     const stageEl = canvas.getStageElement();
-    const gifEl = stageEl.children.find((c: any) => c.className === 'book-blank-page-gif');
+    const gifEl = (Array.from(stageEl.children) as any[]).find((c: any) => c.className === 'book-blank-page-gif');
     expect(gifEl).toBeDefined();
 
     // Mock clamped bounding client rect: scale is 4, but container clamps canvas to 688x384 (scale 2 equivalent)
@@ -412,6 +412,9 @@ Normal page 2 text`;
       height: 384,
       right: 708,
       bottom: 414,
+      x: 20,
+      y: 30,
+      toJSON: () => {},
     });
     stageEl.getBoundingClientRect = () => ({
       left: 20,
@@ -420,6 +423,9 @@ Normal page 2 text`;
       height: 384,
       right: 708,
       bottom: 414,
+      x: 20,
+      y: 30,
+      toJSON: () => {},
     });
 
     canvas.updateGifOverlay();
