@@ -6,6 +6,7 @@ export { MinecraftBookElement } from './component/minecraft-book';
 
 // High-level Viewer
 export { MinecraftBookViewer, type MinecraftBookViewerOptions, type ViewerControlsOptions } from './ui/MinecraftBookViewer';
+export { BookEditorModal, WYSIWYG_BOOK_EDITOR_ENABLED } from './ui/BookEditorModal';
 
 // Canvas & Rendering
 export { BookCanvas, type BookCanvasOptions } from './render/BookCanvas';

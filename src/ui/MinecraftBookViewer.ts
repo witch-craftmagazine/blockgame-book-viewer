@@ -6,6 +6,7 @@ import { parseBook } from '../io/BookParser';
 import { ExportModal } from './ExportModal';
 import { ImportModal } from './ImportModal';
 import { ResourcePackModal } from './ResourcePackModal';
+import { BookEditorModal } from './BookEditorModal';
 import { BookPlugin } from '../plugin/BookPlugin';
 
 export interface ViewerControlsOptions {
@@ -14,6 +15,7 @@ export interface ViewerControlsOptions {
   viewModeToggle?: boolean;
   soundToggle?: boolean;
   zoomControls?: boolean;
+  editButton?: boolean;
   exportButton?: boolean;
   importButton?: boolean;
   resourcePackButton?: boolean;
@@ -45,6 +47,7 @@ export class MinecraftBookViewer {
   private exportModal?: ExportModal;
   private importModal?: ImportModal;
   private packModal?: ResourcePackModal;
+  private editorModal?: BookEditorModal;
 
   private pageIndicatorEl?: HTMLElement;
   private soundBtn?: HTMLButtonElement;
@@ -104,10 +107,12 @@ export class MinecraftBookViewer {
     this.packModal = new ResourcePackModal(this.packManager, async (pack) => {
       await this.bookCanvas.applyResourcePack(pack);
     });
+    this.editorModal = new BookEditorModal((book) => this.setBook(book));
 
     this.container.appendChild(this.exportModal.getElement());
     this.container.appendChild(this.importModal.getElement());
     this.container.appendChild(this.packModal.getElement());
+    this.container.appendChild(this.editorModal.getElement());
 
     // Load initial book URL if provided
     if (this.options.bookUrl) {
@@ -134,6 +139,7 @@ export class MinecraftBookViewer {
       const showViewMode = ctrlOpts.viewModeToggle !== false;
       const showSound = ctrlOpts.soundToggle !== false;
       const showZoom = ctrlOpts.zoomControls !== false;
+      const showEdit = ctrlOpts.editButton !== false;
       const showExport = ctrlOpts.exportButton !== false;
       const showImport = ctrlOpts.importButton !== false;
       const showPacks = ctrlOpts.resourcePackButton !== false;
@@ -154,6 +160,7 @@ export class MinecraftBookViewer {
             <button class="mc-btn mc-btn-zoom-in" title="Zoom in">+</button>
           ` : ''}
           ${showPacks ? `<button class="mc-btn mc-btn-packs" title="Resource Packs">🎨</button>` : ''}
+          ${showEdit ? `<button class="mc-btn mc-btn-edit" title="Edit Book (Markup)">✏️</button>` : ''}
           ${showImport ? `<button class="mc-btn mc-btn-import" title="Open Book">📂</button>` : ''}
           ${showExport ? `<button class="mc-btn mc-btn-export" title="Export Book">💾</button>` : ''}
         </div>
@@ -191,9 +198,8 @@ export class MinecraftBookViewer {
     });
 
     this.toolbarElement.querySelector('.mc-btn-zoom-in')?.addEventListener('click', () => {
-      const maxScale = Math.max(1, this.bookCanvas.getMaxFittingScale());
       const currentScale = this.bookCanvas.getScale();
-      if (currentScale < maxScale) {
+      if (currentScale < 5) {
         this.bookCanvas.setScale(currentScale + 1);
       }
     });
@@ -216,6 +222,14 @@ export class MinecraftBookViewer {
     this.toolbarElement.querySelector('.mc-btn-packs')?.addEventListener('click', () => {
       this.packModal?.open();
     });
+
+    this.toolbarElement.querySelector('.mc-btn-edit')?.addEventListener('click', () => {
+      this.openEditor();
+    });
+  }
+
+  public openEditor(): void {
+    this.editorModal?.open(this.currentBook);
   }
 
   public setBook(book: MinecraftBook): void {

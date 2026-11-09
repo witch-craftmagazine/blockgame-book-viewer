@@ -11,6 +11,8 @@ import {
   WitchcraftPlugin,
   defaultGlyphAtlas,
   ResourcePackManager,
+  BookEditorModal,
+  WYSIWYG_BOOK_EDITOR_ENABLED,
 } from '../src/index';
 
 describe('Modular Library API & Components', () => {
@@ -63,6 +65,7 @@ describe('Modular Library API & Components', () => {
           }
         },
         textContent: '',
+        value: '',
         setAttribute(k: string, v: string) {
           this.attributes[k] = v;
         },
@@ -81,7 +84,7 @@ describe('Modular Library API & Components', () => {
           if (idx !== -1) this.children.splice(idx, 1);
           return child;
         },
-        querySelector: vi.fn((sel: string) => makeEl(sel.includes('btn') || sel.includes('button') ? 'button' : 'div')),
+        querySelector: vi.fn((sel: string) => makeEl(sel.includes('btn') || sel.includes('button') ? 'button' : (sel.includes('textarea') ? 'textarea' : 'div'))),
         querySelectorAll: vi.fn(() => []),
         addEventListener: vi.fn(),
         removeEventListener: vi.fn(),
@@ -260,26 +263,13 @@ describe('Modular Library API & Components', () => {
     expect(hasLithos).toBe(false);
   });
 
-  it('caps zoom-in button at getMaxFittingScale to prevent scaling past container display capacity', () => {
+  it('allows zoom-in button to zoom up to scale 5 and zoom-out down to 1', () => {
     const viewer = new MinecraftBookViewer(mockContainer, {
       defaultViewMode: 'double',
       controls: true,
     });
 
     const canvas = viewer.getCanvas();
-    // Configure canvas wrapper bounding rect to 800x480
-    (canvas as any).container.getBoundingClientRect = () => ({
-      left: 0,
-      top: 0,
-      width: 800,
-      height: 480,
-      right: 800,
-      bottom: 480,
-    });
-
-    // Max fitting scale for 800x480 in double mode (344x192 base) is 2
-    expect(canvas.getMaxFittingScale()).toBe(2);
-
     canvas.setScale(2);
     expect(canvas.getScale()).toBe(2);
 
@@ -292,11 +282,22 @@ describe('Modular Library API & Components', () => {
       .find((el: any) => el.className?.includes('mc-btn-zoom-in'));
 
     if (zoomInBtn) {
-      // Trigger click event listener
       const clickHandler = zoomInBtn.addEventListener.mock.calls.find((call: any) => call[0] === 'click')?.[1];
       if (clickHandler) {
         clickHandler();
-        // Scale should remain capped at 2, not increment to 3
+        // Zoom-in should increment scale to 3
+        expect(canvas.getScale()).toBe(3);
+      }
+    }
+
+    const zoomOutBtn = toolbar.children
+      .flatMap((c: any) => c.children || [])
+      .find((el: any) => el.className?.includes('mc-btn-zoom-out'));
+
+    if (zoomOutBtn) {
+      const clickHandler = zoomOutBtn.addEventListener.mock.calls.find((call: any) => call[0] === 'click')?.[1];
+      if (clickHandler) {
+        clickHandler();
         expect(canvas.getScale()).toBe(2);
       }
     }
@@ -349,5 +350,42 @@ pages:
     expect(v).toBeDefined();
     expect(v?.getBook()?.title).toBe('Custom Web Component Book');
     expect(v?.getBook()?.pages.length).toBe(2);
+  });
+
+  it('provides BookEditorModal for editing markup and flags WYSIWYG editor', () => {
+    expect(WYSIWYG_BOOK_EDITOR_ENABLED).toBe(false);
+
+    let appliedBook: any = null;
+    const modal = new BookEditorModal((book) => {
+      appliedBook = book;
+    });
+
+    const initialBook = {
+      title: 'Original Title',
+      author: 'Author One',
+      pages: ['First Page Content'],
+    };
+
+    modal.open(initialBook);
+
+    const textarea = modal.getTextarea();
+    expect(textarea).toBeDefined();
+    expect(textarea.value).toContain('Original Title');
+
+    // Simulate editing markup
+    textarea.value = `title: Edited Tome
+author: Editor Two
+pages:
+#- §4§lEdited First Page§r
+#- §2Second Page Content§r
+`;
+
+    modal.apply();
+
+    expect(appliedBook).toBeDefined();
+    expect(appliedBook.title).toBe('Edited Tome');
+    expect(appliedBook.author).toBe('Editor Two');
+    expect(appliedBook.pages.length).toBe(2);
+    expect(appliedBook.pages[0]).toContain('§4§lEdited First Page§r');
   });
 });

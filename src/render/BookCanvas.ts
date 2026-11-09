@@ -733,13 +733,23 @@ export class BookCanvas {
     this.canvas.height = baseH * this.scale;
     this.canvas.style.width = `${baseW * this.scale}px`;
     this.canvas.style.height = `${baseH * this.scale}px`;
-    this.canvas.style.maxWidth = '100%';
-    this.canvas.style.maxHeight = '100%';
-
-    this.stageElement.style.width = `${baseW * this.scale}px`;
-    this.stageElement.style.height = `${baseH * this.scale}px`;
-    this.stageElement.style.maxWidth = '100%';
-    this.stageElement.style.maxHeight = '100%';
+    if (this.isScaleLocked) {
+      this.canvas.style.maxWidth = 'none';
+      this.canvas.style.maxHeight = 'none';
+      this.stageElement.style.maxWidth = 'none';
+      this.stageElement.style.maxHeight = 'none';
+      if (this.stageElement?.classList && typeof this.stageElement.classList.add === 'function') {
+        this.stageElement.classList.add('scale-locked');
+      }
+    } else {
+      this.canvas.style.maxWidth = '100%';
+      this.canvas.style.maxHeight = '100%';
+      this.stageElement.style.maxWidth = '100%';
+      this.stageElement.style.maxHeight = '100%';
+      if (this.stageElement?.classList && typeof this.stageElement.classList.remove === 'function') {
+        this.stageElement.classList.remove('scale-locked');
+      }
+    }
     this.stageElement.style.aspectRatio = `${baseW} / ${baseH}`;
 
     this.ctx.imageSmoothingEnabled = false;

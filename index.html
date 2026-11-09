@@ -4,12 +4,20 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Minecraft Book Viewer & Playground</title>
-  <link rel="icon" type="image/png" href="./assets/textures/gui/book.png" />
+  <link rel="icon" type="image/png" href="./assets/textures/gui/book_icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Sorts+Mill+Goudy:ital@0;1&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="./src/styles/viewer.css" />
   <style>
+    @font-face {
+      font-family: 'EB Garamond Initials';
+      src: url('./assets/fonts/EBGaramond-Initials.ttf') format('truetype'),
+           url('./assets/fonts/EBGaramond-Initials.otf') format('opentype');
+      font-weight: normal;
+      font-style: normal;
+      font-display: swap;
+    }
     :root {
       --paper: #f6f1e6;
       --plate: #fffdf8;
@@ -253,13 +261,14 @@
       text-align: left;
     }
     .lede::first-letter {
+      font-family: 'EB Garamond Initials', 'Sorts Mill Goudy', serif;
       float: left;
-      font-size: 3.4em;
-      line-height: .75;
-      padding: .2em .1em .08em;
-      margin: .06em .12em 0 0;
-      background: var(--madder);
-      color: var(--gilt);
+      font-size: 3.8em;
+      line-height: .72;
+      padding: .08em .1em .04em .04em;
+      margin: .04em .16em 0 0;
+      color: var(--madder);
+      background: transparent;
     }
     .cta {
       display: flex;
@@ -304,8 +313,8 @@
     }
     .reader-frame {
       width: 100%;
-      height: 520px;
-      max-height: 80vh;
+      height: 600px;
+      max-height: 85vh;
       position: relative;
       background: var(--plate);
       border: 1px solid var(--rule);
@@ -414,7 +423,7 @@
   <div class="bar">
     <div class="wrap in">
       <a href="#" class="brand">
-        <img src="./assets/textures/gui/book.png" alt="Book Icon" />
+        <img src="./assets/textures/gui/book_icon.png" alt="Book Icon" />
         <b>Minecraft Book Viewer</b>
       </a>
       <div class="bar-center">

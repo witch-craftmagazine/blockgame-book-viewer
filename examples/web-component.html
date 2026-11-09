@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Minecraft Book - Web Component Example</title>
-  <link rel="icon" type="image/png" href="../assets/textures/gui/book.png" />
+  <link rel="icon" type="image/png" href="../assets/textures/gui/book_icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Sorts+Mill+Goudy:ital@0;1&display=swap" rel="stylesheet" />
@@ -212,43 +212,16 @@
       width: 100%;
       display: flex;
       justify-content: center;
+      margin: 1.5rem 0 2rem;
     }
-    .shot {
-      position: relative;
-      margin: 0;
-      padding: 10px;
-      background: var(--plate);
-      box-shadow: 10px 10px 0 -1px var(--rule);
+    .component-viewport {
       width: 100%;
-      max-width: 840px;
-    }
-    .shot::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      border: 1px solid var(--gold);
-      outline: 1px solid var(--gold);
-      outline-offset: 4px;
-      pointer-events: none;
-      z-index: 1;
-    }
-    .shot figcaption {
-      font-style: italic;
-      font-size: .9rem;
-      color: var(--mut);
-      text-align: center;
-      padding: 8px 4px 2px;
-    }
-
-    .component-container {
-      width: 100%;
-      height: 480px;
-      max-height: 75vh;
-      background: var(--plate);
-      border: 1px solid var(--rule);
-      overflow: hidden;
+      max-width: 1100px;
+      height: 640px;
+      max-height: 85vh;
       display: flex;
       flex-direction: column;
+      position: relative;
     }
 
     .fleuron {
@@ -278,7 +251,7 @@
   <div class="bar">
     <div class="wrap in">
       <a href="../index.html" class="brand">
-        <img src="../assets/textures/gui/book.png" alt="Book Icon" />
+        <img src="../assets/textures/gui/book_icon.png" alt="Book Icon" />
         <span>Minecraft Book Viewer</span>
       </a>
       <nav class="bar-nav">
@@ -343,14 +316,13 @@ with the 📂 button.
     </div>
 
     <div class="stage">
-      <figure class="shot">
-        <div class="component-container">
-          <minecraft-book
-            view-mode="double"
-            base-path="../assets"
-            theme="transparent"
-            controls="true">
-            <script type="text/plain">
+      <div class="component-viewport">
+        <minecraft-book
+          view-mode="double"
+          base-path="../assets"
+          theme="transparent"
+          controls="true">
+          <script type="text/plain">
 title: Web Component Guide
 author: Minecraft Book Engine
 pages:
@@ -388,11 +360,9 @@ below to change zoom,
 switch view modes, or
 open your own book
 with the 📂 button.
-            </script>
-          </minecraft-book>
-        </div>
-        <figcaption>Standalone &lt;minecraft-book&gt; element responding dynamically to parent dimensions</figcaption>
-      </figure>
+          </script>
+        </minecraft-book>
+      </div>
     </div>
 
     <div class="fleuron" aria-hidden="true"><i></i></div>
