@@ -25,7 +25,7 @@ A modular, pixel-perfect, zero-dependency Minecraft written book web emulator, r
   - **URL Hash Sharing** (zero-backend instant link sharing)
 - 🧩 **Extensible Plugin System**:
   - Lifecycle hooks for custom rendering, animations, character replacements, and click handling.
-  - Ships with `WitchcraftPlugin` (Blinking runic eye `⏼` and animated ending page celebration GIF).
+  - Ships with `WitchcraftPlugin` (custom animated ending page celebration GIF and interactive hooks).
 - 🌐 **Web Component `<minecraft-book>`**:
   - Drop a single `<script>` tag on any HTML page, React, Vue, Svelte, or WordPress site.
 - 🔊 **Web Audio Sound Effects**: Realistic page-turn sounds with synthesized audio fallback.

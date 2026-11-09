@@ -77,15 +77,12 @@ describe('StringSplitter and Pagination', () => {
     expect(lines[0].spans.map(s => s.text).join('')).toBe('Item 1:     10 Gold');
   });
 
-  it('does not wrap on line 14 into a phantom 15th line, allowing natural canvas right margin clipping', () => {
-    // 13 lines of filler, followed by a 14th line that exceeds 114px and contains a space
+  it('wraps line 14 onto line 15 when exceeding max text width', () => {
     const thirteenLines = Array.from({ length: 13 }, (_, i) => `Filler line ${i + 1}`).join('\n');
-    const fourteenthLine = '      ( ◉o◉)⊃--§6☆ﾟ.*･｡ﾟﾟ.*･｡ﾟﾟ.*';
+    const fourteenthLine = 'Line 14 has words that definitely exceed one hundred and fourteen pixels and wrap into line 15';
     const pageText = `${thirteenLines}\n${fourteenthLine}`;
 
     const lines = splitTextToLines(pageText, BOOK_TEXT_WIDTH, defaultGlyphAtlas);
-    expect(lines).toHaveLength(14);
-    const lastLineText = lines[13].spans.map((s) => s.text).join('');
-    expect(lastLineText).toContain('( ◉o◉)⊃--');
+    expect(lines.length).toBeGreaterThanOrEqual(15);
   });
 });

@@ -176,7 +176,7 @@ export class SoundManager {
   }
 
   /**
-   * Synthesizes a soft, magical twinkling wink chime for the Witchcraft Magazine easter egg.
+   * Synthesizes a soft, magical twinkling chime.
    */
   public playWink(): void {
     if (!this.enabled) return;

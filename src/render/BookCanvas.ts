@@ -69,7 +69,7 @@ export class BookCanvas {
   private randomCharPool = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+{}[]:;<>?,./~';
   private randomCharsByAdvance: Map<number, string[]> = new Map();
 
-  // Witchcraft Magazine Blinking Eye Easter Egg (StarSweetpea exclusive)
+  // Eye blinking animation
   private isWitchcraftMagazine = false;
   private isBlinkingEye = false;
   private nextBlinkTimestamp = 0;
@@ -1246,7 +1246,7 @@ export class BookCanvas {
         }
       }
 
-      // 1.5. Witchcraft Magazine eye easter egg click (wink interaction!)
+      // 1.5. Eye click interaction
       if (this.isWitchcraftMagazine && this.hasEyeOnCurrentPage && this.eyeHitBoxes.length > 0) {
         for (const box of this.eyeHitBoxes) {
           if (
@@ -1493,7 +1493,7 @@ export class BookCanvas {
         this.lastAnimTick = now;
       }
 
-      // 2. Witchcraft Magazine eye blinking easter egg:
+      // 2. Eye blinking animation:
       if (this.isWitchcraftMagazine && this.hasEyeOnCurrentPage) {
         if (!this.isBlinkingEye && now >= this.nextBlinkTimestamp) {
           this.isBlinkingEye = true;

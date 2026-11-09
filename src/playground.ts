@@ -10,7 +10,7 @@ const welcomeBook = {
     '§0§lWelcome!§r\n\nThis is a §2modular§r, pixel-perfect §6Minecraft Book Viewer§r.\n\nEdit this text live in the editor on the right to see instant page updates!\n\n§8Turn page to continue...§r',
     '§1§lSupported Formats§r\n\n§0Native export & import for:\n\n§4• Stendhal (.stendhal)\n§2• Scribble JSON (.json)\n§9• BookCopy (.json)\n§5• CMI BookExport (<NextPage>)\n§6• Vanilla /give commands\n\n§8Type your own content anytime!§r',
     '§5§lCustom Resource Packs§r\n\n§0Engine support for:\n- Vanilla (16x)\n- Lithos (32x HD)\n- Server packs (Craftadia)\n- Custom bitmap unicode fonts\n\nFull Symbol Chat included.',
-    '§6§lInteractive Easter Eggs§r\n\n§0Modular plugins support custom animations.\n\nTry the Witchcraft magazine issues to see the blinking runic eye ⏼ (click it to wink!).'
+    '§6§lModular Plugin System§r\n\n§0Extend the reader with custom plugins, click hitboxes, interactive sound effects, and animated page overlays.'
   ]
 };
 

@@ -142,15 +142,6 @@ export function splitTextToLines(
       }
 
       if (currentWidth + item.width > maxWidth) {
-        // If we have already reached the 14th line (the page's hard line limit),
-        // do not wrap into a non-existent 15th line that gets clipped by page height.
-        // Instead, let the 14th line continue and naturally clip at the right margin (vanilla book authoring behavior).
-        if (resultLines.length >= LINES_PER_PAGE - 1) {
-          currentWidth += item.width;
-          i++;
-          continue;
-        }
-
         if (lastSpace !== -1 && lastSpace >= lineStart) {
           // If the break occurs at the start of a multi-space indentation block,
           // preserve all indentation spaces on the new line.

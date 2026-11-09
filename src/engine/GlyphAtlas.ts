@@ -36,7 +36,7 @@ export const MINECRAFT_SYMBOL_ADVANCES: Record<string, number> = {
   '\r': 0,
   // Issue 1 Page 52 calibrated horoscope border symbols (must fit within 114px without wrapping)
   '✧': 5, '⋄': 4, '⋆': 4, '⋅': 2, '✦': 5,
-  // Witchcraft Magazine Blinking Eye Easter Egg symbols (preserving exact 8px advance to prevent reflow)
+  // Custom unicode symbols (preserving exact 8px advance to prevent reflow)
   '⏼': 8, '◡': 8,
   // Block Elements (U+2580 - U+2588): advance = 9px (matching vanilla Minecraft: 8px glyph width + 1px horizontal padding)
   // Use explicit unicode escapes to prevent U+2581 (lower one eighth) from ever being confused with U+0020 (ASCII space)
