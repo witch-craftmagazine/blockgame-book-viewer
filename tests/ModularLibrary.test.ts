@@ -263,10 +263,19 @@ describe('Modular Library API & Components', () => {
     expect(hasLithos).toBe(false);
   });
 
-  it('allows zoom-in button to zoom up to scale 5 and zoom-out down to 1', () => {
+  it('allows zoom-in button to zoom within page bounds and prevents scaling beyond max fitting scale', () => {
     const viewer = new MinecraftBookViewer(mockContainer, {
       defaultViewMode: 'double',
       controls: true,
+    });
+
+    const canvasWrapper = (viewer as any).canvasWrapper;
+    // Simulate generous viewport allowing zoom up to scale 5
+    canvasWrapper.getBoundingClientRect = () => ({
+      left: 0,
+      top: 0,
+      width: 1920,
+      height: 1200,
     });
 
     const canvas = viewer.getCanvas();
@@ -299,6 +308,22 @@ describe('Modular Library API & Components', () => {
       if (clickHandler) {
         clickHandler();
         expect(canvas.getScale()).toBe(2);
+      }
+    }
+
+    // Now constrain viewport to max fitting scale 2
+    canvasWrapper.getBoundingClientRect = () => ({
+      left: 0,
+      top: 0,
+      width: 720,
+      height: 460,
+    });
+    // Attempting to zoom in beyond container fitting scale should be prevented
+    if (zoomInBtn) {
+      const clickHandler = zoomInBtn.addEventListener.mock.calls.find((call: any) => call[0] === 'click')?.[1];
+      if (clickHandler) {
+        clickHandler();
+        expect(canvas.getScale()).toBeLessThanOrEqual(2);
       }
     }
   });

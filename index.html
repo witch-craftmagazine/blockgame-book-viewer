@@ -286,46 +286,219 @@
     }
     .center { text-align: center; }
 
-    /* Reader Stage Frame */
-    .stage {
+    /* Showcase Workbench Layout */
+    .showcase-workbench {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+      gap: 32px;
+      align-items: start;
+      width: 100%;
+      margin: 1.5rem auto 0;
+    }
+    @media (max-width: 920px) {
+      .showcase-workbench {
+        grid-template-columns: 1fr;
+        gap: 28px;
+      }
+    }
+
+    .showcase-viewer-column {
       display: flex;
+      flex-direction: column;
+      align-items: center;
       justify-content: center;
       width: 100%;
-    }
-    .shot {
       position: relative;
-      margin: 0;
-      padding: 10px;
-      background: var(--plate);
-      box-shadow: 10px 10px 0 -1px var(--rule);
-      width: 100%;
-      max-width: 980px;
     }
-    .shot::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      border: 1px solid var(--gold);
-      outline: 1px solid var(--gold);
-      outline-offset: 4px;
-      pointer-events: none;
-      z-index: 1;
-    }
-    .reader-frame {
+
+    .showcase-reader-frame {
       width: 100%;
-      height: 600px;
-      max-height: 85vh;
+      height: 640px;
+      min-height: 580px;
+      max-height: 88vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      box-shadow: none;
       position: relative;
-      background: var(--plate);
-      border: 1px solid var(--rule);
-      overflow: hidden;
     }
-    .shot figcaption {
+
+    .showcase-nav {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 14px;
+    }
+
+    .showcase-page-text {
       font-style: italic;
-      font-size: .9rem;
+      color: var(--gold-ink);
+      font-size: 1.05rem;
+      min-width: 90px;
+      text-align: center;
+      user-select: none;
+    }
+
+    .showcase-hint {
+      font-style: italic;
+      font-size: 0.88rem;
       color: var(--mut);
       text-align: center;
-      padding: 10px 4px 2px;
+      margin: 8px 0 0;
+    }
+
+    /* Live Markup Editor Panel */
+    .showcase-editor-column {
+      width: 100%;
+    }
+
+    .live-editor-card {
+      background: var(--plate);
+      border: 1px solid var(--gold);
+      outline: 1px solid var(--gold);
+      outline-offset: -5px;
+      padding: 18px 20px;
+      box-shadow: 6px 6px 0 -1px var(--rule);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .live-editor-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 10px;
+    }
+
+    .live-editor-title-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .live-editor-icon {
+      font-size: 1.4rem;
+    }
+
+    .live-editor-title {
+      font-size: 1.15rem;
+      font-weight: normal;
+      margin: 0;
+      color: var(--ink);
+      line-height: 1.2;
+    }
+
+    .live-editor-badge {
+      font-size: 0.8rem;
+      font-style: italic;
+      color: var(--gold-ink);
+    }
+
+    .live-status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.78rem;
+      color: #2e7d32;
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      background: rgba(46, 125, 50, 0.12);
+      border: 1px solid rgba(46, 125, 50, 0.25);
+      padding: 3px 8px;
+      border-radius: 12px;
+      letter-spacing: 0.02em;
+    }
+
+    .palette-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .colors-palette {
+      padding-bottom: 4px;
+    }
+
+    .tag-btn {
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      font-size: 11px;
+      padding: 3px 6px;
+      border-radius: 3px;
+      border: 1px solid var(--rule);
+      background: var(--paper);
+      color: var(--ink);
+      cursor: pointer;
+      line-height: 1.2;
+      transition: all 0.1s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .tag-btn:hover {
+      border-color: var(--gold);
+      transform: translateY(-1px);
+    }
+
+    .pill-color {
+      font-weight: bold;
+      min-width: 24px;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+    }
+
+    .tag-break {
+      font-weight: 600;
+      background: var(--tint);
+      color: var(--gold-ink);
+      border-color: var(--gold);
+    }
+
+    .live-markup-textarea {
+      width: 100%;
+      height: 380px;
+      min-height: 280px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.92rem;
+      line-height: 1.5;
+      padding: 12px;
+      background: var(--paper);
+      color: var(--ink);
+      border: 1px solid var(--rule);
+      resize: vertical;
+      outline: none;
+      box-sizing: border-box;
+      tab-size: 2;
+    }
+
+    .live-markup-textarea:focus {
+      border-color: var(--gold);
+      outline: 1px solid var(--gold);
+    }
+
+    .live-editor-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding-top: 4px;
+    }
+
+    .live-editor-info {
+      font-style: italic;
+      font-size: 0.85rem;
+      color: var(--mut);
+    }
+
+    .live-editor-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
     }
 
     /* Fleuron Divider */
@@ -460,11 +633,74 @@
         <p class="fine">Zero runtime dependencies • 114px vanilla text boundary • 14 lines per page</p>
       </div>
 
-      <div class="stage">
-        <figure class="shot">
-          <div id="viewer-container" class="reader-frame"></div>
-          <figcaption>Interactive Minecraft Tome Reader — click corners to turn pages, select text, or drop custom resource packs</figcaption>
-        </figure>
+      <div class="showcase-workbench">
+        <div class="showcase-viewer-column">
+          <div id="viewer-container" class="showcase-reader-frame"></div>
+          <div class="showcase-nav">
+            <button id="showcase-prev-btn" class="btn alt" type="button" aria-label="Previous page">◀ Prev</button>
+            <span id="showcase-page-indicator" class="showcase-page-text">Page 1 / 4</span>
+            <button id="showcase-next-btn" class="btn alt" type="button" aria-label="Next page">Next ▶</button>
+          </div>
+          <p class="showcase-hint">Click book corners or arrow keys to turn pages • Text wraps at vanilla 114px</p>
+        </div>
+
+        <div class="showcase-editor-column">
+          <div class="live-editor-card">
+            <div class="live-editor-header">
+              <div class="live-editor-title-group">
+                <span class="live-editor-icon">📝</span>
+                <div>
+                  <h3 class="live-editor-title">Live Markup Editor</h3>
+                  <span class="live-editor-badge">Stendhal format</span>
+                </div>
+              </div>
+              <span class="live-status-pill">● Live Sync</span>
+            </div>
+
+            <div class="markup-toolbar">
+              <div class="palette-group colors-palette">
+                <button type="button" class="tag-btn pill-color" data-code="§0" style="background: #000000; color: #fff;" title="Black (§0)">§0</button>
+                <button type="button" class="tag-btn pill-color" data-code="§1" style="background: #0000AA; color: #fff;" title="Dark Blue (§1)">§1</button>
+                <button type="button" class="tag-btn pill-color" data-code="§2" style="background: #00AA00; color: #fff;" title="Dark Green (§2)">§2</button>
+                <button type="button" class="tag-btn pill-color" data-code="§3" style="background: #00AAAA; color: #fff;" title="Dark Aqua (§3)">§3</button>
+                <button type="button" class="tag-btn pill-color" data-code="§4" style="background: #AA0000; color: #fff;" title="Dark Red (§4)">§4</button>
+                <button type="button" class="tag-btn pill-color" data-code="§5" style="background: #AA00AA; color: #fff;" title="Dark Purple (§5)">§5</button>
+                <button type="button" class="tag-btn pill-color" data-code="§6" style="background: #FFAA00; color: #000;" title="Gold (§6)">§6</button>
+                <button type="button" class="tag-btn pill-color" data-code="§7" style="background: #AAAAAA; color: #000;" title="Gray (§7)">§7</button>
+                <button type="button" class="tag-btn pill-color" data-code="§8" style="background: #555555; color: #fff;" title="Dark Gray (§8)">§8</button>
+                <button type="button" class="tag-btn pill-color" data-code="§9" style="background: #5555FF; color: #fff;" title="Blue (§9)">§9</button>
+                <button type="button" class="tag-btn pill-color" data-code="§a" style="background: #55FF55; color: #000;" title="Green (§a)">§a</button>
+                <button type="button" class="tag-btn pill-color" data-code="§b" style="background: #55FFFF; color: #000;" title="Aqua (§b)">§b</button>
+                <button type="button" class="tag-btn pill-color" data-code="§c" style="background: #FF5555; color: #000;" title="Red (§c)">§c</button>
+                <button type="button" class="tag-btn pill-color" data-code="§d" style="background: #FF55FF; color: #000;" title="Light Purple (§d)">§d</button>
+                <button type="button" class="tag-btn pill-color" data-code="§e" style="background: #FFFF55; color: #000;" title="Yellow (§e)">§e</button>
+                <button type="button" class="tag-btn pill-color" data-code="§f" style="background: #FFFFFF; color: #000;" title="White (§f)">§f</button>
+              </div>
+
+              <div class="palette-group styles-palette">
+                <button type="button" class="tag-btn" data-code="§l" title="Bold (§l)"><strong>B</strong></button>
+                <button type="button" class="tag-btn" data-code="§o" title="Italic (§o)"><em>I</em></button>
+                <button type="button" class="tag-btn" data-code="§n" title="Underline (§n)"><u>U</u></button>
+                <button type="button" class="tag-btn" data-code="§m" title="Strikethrough (§m)"><s>S</s></button>
+                <button type="button" class="tag-btn" data-code="§k" title="Magic Obfuscated (§k)">𝓞</button>
+                <button type="button" class="tag-btn" data-code="§r" title="Reset Formatting (§r)">↺</button>
+                <button type="button" class="tag-btn tag-break" data-code="\n#- " title="Insert Page Break (Stendhal delimiter)">+ Page Break</button>
+              </div>
+            </div>
+
+            <textarea id="live-markup-textarea" class="live-markup-textarea" spellcheck="false" aria-label="Live book markup text"></textarea>
+
+            <div class="live-editor-footer">
+              <div class="live-editor-info">
+                <span>Type directly in the box to update the book live</span>
+              </div>
+              <div class="live-editor-actions">
+                <button id="live-reset-btn" class="btn alt" type="button">Reset Sample</button>
+                <button id="live-copy-give-btn" class="btn" type="button">Copy /give</button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 

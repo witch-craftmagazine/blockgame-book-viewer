@@ -40,21 +40,41 @@
   --mc-btn-border: var(--gold, #a67c1f);
   --mc-btn-text: var(--gilt, #f7e9b8);
   --mc-accent: var(--gold, #a67c1f);
-  --mc-shadow: 0 10px 25px rgba(35, 28, 20, 0.15);
+  --mc-shadow: 0 4px 14px rgba(35, 28, 20, 0.08), 0 1px 3px rgba(35, 28, 20, 0.05);
 }
 
 .mc-theme-transparent {
   --mc-bg: transparent;
-  --mc-panel-bg: var(--plate, rgba(20, 20, 20, 0.85));
+  --mc-panel-bg: var(--plate, rgba(255, 253, 248, 0.95));
   --mc-border: var(--gold, #a67c1f);
-  --mc-text: var(--ink, #efe4d2);
-  --mc-text-muted: var(--mut, #b7a69c);
+  --mc-text: var(--ink, #231c14);
+  --mc-text-muted: var(--mut, #5a4c3a);
   --mc-btn-bg: var(--btn, #2f4a3a);
   --mc-btn-hover: var(--btn-h, #3b5a48);
   --mc-btn-border: var(--gold, #a67c1f);
   --mc-btn-text: var(--gilt, #f7e9b8);
   --mc-accent: var(--gold, #a67c1f);
-  --mc-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  --mc-shadow: 0 4px 14px rgba(35, 28, 20, 0.08), 0 1px 3px rgba(35, 28, 20, 0.05);
+}
+
+:root[data-theme="dark"] .mc-theme-transparent,
+:root[data-theme="dark"] .mc-theme-parchment,
+:root[data-theme="dark"] .mc-theme-nectar {
+  --mc-text: var(--ink, #efe4d2);
+  --mc-text-muted: var(--mut, #b7a69c);
+  --mc-panel-bg: var(--plate, rgba(36, 28, 34, 0.95));
+  --mc-shadow: 0 4px 18px rgba(0, 0, 0, 0.32), 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+@media (prefers-color-scheme: dark) {
+  .mc-theme-transparent,
+  .mc-theme-parchment,
+  .mc-theme-nectar {
+    --mc-text: var(--ink, #efe4d2);
+    --mc-text-muted: var(--mut, #b7a69c);
+    --mc-panel-bg: var(--plate, rgba(36, 28, 34, 0.95));
+    --mc-shadow: 0 4px 18px rgba(0, 0, 0, 0.32), 0 1px 3px rgba(0, 0, 0, 0.2);
+  }
 }
 
 /* Root container */
@@ -103,10 +123,11 @@ minecraft-book {
   margin: auto;
 }
 
-.book-stage.scale-locked,
-.book-stage.scale-locked .book-canvas {
-  max-width: none !important;
-  max-height: none !important;
+.book-stage,
+.book-stage .book-canvas {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
 }
 
 .book-stage.text-selection-enabled {
@@ -223,7 +244,7 @@ minecraft-book {
   align-items: center;
   width: auto;
   max-width: 90%;
-  margin-bottom: 12px;
+  margin: 8px auto 16px;
   padding: 6px 14px;
   background: var(--mc-panel-bg);
   border: 1px solid var(--mc-border);
@@ -231,6 +252,7 @@ minecraft-book {
   box-shadow: var(--mc-shadow);
   gap: 12px;
   z-index: 10;
+  flex-shrink: 0;
 }
 
 .mc-toolbar-group {

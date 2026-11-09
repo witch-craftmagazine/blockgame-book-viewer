@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { parseBook, parseStendhalBook } from '../src/io/BookParser';
+import { parseBook, parseStendhalBook, parseScribbleBook } from '../src/io/BookParser';
 import {
   exportToBookCopyJson,
+  exportToScribbleJson,
   exportToCmiText,
   exportToStendhal,
   exportToGiveCommandModern,
@@ -59,6 +60,21 @@ Line 3
     expect(parsed.title).toBe(sampleBook.title);
     expect(parsed.author).toBe(sampleBook.author);
     expect(parsed.pages).toEqual(sampleBook.pages);
+  });
+
+  it('exports and parses Scribble mod JSON format (.json)', () => {
+    const scribbleJson = exportToScribbleJson(sampleBook);
+    expect(scribbleJson).toContain('"author": "Steve"');
+    expect(scribbleJson).toContain('"pages": [');
+
+    const parsedDirect = parseScribbleBook(scribbleJson);
+    expect(parsedDirect).not.toBeNull();
+    expect(parsedDirect?.author).toBe('Steve');
+    expect(parsedDirect?.pages).toEqual(sampleBook.pages);
+
+    const parsedAuto = parseBook(scribbleJson);
+    expect(parsedAuto.author).toBe('Steve');
+    expect(parsedAuto.pages).toEqual(sampleBook.pages);
   });
 
   it('exports and parses CMI BookExport format with <NextPage>', () => {

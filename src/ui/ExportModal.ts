@@ -1,6 +1,7 @@
 import { MinecraftBook } from '../engine/types';
 import {
   exportToBookCopyJson,
+  exportToScribbleJson,
   exportToCmiText,
   exportToStendhal,
   exportToGiveCommandModern,
@@ -30,6 +31,7 @@ export class ExportModal {
           <div class="export-tabs">
             <button class="tab-btn active" data-tab="give">/give Command</button>
             <button class="tab-btn" data-tab="stendhal">Stendhal</button>
+            <button class="tab-btn" data-tab="scribble">Scribble JSON</button>
             <button class="tab-btn" data-tab="json">BookCopy JSON</button>
             <button class="tab-btn" data-tab="cmi">CMI Text</button>
             <button class="tab-btn" data-tab="share">Shareable URL</button>
@@ -52,6 +54,15 @@ export class ExportModal {
             <div class="btn-row">
               <button class="btn btn-secondary" id="copy-stendhal-btn">Copy Stendhal</button>
               <button class="btn btn-primary" id="download-stendhal-btn">Download .stendhal</button>
+            </div>
+          </div>
+
+          <div class="tab-content" id="tab-scribble" style="display: none;">
+            <p class="tab-sub">Compatible with the Scribble mod (.json files):</p>
+            <textarea id="export-scribble-text" readonly></textarea>
+            <div class="btn-row">
+              <button class="btn btn-secondary" id="copy-scribble-btn">Copy Scribble JSON</button>
+              <button class="btn btn-primary" id="download-scribble-btn">Download .json</button>
             </div>
           </div>
 
@@ -130,6 +141,7 @@ export class ExportModal {
     // Copy buttons
     this.setupCopyButton('#copy-give-btn', '#export-give-text');
     this.setupCopyButton('#copy-stendhal-btn', '#export-stendhal-text');
+    this.setupCopyButton('#copy-scribble-btn', '#export-scribble-text');
     this.setupCopyButton('#copy-json-btn', '#export-json-text');
     this.setupCopyButton('#copy-cmi-btn', '#export-cmi-text');
     this.setupCopyButton('#copy-share-btn', '#export-share-url');
@@ -141,6 +153,15 @@ export class ExportModal {
       const data = exportToStendhal(this.currentBook);
       this.triggerDownload(`${this.sanitizeFilename(this.currentBook.title)}.stendhal`, data, 'text/plain');
     };
+
+    const downloadScribbleBtn = this.backdrop.querySelector('#download-scribble-btn') as HTMLElement;
+    if (downloadScribbleBtn) {
+      downloadScribbleBtn.onclick = () => {
+        if (!this.currentBook) return;
+        const data = exportToScribbleJson(this.currentBook);
+        this.triggerDownload(`${this.sanitizeFilename(this.currentBook.title || 'scribble')}.json`, data, 'application/json');
+      };
+    }
 
     const downloadJsonBtn = this.backdrop.querySelector('#download-json-btn') as HTMLElement;
     downloadJsonBtn.onclick = () => {
@@ -228,6 +249,11 @@ export class ExportModal {
 
     const stendhalArea = this.backdrop.querySelector('#export-stendhal-text') as HTMLTextAreaElement;
     stendhalArea.value = exportToStendhal(book);
+
+    const scribbleArea = this.backdrop.querySelector('#export-scribble-text') as HTMLTextAreaElement;
+    if (scribbleArea) {
+      scribbleArea.value = exportToScribbleJson(book);
+    }
 
     const jsonArea = this.backdrop.querySelector('#export-json-text') as HTMLTextAreaElement;
     jsonArea.value = exportToBookCopyJson(book);

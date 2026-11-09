@@ -20,7 +20,7 @@ export class ImportModal {
         </div>
         <div class="modal-body">
           <p class="modal-desc">
-            Upload or paste any exported Minecraft book. Supports <strong>Stendhal (.stendhal)</strong>, <strong>BookCopy JSON</strong>,
+            Upload or paste any exported Minecraft book. Supports <strong>Stendhal (.stendhal)</strong>, <strong>Scribble JSON (.json)</strong>, <strong>BookCopy JSON</strong>,
             <strong>CMI BookExport (&lt;NextPage&gt;)</strong>, <strong>/give commands</strong> (1.20.5+ & legacy), or <strong>raw text</strong>.
           </p>
 
@@ -33,7 +33,7 @@ export class ImportModal {
 
           <div class="paste-section">
             <label for="import-textarea">Or paste book content / command below:</label>
-            <textarea id="import-textarea" placeholder="Paste Stendhal (.stendhal), BookCopy JSON, CMI text with <NextPage>, /give command, or plain text..."></textarea>
+            <textarea id="import-textarea" placeholder="Paste Stendhal (.stendhal), Scribble JSON (.json), BookCopy JSON, CMI text with <NextPage>, /give command, or plain text..."></textarea>
           </div>
         </div>
         <div class="modal-footer">

@@ -269,11 +269,16 @@ export class BookCanvas {
     this.pageBackwardHoverBtn = bwdH;
   }
 
-  public setBook(book: MinecraftBook): void {
+  public setBook(book: MinecraftBook, preservePage = false): void {
+    const savedPage = this.currentPage;
     this.book = book;
     this.isWitchcraftMagazine = this.detectWitchcraftMagazine(book);
     this.recalculatePages();
-    this.currentPage = 0;
+    if (preservePage) {
+      this.currentPage = Math.max(0, Math.min(this.paginatedPages.length - 1, savedPage));
+    } else {
+      this.currentPage = 0;
+    }
     this.updateHasEyeOnCurrentPage();
     if (this.isWitchcraftMagazine) {
       const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
@@ -592,7 +597,8 @@ export class BookCanvas {
     if (lockScale) {
       this.isScaleLocked = true;
     }
-    this.scale = Math.max(1, Math.min(6, scale));
+    const maxFitting = this.getMaxFittingScale();
+    this.scale = Math.max(1, Math.min(maxFitting, scale));
     this.updateCanvasDimensions();
     this.render();
   }
@@ -601,11 +607,29 @@ export class BookCanvas {
     const parent = this.container;
     if (!parent || typeof window === 'undefined') return 6;
 
-    const rect = parent.getBoundingClientRect ? parent.getBoundingClientRect() : { width: 0, height: 0 };
-    const containerW = rect.width > 0 ? rect.width : (typeof window !== 'undefined' ? window.innerWidth : 0);
-    const containerH = rect.height > 0 ? rect.height : (typeof window !== 'undefined' ? window.innerHeight : 0);
+    let containerW = 0;
+    let containerH = 0;
 
-    if (containerW <= 0 || containerH <= 0) return 6;
+    if (parent.getBoundingClientRect && typeof parent.getBoundingClientRect === 'function') {
+      const rect = parent.getBoundingClientRect();
+      if (rect && typeof rect.width === 'number' && rect.width > 0) {
+        containerW = rect.width;
+      }
+      if (rect && typeof rect.height === 'number' && rect.height > 0) {
+        containerH = rect.height;
+      }
+    }
+
+    if (containerW <= 0 && typeof window !== 'undefined' && typeof window.innerWidth === 'number' && window.innerWidth > 0) {
+      containerW = window.innerWidth;
+    }
+    if (containerH <= 0 && typeof window !== 'undefined' && typeof window.innerHeight === 'number' && window.innerHeight > 0) {
+      containerH = window.innerHeight;
+    }
+
+    if (containerW <= 0 || containerH <= 0 || !Number.isFinite(containerW) || !Number.isFinite(containerH)) {
+      return 6;
+    }
 
     // Allocate margin/padding and space for toolbar
     const availW = Math.max(containerW - 16, 192);
@@ -616,7 +640,8 @@ export class BookCanvas {
 
     const scaleX = Math.floor(availW / baseW);
     const scaleY = Math.floor(availH / baseH);
-    return Math.max(1, Math.min(6, Math.min(scaleX, scaleY)));
+    const fitting = Math.max(1, Math.min(6, Math.min(scaleX, scaleY)));
+    return Number.isFinite(fitting) ? fitting : 6;
   }
 
   public fitToContainer(): void {
@@ -633,7 +658,12 @@ export class BookCanvas {
   private setupResizeObserver(): void {
     if (typeof ResizeObserver !== 'undefined' && this.container) {
       this.resizeObserver = new ResizeObserver(() => {
-        if (!this.isScaleLocked) {
+        const maxFitting = this.getMaxFittingScale();
+        if (this.scale > maxFitting) {
+          this.scale = maxFitting;
+          this.updateCanvasDimensions();
+          this.render();
+        } else if (!this.isScaleLocked) {
           this.fitToContainer();
         } else {
           this.updateGifOverlay();
@@ -733,19 +763,15 @@ export class BookCanvas {
     this.canvas.height = baseH * this.scale;
     this.canvas.style.width = `${baseW * this.scale}px`;
     this.canvas.style.height = `${baseH * this.scale}px`;
+    this.canvas.style.maxWidth = '100%';
+    this.canvas.style.maxHeight = '100%';
+    this.stageElement.style.maxWidth = '100%';
+    this.stageElement.style.maxHeight = '100%';
     if (this.isScaleLocked) {
-      this.canvas.style.maxWidth = 'none';
-      this.canvas.style.maxHeight = 'none';
-      this.stageElement.style.maxWidth = 'none';
-      this.stageElement.style.maxHeight = 'none';
       if (this.stageElement?.classList && typeof this.stageElement.classList.add === 'function') {
         this.stageElement.classList.add('scale-locked');
       }
     } else {
-      this.canvas.style.maxWidth = '100%';
-      this.canvas.style.maxHeight = '100%';
-      this.stageElement.style.maxWidth = '100%';
-      this.stageElement.style.maxHeight = '100%';
       if (this.stageElement?.classList && typeof this.stageElement.classList.remove === 'function') {
         this.stageElement.classList.remove('scale-locked');
       }

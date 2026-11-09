@@ -24,6 +24,21 @@ export function exportToBookCopyJson(book: MinecraftBook): string {
 }
 
 /**
+ * Exports book to Scribble mod JSON format.
+ * In Scribble (1.6+), books are stored as JSON files with author and formatted pages.
+ */
+export function exportToScribbleJson(book: MinecraftBook): string {
+  return JSON.stringify(
+    {
+      author: book.author || 'Player',
+      pages: book.pages,
+    },
+    null,
+    2
+  );
+}
+
+/**
  * Exports book to CMI CustomText / BookExport format.
  */
 export function exportToCmiText(book: MinecraftBook): string {

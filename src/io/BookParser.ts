@@ -315,18 +315,41 @@ export function parseStendhalBook(text: string): MinecraftBook | null {
 }
 
 /**
+ * Parses Scribble mod JSON format (.json):
+ * { "author": "...", "pages": [ "..." ] }
+ */
+export function parseScribbleBook(input: string): MinecraftBook | null {
+  try {
+    const trimmed = input.trim();
+    if (!trimmed.startsWith('{') || !trimmed.endsWith('}')) return null;
+    const parsed = JSON.parse(trimmed);
+    if (parsed && Array.isArray(parsed.pages)) {
+      return {
+        title: typeof parsed.title === 'string' && parsed.title ? parsed.title : 'Scribble Book',
+        author: typeof parsed.author === 'string' && parsed.author ? parsed.author : 'Player',
+        generation: typeof parsed.generation === 'number' ? parsed.generation : 0,
+        pages: parsed.pages.map((p: any) => componentToFormattedString(p)),
+      };
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+/**
  * Automatically parses any supported Minecraft book string or file content.
  */
 export function parseBook(input: string): MinecraftBook {
   const trimmed = input.trim();
 
-  // 1. Check for JSON (BookCopy format or text component)
+  // 1. Check for JSON (Scribble format, BookCopy format, or text component)
   if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
     try {
       const parsed = JSON.parse(trimmed);
       if (parsed.pages && Array.isArray(parsed.pages)) {
         return {
-          title: parsed.title || 'Untitled Book',
+          title: parsed.title || 'Scribble Book',
           author: parsed.author || 'Anonymous',
           generation: typeof parsed.generation === 'number' ? parsed.generation : 0,
           pages: parsed.pages.map((p: any) => componentToFormattedString(p)),

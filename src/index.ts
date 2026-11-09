@@ -46,12 +46,14 @@ export { ResourcePackManager, type ResourcePackInfo, type FontTexturePaths } fro
 export {
   parseBook,
   parseStendhalBook,
+  parseScribbleBook,
   componentToFormattedString,
 } from './io/BookParser';
 
 export {
   exportToStendhal,
   exportToBookCopyJson,
+  exportToScribbleJson,
   exportToCmiText,
   exportToGiveCommandModern,
   exportToGiveCommandLegacy,

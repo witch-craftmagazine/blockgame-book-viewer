@@ -188,6 +188,7 @@ export class MinecraftBookViewer {
     this.viewModeBtn?.addEventListener('click', () => {
       const current = this.bookCanvas.getViewMode();
       this.bookCanvas.setViewMode(current === 'double' ? 'single' : 'double');
+      this.updateZoomButtons();
     });
 
     this.soundBtn?.addEventListener('click', () => {
@@ -199,8 +200,10 @@ export class MinecraftBookViewer {
 
     this.toolbarElement.querySelector('.mc-btn-zoom-in')?.addEventListener('click', () => {
       const currentScale = this.bookCanvas.getScale();
-      if (currentScale < 5) {
+      const maxFitting = this.bookCanvas.getMaxFittingScale();
+      if (currentScale < maxFitting) {
         this.bookCanvas.setScale(currentScale + 1);
+        this.updateZoomButtons();
       }
     });
 
@@ -208,8 +211,11 @@ export class MinecraftBookViewer {
       const currentScale = this.bookCanvas.getScale();
       if (currentScale > 1) {
         this.bookCanvas.setScale(currentScale - 1);
+        this.updateZoomButtons();
       }
     });
+
+    this.updateZoomButtons();
 
     this.toolbarElement.querySelector('.mc-btn-export')?.addEventListener('click', () => {
       this.exportModal?.open(this.currentBook);
@@ -228,14 +234,35 @@ export class MinecraftBookViewer {
     });
   }
 
+  private updateZoomButtons(): void {
+    if (!this.toolbarElement) return;
+    const currentScale = this.bookCanvas.getScale();
+    const maxFitting = this.bookCanvas.getMaxFittingScale();
+    const zoomInBtn = this.toolbarElement.querySelector('.mc-btn-zoom-in') as HTMLButtonElement | null;
+    const zoomOutBtn = this.toolbarElement.querySelector('.mc-btn-zoom-out') as HTMLButtonElement | null;
+    if (zoomInBtn) {
+      const atMax = currentScale >= maxFitting;
+      zoomInBtn.disabled = atMax;
+      zoomInBtn.style.opacity = atMax ? '0.45' : '1';
+      zoomInBtn.style.cursor = atMax ? 'not-allowed' : 'pointer';
+    }
+    if (zoomOutBtn) {
+      const atMin = currentScale <= 1;
+      zoomOutBtn.disabled = atMin;
+      zoomOutBtn.style.opacity = atMin ? '0.45' : '1';
+      zoomOutBtn.style.cursor = atMin ? 'not-allowed' : 'pointer';
+    }
+  }
+
   public openEditor(): void {
     this.editorModal?.open(this.currentBook);
   }
 
-  public setBook(book: MinecraftBook): void {
+  public setBook(book: MinecraftBook, preservePage = false): void {
     this.currentBook = book;
-    this.bookCanvas.setBook(book);
+    this.bookCanvas.setBook(book, preservePage);
     this.updatePageIndicator(this.bookCanvas.getCurrentPage(), this.bookCanvas.getTotalPages());
+    this.updateZoomButtons();
     if (this.options.onBookChange) {
       this.options.onBookChange(book);
     }
