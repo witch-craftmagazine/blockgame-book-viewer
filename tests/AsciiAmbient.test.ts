@@ -7,10 +7,61 @@ describe('AsciiAmbientManager Backdrop System', () => {
   let manager: AsciiAmbientManager;
 
   beforeEach(() => {
-    mockContainer = {
-      appendChild: (el: any) => el,
-      removeChild: (el: any) => el,
+    const makeEl = (tag: string) => {
+      const attributes: Record<string, string> = {};
+      const el: any = {
+        tagName: tag.toUpperCase(),
+        className: '',
+        classList: {
+          add: () => {},
+          remove: () => {},
+          toggle: () => {},
+          contains: () => false,
+        },
+        style: {
+          removeProperty: () => {},
+        },
+        children: [] as any[],
+        setAttribute: (k: string, v: string) => {
+          attributes[k] = v;
+        },
+        getAttribute: (k: string) => attributes[k] ?? null,
+        appendChild: (child: any) => {
+          el.children.push(child);
+          return child;
+        },
+        removeChild: (child: any) => child,
+        remove: () => {},
+        addEventListener: () => {},
+        removeEventListener: () => {},
+        textContent: '',
+        getBoundingClientRect: () => ({ left: 0, top: 0, width: 72, height: 13.5 }),
+      };
+      if (tag === 'canvas') {
+        el.getContext = () => ({
+          save: () => {},
+          restore: () => {},
+          scale: () => {},
+          clearRect: () => {},
+          drawImage: () => {},
+          imageSmoothingEnabled: false,
+        });
+      }
+      return el;
     };
+
+    (globalThis as any).document = {
+      createElement: makeEl,
+      body: makeEl('body'),
+    };
+    (globalThis as any).window = {
+      innerWidth: 1024,
+      innerHeight: 768,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    };
+
+    mockContainer = makeEl('div');
     manager = new AsciiAmbientManager(mockContainer as unknown as HTMLElement);
   });
 

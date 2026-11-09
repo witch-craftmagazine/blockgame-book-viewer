@@ -218,7 +218,7 @@ export class AsciiAmbientManager {
       testSpan.textContent = 'MMMMMMMMMM'; // 10 chars
       document.body.appendChild(testSpan);
       const rect = testSpan.getBoundingClientRect();
-      if (rect && rect.width > 0 && rect.height > 0) {
+      if (rect && rect.width > 0 && rect.height > 0 && rect.height < 50 && rect.width < 200) {
         this.cellDim = {
           width: rect.width / 10,
           height: rect.height,
