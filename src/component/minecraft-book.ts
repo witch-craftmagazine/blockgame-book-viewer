@@ -1,4 +1,4 @@
-import { MinecraftBook, ViewMode } from '../engine/types';
+import { MinecraftBook, ViewMode, BookAppearance, BookEngine } from '../engine/types';
 import { MinecraftBookViewer } from '../ui/MinecraftBookViewer';
 import { parseBook } from '../io/BookParser';
 
@@ -9,7 +9,7 @@ export class MinecraftBookElement extends BaseElement {
   private isInitialized = false;
 
   static get observedAttributes() {
-    return ['src', 'view-mode', 'scale', 'sound', 'controls', 'theme', 'page', 'base-path'];
+    return ['src', 'view-mode', 'scale', 'sound', 'controls', 'theme', 'page', 'base-path', 'appearance', 'engine', 'high-contrast'];
   }
 
   constructor() {
@@ -26,6 +26,9 @@ export class MinecraftBookElement extends BaseElement {
     const scale = scaleAttr ? parseInt(scaleAttr, 10) : undefined;
     const showControls = this.getAttribute('controls') !== 'false';
     const theme = (this.getAttribute('theme') || 'dark') as any;
+    const appearance = (this.getAttribute('appearance') || 'java') as BookAppearance;
+    const engine = (this.getAttribute('engine') || 'java') as BookEngine;
+    const highContrast = this.hasAttribute('high-contrast') && this.getAttribute('high-contrast') !== 'false';
 
     let initialMode: ViewMode = 'double';
     if (viewMode === 'single' || viewMode === 'double') {
@@ -38,9 +41,17 @@ export class MinecraftBookElement extends BaseElement {
     this.viewer = new MinecraftBookViewer(this, {
       baseAssetPath: basePath,
       defaultViewMode: initialMode,
+      appearance,
+      engine,
+      highContrast,
       scale,
       controls: showControls,
       theme,
+      onClose: () => {
+        if (typeof this.dispatchEvent === 'function') {
+          this.dispatchEvent(new CustomEvent('close'));
+        }
+      },
       onPageChange: (page, total) => {
         if (typeof this.dispatchEvent === 'function') {
           this.dispatchEvent(new CustomEvent('pagechange', { detail: { page: page + 1, total } }));
@@ -92,9 +103,46 @@ export class MinecraftBookElement extends BaseElement {
       this.viewer.setPage(parseInt(newValue, 10) - 1);
     } else if (name === 'view-mode' && (newValue === 'single' || newValue === 'double')) {
       this.viewer.getCanvas().setViewMode(newValue as ViewMode);
+    } else if (name === 'appearance' && (newValue === 'java' || newValue === 'bedrock')) {
+      this.viewer.setAppearance(newValue as BookAppearance);
+    } else if (name === 'engine' && (newValue === 'java' || newValue === 'bedrock')) {
+      this.viewer.setEngine(newValue as BookEngine);
+    } else if (name === 'high-contrast') {
+      this.viewer.setHighContrast(newValue !== null && newValue !== 'false');
     } else if (name === 'scale' && newValue) {
       this.viewer.getCanvas().setScale(parseInt(newValue, 10));
     }
+  }
+
+  get appearance(): BookAppearance {
+    return this.viewer ? this.viewer.getAppearance() : ((this.getAttribute('appearance') || 'java') as BookAppearance);
+  }
+
+  set appearance(val: BookAppearance) {
+    this.setAttribute('appearance', val);
+    if (this.viewer) this.viewer.setAppearance(val);
+  }
+
+  get engine(): BookEngine {
+    return this.viewer ? this.viewer.getEngine() : ((this.getAttribute('engine') || 'java') as BookEngine);
+  }
+
+  set engine(val: BookEngine) {
+    this.setAttribute('engine', val);
+    if (this.viewer) this.viewer.setEngine(val);
+  }
+
+  get highContrast(): boolean {
+    return this.viewer ? this.viewer.isHighContrast() : this.hasAttribute('high-contrast');
+  }
+
+  set highContrast(val: boolean) {
+    if (val) {
+      this.setAttribute('high-contrast', '');
+    } else {
+      this.removeAttribute('high-contrast');
+    }
+    if (this.viewer) this.viewer.setHighContrast(val);
   }
 
   public setBook(book: MinecraftBook | string): void {

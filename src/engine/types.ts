@@ -39,3 +39,5 @@ export interface GlyphDrawInfo {
 }
 
 export type ViewMode = 'single' | 'double';
+export type BookAppearance = 'java' | 'bedrock';
+export type BookEngine = 'java' | 'bedrock';

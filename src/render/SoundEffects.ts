@@ -206,6 +206,37 @@ export class SoundManager {
       // Audio playback failed or blocked by autoplay policy
     }
   }
+
+  /**
+   * Synthesizes a crisp Minecraft UI button click sound.
+   */
+  public playButtonClick(): void {
+    if (!this.enabled) return;
+
+    try {
+      const ctx = this.initContext();
+      if (!ctx) return;
+
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(600, now);
+      osc.frequency.exponentialRampToValueAtTime(300, now + 0.05);
+
+      gain.gain.setValueAtTime(0.18, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.05);
+    } catch {
+      // Audio playback failed or blocked by autoplay policy
+    }
+  }
 }
 
 export const soundManager = new SoundManager();

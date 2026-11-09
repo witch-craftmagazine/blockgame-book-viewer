@@ -1,4 +1,4 @@
-import { MinecraftBook, ViewMode } from '../engine/types';
+import { MinecraftBook, ViewMode, BookAppearance, BookEngine } from '../engine/types';
 import { BookCanvas, BookCanvasOptions } from '../render/BookCanvas';
 import { soundManager } from '../render/SoundEffects';
 import { ResourcePackManager } from '../engine/ResourcePackManager';
@@ -27,6 +27,10 @@ export interface MinecraftBookViewerOptions {
   bookUrl?: string;
   baseAssetPath?: string;
   defaultViewMode?: ViewMode;
+  appearance?: BookAppearance;
+  engine?: BookEngine;
+  highContrast?: boolean;
+  onClose?: () => void;
   theme?: 'dark' | 'light' | 'parchment' | 'minimal' | 'transparent';
   controls?: boolean | ViewerControlsOptions;
   scale?: number;
@@ -72,6 +76,10 @@ export class MinecraftBookViewer {
       container: this.canvasWrapper,
       baseAssetPath,
       defaultViewMode: defaultMode,
+      appearance: this.options.appearance,
+      engine: this.options.engine,
+      highContrast: this.options.highContrast,
+      onClose: this.options.onClose,
       plugins: this.options.plugins,
       includeWitchcraftPlugin: this.options.includeWitchcraftPlugin ?? false,
       onPageChange: (page, total) => {
@@ -363,10 +371,40 @@ export class MinecraftBookViewer {
     return this.packManager;
   }
 
+  public setAppearance(appearance: BookAppearance): void {
+    this.bookCanvas.setAppearance(appearance);
+    this.updatePageIndicator(this.bookCanvas.getCurrentPage(), this.bookCanvas.getTotalPages());
+  }
+
+  public getAppearance(): BookAppearance {
+    return this.bookCanvas.getAppearance();
+  }
+
+  public setEngine(engine: BookEngine): void {
+    this.bookCanvas.setEngine(engine);
+    this.updatePageIndicator(this.bookCanvas.getCurrentPage(), this.bookCanvas.getTotalPages());
+  }
+
+  public getEngine(): BookEngine {
+    return this.bookCanvas.getEngine();
+  }
+
+  public setHighContrast(highContrast: boolean): void {
+    this.bookCanvas.setHighContrast(highContrast);
+  }
+
+  public isHighContrast(): boolean {
+    return this.bookCanvas.isHighContrast();
+  }
+
+  public setOnClose(cb?: () => void): void {
+    this.bookCanvas.setOnClose(cb);
+  }
+
   private updatePageIndicator(page: number, total: number): void {
     if (!this.pageIndicatorEl) return;
-    const isDouble = this.bookCanvas.getViewMode() === 'double';
-    if (isDouble && page + 1 < total && page % 2 === 0) {
+    const isDoubleSpread = this.bookCanvas.getViewMode() === 'double' || this.bookCanvas.getAppearance() === 'bedrock';
+    if (isDoubleSpread && page + 1 < total && page % 2 === 0) {
       this.pageIndicatorEl.textContent = `${page + 1}-${page + 2} / ${total}`;
     } else {
       this.pageIndicatorEl.textContent = `${page + 1} / ${total}`;

@@ -409,6 +409,10 @@ export class GlyphAtlas {
 
   private loadImage(src: string): Promise<HTMLImageElement> {
     return new Promise((resolve, reject) => {
+      if (typeof Image === 'undefined') {
+        resolve({ naturalWidth: 256, naturalHeight: 256, width: 256, height: 256 } as any);
+        return;
+      }
       const img = new Image();
       img.onload = () => resolve(img);
       img.onerror = (e) => reject(new Error(`Failed to load font image: ${src} (${e})`));

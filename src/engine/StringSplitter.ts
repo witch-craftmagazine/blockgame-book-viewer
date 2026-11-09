@@ -1,10 +1,16 @@
-import { FormattedSpan, LineLayout } from './types';
+import { FormattedSpan, LineLayout, BookEngine } from './types';
 import { GlyphAtlas, defaultGlyphAtlas } from './GlyphAtlas';
 import { parseFormattedText } from './Formatting';
 
 export const BOOK_TEXT_WIDTH = 114;
+export const JAVA_BOOK_TEXT_WIDTH = BOOK_TEXT_WIDTH;
+export const BEDROCK_BOOK_TEXT_WIDTH = 122;
 export const LINES_PER_PAGE = 14;
 export const LINE_HEIGHT = 9;
+
+export function getTextWidthForEngine(engine: BookEngine = 'java'): number {
+  return engine === 'bedrock' ? BEDROCK_BOOK_TEXT_WIDTH : BOOK_TEXT_WIDTH;
+}
 
 /**
  * Calculates the visual pixel width of a formatted span.

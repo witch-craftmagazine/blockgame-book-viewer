@@ -25,6 +25,9 @@ export {
   paginateRawText,
   LINES_PER_PAGE,
   BOOK_TEXT_WIDTH,
+  JAVA_BOOK_TEXT_WIDTH,
+  BEDROCK_BOOK_TEXT_WIDTH,
+  getTextWidthForEngine,
   LINE_HEIGHT,
 } from './engine/StringSplitter';
 
@@ -69,4 +72,6 @@ export type {
   GlyphMetric,
   GlyphDrawInfo,
   ViewMode,
+  BookAppearance,
+  BookEngine,
 } from './engine/types';
