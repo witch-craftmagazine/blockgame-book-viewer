@@ -74,6 +74,9 @@ window.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('showcase-next-btn')?.addEventListener('click', () => {
     viewer.nextPage();
   });
+  document.getElementById('showcase-export-btn')?.addEventListener('click', () => {
+    viewer.exportCurrentPage();
+  });
 
   // Keyboard navigation when not typing in textarea
   window.addEventListener('keydown', (e) => {

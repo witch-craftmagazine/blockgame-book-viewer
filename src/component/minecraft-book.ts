@@ -42,10 +42,14 @@ export class MinecraftBookElement extends BaseElement {
       controls: showControls,
       theme,
       onPageChange: (page, total) => {
-        this.dispatchEvent(new CustomEvent('pagechange', { detail: { page: page + 1, total } }));
+        if (typeof this.dispatchEvent === 'function') {
+          this.dispatchEvent(new CustomEvent('pagechange', { detail: { page: page + 1, total } }));
+        }
       },
       onBookChange: (book) => {
-        this.dispatchEvent(new CustomEvent('bookload', { detail: { book } }));
+        if (typeof this.dispatchEvent === 'function') {
+          this.dispatchEvent(new CustomEvent('bookload', { detail: { book } }));
+        }
       },
     });
 
@@ -119,6 +123,25 @@ export class MinecraftBookElement extends BaseElement {
 
   public getViewer(): MinecraftBookViewer | null {
     return this.viewer;
+  }
+
+  public async exportCurrentPage(options?: { filename?: string; pageIndex?: number }): Promise<void> {
+    if (!this.viewer) return;
+    await this.viewer.exportCurrentPage(options);
+    const page = options?.pageIndex ?? this.viewer.getCurrentPage();
+    this.dispatchEvent(
+      new CustomEvent('pageexport', {
+        detail: { page: page + 1, dataUrl: this.getPageDataUrl(page) },
+      })
+    );
+  }
+
+  public getPageDataUrl(pageIndex?: number): string {
+    return this.viewer ? this.viewer.getPageDataUrl(pageIndex) : '';
+  }
+
+  public async getPageBlob(pageIndex?: number): Promise<Blob | null> {
+    return this.viewer ? this.viewer.getPageBlob(pageIndex) : null;
   }
 }
 

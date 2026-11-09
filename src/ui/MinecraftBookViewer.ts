@@ -17,6 +17,7 @@ export interface ViewerControlsOptions {
   zoomControls?: boolean;
   editButton?: boolean;
   exportButton?: boolean;
+  exportPageButton?: boolean;
   importButton?: boolean;
   resourcePackButton?: boolean;
 }
@@ -141,6 +142,7 @@ export class MinecraftBookViewer {
       const showZoom = ctrlOpts.zoomControls !== false;
       const showEdit = ctrlOpts.editButton !== false;
       const showExport = ctrlOpts.exportButton !== false;
+      const showExportPage = ctrlOpts.exportPageButton === true;
       const showImport = ctrlOpts.importButton !== false;
       const showPacks = ctrlOpts.resourcePackButton !== false;
 
@@ -162,6 +164,7 @@ export class MinecraftBookViewer {
           ${showPacks ? `<button class="mc-btn mc-btn-packs" title="Resource Packs">🎨</button>` : ''}
           ${showEdit ? `<button class="mc-btn mc-btn-edit" title="Edit Book (Markup)">✏️</button>` : ''}
           ${showImport ? `<button class="mc-btn mc-btn-import" title="Open Book">📂</button>` : ''}
+          ${showExportPage ? `<button class="mc-btn mc-btn-export-page" title="Export Current Page">📷</button>` : ''}
           ${showExport ? `<button class="mc-btn mc-btn-export" title="Export Book">💾</button>` : ''}
         </div>
       `;
@@ -219,6 +222,10 @@ export class MinecraftBookViewer {
 
     this.toolbarElement.querySelector('.mc-btn-export')?.addEventListener('click', () => {
       this.exportModal?.open(this.currentBook);
+    });
+
+    this.toolbarElement.querySelector('.mc-btn-export-page')?.addEventListener('click', () => {
+      this.exportCurrentPage();
     });
 
     this.toolbarElement.querySelector('.mc-btn-import')?.addEventListener('click', () => {
@@ -300,6 +307,48 @@ export class MinecraftBookViewer {
 
   public getTotalPages(): number {
     return this.bookCanvas.getTotalPages();
+  }
+
+  public getPageDataUrl(pageIndex?: number): string {
+    return this.bookCanvas.getPageDataUrl(pageIndex);
+  }
+
+  public async getPageBlob(pageIndex?: number): Promise<Blob> {
+    return this.bookCanvas.getPageBlob(pageIndex);
+  }
+
+  public async exportCurrentPage(options?: { filename?: string; pageIndex?: number }): Promise<void> {
+    const page = options?.pageIndex ?? this.getCurrentPage();
+    const title = (this.currentBook.title || 'book').replace(/[^a-zA-Z0-9_\-]/g, '_').toLowerCase();
+    const filename = options?.filename || `${title}-page-${page + 1}.png`;
+
+    try {
+      const blob = await this.getPageBlob(page);
+      if (typeof File !== 'undefined' && typeof navigator !== 'undefined' && typeof navigator.canShare === 'function' && typeof navigator.share === 'function') {
+        const file = new File([blob], filename, { type: 'image/png' });
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: this.currentBook.title || 'Minecraft Book',
+            text: `Page ${page + 1} of ${this.currentBook.title || 'Minecraft Book'}`,
+          });
+          return;
+        }
+      }
+    } catch (err) {
+      if ((err as Error)?.name === 'AbortError') return;
+    }
+
+    // Fallback: trigger direct PNG download
+    const dataUrl = this.getPageDataUrl(page);
+    if (typeof document !== 'undefined' && typeof document.createElement === 'function') {
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = filename;
+      document.body?.appendChild(a);
+      a.click();
+      a.remove();
+    }
   }
 
   public getBook(): MinecraftBook {

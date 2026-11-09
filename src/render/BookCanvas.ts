@@ -187,7 +187,75 @@ export class BookCanvas {
   }
 
   public getCanvasDataUrl(): string {
-    return this.canvas.toDataURL('image/png');
+    return typeof this.canvas.toDataURL === 'function' ? this.canvas.toDataURL('image/png') : '';
+  }
+
+  public getPageDataUrl(pageIndex?: number): string {
+    if (pageIndex === undefined || (pageIndex === this.currentPage && this.viewMode === 'single')) {
+      return this.getCanvasDataUrl();
+    }
+
+    if (pageIndex < 0 || pageIndex >= this.paginatedPages.length) {
+      return this.getCanvasDataUrl();
+    }
+
+    if (typeof document === 'undefined' || typeof document.createElement !== 'function') {
+      return this.getCanvasDataUrl();
+    }
+
+    const offCanvas = document.createElement('canvas');
+    offCanvas.width = 192 * this.scale;
+    offCanvas.height = 192 * this.scale;
+    const offCtx = offCanvas.getContext ? offCanvas.getContext('2d') : null;
+    if (!offCtx || typeof offCanvas.toDataURL !== 'function') {
+      return this.getCanvasDataUrl();
+    }
+
+    offCtx.imageSmoothingEnabled = false;
+    const originalCtx = this.ctx;
+    try {
+      this.ctx = offCtx;
+      this.ctx.save();
+      this.ctx.scale(this.scale, this.scale);
+      this.renderSinglePage({
+        destX: 0,
+        pageIndex,
+        textStartX: 36,
+        pageIndicatorRightX: 148,
+        backwardButtonX: 43,
+        forwardButtonX: 116,
+        isMirrored: false,
+        allowForward: pageIndex < this.paginatedPages.length - 1,
+        allowBackward: pageIndex > 0,
+      });
+      this.ctx.restore();
+      return offCanvas.toDataURL('image/png');
+    } finally {
+      this.ctx = originalCtx;
+    }
+  }
+
+  public async getPageBlob(pageIndex?: number): Promise<Blob> {
+    const dataUrl = this.getPageDataUrl(pageIndex);
+    if (!dataUrl || !dataUrl.startsWith('data:')) {
+      return new Blob([], { type: 'image/png' });
+    }
+    const parts = dataUrl.split(',');
+    const mime = parts[0].match(/:(.*?);/)?.[1] || 'image/png';
+    const base64Data = parts[1] || '';
+    try {
+      if (typeof atob === 'function') {
+        const binary = atob(base64Data);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+          bytes[i] = binary.charCodeAt(i);
+        }
+        return new Blob([bytes], { type: mime });
+      }
+    } catch {
+      // Fallback if string is not valid base64
+    }
+    return new Blob([base64Data], { type: mime });
   }
 
   public getPaginatedPages(): LineLayout[][] {
