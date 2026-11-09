@@ -2,7 +2,8 @@ import { MinecraftBook, ViewMode, BookAppearance, BookEngine } from '../engine/t
 import { BookCanvas, BookCanvasOptions } from '../render/BookCanvas';
 import { soundManager } from '../render/SoundEffects';
 import { ResourcePackManager } from '../engine/ResourcePackManager';
-import { parseBook } from '../io/BookParser';
+import { parseBook, parseRawTextLossless } from '../io/BookParser';
+import { PageMemoryManager } from '../engine/PageMemoryManager';
 import { ExportModal } from './ExportModal';
 import { ImportModal } from './ImportModal';
 import { ResourcePackModal } from './ResourcePackModal';
@@ -36,6 +37,7 @@ export interface MinecraftBookViewerOptions {
   scale?: number;
   plugins?: BookPlugin[];
   includeWitchcraftPlugin?: boolean;
+  persistReadingProgress?: boolean;
   onPageChange?: (page: number, total: number) => void;
   onBookChange?: (book: MinecraftBook, viewer?: MinecraftBookViewer) => void;
 }
@@ -46,6 +48,7 @@ export class MinecraftBookViewer {
   private toolbarElement?: HTMLElement;
   private bookCanvas!: BookCanvas;
   private packManager: ResourcePackManager;
+  private pageMemory: PageMemoryManager;
   private options: MinecraftBookViewerOptions;
   private currentBook: MinecraftBook = { title: '', author: '', pages: [''] };
 
@@ -63,6 +66,7 @@ export class MinecraftBookViewer {
     this.options = options;
     const baseAssetPath = options.baseAssetPath || './assets';
     this.packManager = new ResourcePackManager(baseAssetPath);
+    this.pageMemory = new PageMemoryManager({ enabled: options.persistReadingProgress ?? false });
 
     const containerW = container.clientWidth || (typeof window !== 'undefined' ? window.innerWidth : 1024);
     const isNarrow = containerW < 680;
@@ -84,6 +88,9 @@ export class MinecraftBookViewer {
       includeWitchcraftPlugin: this.options.includeWitchcraftPlugin ?? false,
       onPageChange: (page, total) => {
         this.updatePageIndicator(page, total);
+        if (this.pageMemory.isEnabled()) {
+          this.pageMemory.save(this.currentBook, page);
+        }
         if (this.options.onPageChange) {
           this.options.onPageChange(page, total);
         }
@@ -276,11 +283,34 @@ export class MinecraftBookViewer {
   public setBook(book: MinecraftBook, preservePage = false): void {
     this.currentBook = book;
     this.bookCanvas.setBook(book, preservePage);
+    if (!preservePage && this.pageMemory.isEnabled()) {
+      const savedPage = this.pageMemory.load(book);
+      if (savedPage !== null && savedPage > 0) {
+        this.bookCanvas.setPage(savedPage);
+      }
+    }
     this.updatePageIndicator(this.bookCanvas.getCurrentPage(), this.bookCanvas.getTotalPages());
     this.updateZoomButtons();
     if (this.options.onBookChange) {
       this.options.onBookChange(book, this);
     }
+  }
+
+  public setText(text: string, title = 'Imported Text', author = 'Author'): void {
+    const book = parseRawTextLossless(text, title, author, this.options.engine);
+    this.setBook(book);
+  }
+
+  public setPersistReadingProgress(enabled: boolean): void {
+    this.pageMemory.setEnabled(enabled);
+  }
+
+  public clearReadingProgress(): void {
+    this.pageMemory.clear(this.currentBook);
+  }
+
+  public getPageMemoryManager(): PageMemoryManager {
+    return this.pageMemory;
   }
 
   public async loadFromUrl(url: string): Promise<void> {

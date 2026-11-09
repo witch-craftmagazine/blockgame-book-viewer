@@ -413,4 +413,71 @@ pages:
     expect(appliedBook.pages.length).toBe(2);
     expect(appliedBook.pages[0]).toContain('§4§lEdited First Page§r');
   });
+
+  it('supports raw text attribute and setText API with LosslessSplit pagination on MinecraftBookElement', async () => {
+    const el = new MinecraftBookElement();
+    const attrs: Record<string, string> = {};
+    (el as any).setAttribute = vi.fn((k: string, v: string) => { attrs[k] = v; });
+    (el as any).getAttribute = vi.fn((k: string) => attrs[k] ?? null);
+    (el as any).hasAttribute = vi.fn((k: string) => k in attrs);
+    (el as any).removeAttribute = vi.fn((k: string) => { delete attrs[k]; });
+    (el as any).querySelector = vi.fn(() => null);
+    (el as any).classList = { add: vi.fn(), remove: vi.fn() };
+    (el as any).appendChild = vi.fn();
+
+    const longStory = [
+      'Line 1 of long continuous story.',
+      'Line 2 continues here with more lore.',
+      'Line 3 goes deeper into the ancient ruins.',
+      'Line 4 reveals forgotten artifacts.',
+      'Line 5 mentions an old parchment.',
+      'Line 6 describes glowing runes.',
+      'Line 7 talks of ancient enchanters.',
+      'Line 8 notes a mystical altar.',
+      'Line 9 warns of hidden perils.',
+      'Line 10 uncovers an old riddle.',
+      'Line 11 speaks of dragon breath.',
+      'Line 12 guides the reader forward.',
+      'Line 13 reaches the midpoint.',
+      'Line 14 touches the final line of page 1.',
+      'Line 15 naturally starts page 2 without word breakage.',
+      'Line 16 continues page 2.',
+    ].join('\n\n');
+
+    el.setAttribute('text', longStory);
+    el.setAttribute('book-title', 'Ancient Lore');
+    el.setAttribute('author', 'Scholar');
+    await el.connectedCallback();
+
+    const viewer = el.getViewer();
+    expect(viewer).toBeDefined();
+    expect(viewer?.getTotalPages()).toBeGreaterThan(1);
+
+    // Test setText()
+    el.setText('Short replacement story.', 'New Title', 'New Author');
+    expect(viewer?.getTotalPages()).toBe(1);
+  });
+
+  it('honors persist-progress attribute to enable PageMemoryManager', async () => {
+    const el = new MinecraftBookElement();
+    const attrs: Record<string, string> = {};
+    (el as any).setAttribute = vi.fn((k: string, v: string) => { attrs[k] = v; });
+    (el as any).getAttribute = vi.fn((k: string) => attrs[k] ?? null);
+    (el as any).hasAttribute = vi.fn((k: string) => k in attrs);
+    (el as any).removeAttribute = vi.fn((k: string) => { delete attrs[k]; });
+    (el as any).querySelector = vi.fn(() => null);
+    (el as any).classList = { add: vi.fn(), remove: vi.fn() };
+    (el as any).appendChild = vi.fn();
+
+    expect(el.persistProgress).toBe(false);
+
+    el.setAttribute('persist-progress', '');
+    expect(el.hasAttribute('persist-progress')).toBe(true);
+
+    await el.connectedCallback();
+    expect(el.persistProgress).toBe(true);
+
+    el.persistProgress = false;
+    expect(el.persistProgress).toBe(false);
+  });
 });

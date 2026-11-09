@@ -45,9 +45,23 @@ export {
 export { GlyphAtlas, defaultGlyphAtlas, type GlyphMapEntry, type CustomBitmapGlyphEntry, MINECRAFT_SYMBOL_ADVANCES } from './engine/GlyphAtlas';
 export { ResourcePackManager, type ResourcePackInfo, type FontTexturePaths } from './engine/ResourcePackManager';
 
+export {
+  splitTextLossless,
+  paginateTextLossless,
+  isSafeSplitBoundary,
+  getSafeSplitBoundary,
+  type LosslessSplitOptions,
+} from './engine/LosslessSplit';
+
+export {
+  PageMemoryManager,
+  getBookStorageKey,
+} from './engine/PageMemoryManager';
+
 // I/O
 export {
   parseBook,
+  parseRawTextLossless,
   parseStendhalBook,
   parseScribbleBook,
   componentToFormattedString,

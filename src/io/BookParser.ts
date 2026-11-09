@@ -1,5 +1,6 @@
-import { MinecraftBook } from '../engine/types';
+import { MinecraftBook, BookEngine } from '../engine/types';
 import { MINECRAFT_COLORS } from '../engine/Formatting';
+import { splitTextLossless } from '../engine/LosslessSplit';
 
 /**
  * Converts a Minecraft JSON Text Component (or string) into a § formatted string.
@@ -338,9 +339,31 @@ export function parseScribbleBook(input: string): MinecraftBook | null {
 }
 
 /**
+ * Parses raw unformatted or continuous text using the LosslessSplit engine,
+ * guaranteeing String.join("", pages) === text and surrogate-pair safety.
+ */
+export function parseRawTextLossless(
+  text: string,
+  title = 'Imported Text',
+  author = 'Author',
+  engine: BookEngine = 'java'
+): MinecraftBook {
+  const trimmed = text.trim();
+  const pages = splitTextLossless(trimmed, { engine });
+  return {
+    title,
+    author,
+    pages: pages.length > 0 ? pages : [''],
+  };
+}
+
+/**
  * Automatically parses any supported Minecraft book string or file content.
  */
-export function parseBook(input: string): MinecraftBook {
+export function parseBook(
+  input: string,
+  options?: { engine?: BookEngine; splitContinuous?: boolean }
+): MinecraftBook {
   const trimmed = input.trim();
 
   // 1. Check for JSON (Scribble format, BookCopy format, or text component)
@@ -391,9 +414,14 @@ export function parseBook(input: string): MinecraftBook {
   }
 
   // 5. Fallback: Plain continuous text
+  const splitContinuous = options?.splitContinuous ?? true;
+  const pages = splitContinuous
+    ? splitTextLossless(trimmed, { engine: options?.engine })
+    : [trimmed];
+
   return {
     title: 'Imported Text',
     author: 'Author',
-    pages: [trimmed],
+    pages: pages.length > 0 ? pages : [''],
   };
 }

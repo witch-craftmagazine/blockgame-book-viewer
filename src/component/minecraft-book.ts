@@ -9,7 +9,24 @@ export class MinecraftBookElement extends BaseElement {
   private isInitialized = false;
 
   static get observedAttributes() {
-    return ['src', 'view-mode', 'scale', 'sound', 'controls', 'theme', 'page', 'base-path', 'appearance', 'engine', 'high-contrast'];
+    return [
+      'src',
+      'text',
+      'book-title',
+      'author',
+      'split-mode',
+      'persist-progress',
+      'view-mode',
+      'scale',
+      'sound',
+      'controls',
+      'theme',
+      'page',
+      'base-path',
+      'appearance',
+      'engine',
+      'high-contrast',
+    ];
   }
 
   constructor() {
@@ -29,6 +46,10 @@ export class MinecraftBookElement extends BaseElement {
     const appearance = (this.getAttribute('appearance') || 'java') as BookAppearance;
     const engine = (this.getAttribute('engine') || 'java') as BookEngine;
     const highContrast = this.hasAttribute('high-contrast') && this.getAttribute('high-contrast') !== 'false';
+    const persistProgress = this.hasAttribute('persist-progress') && this.getAttribute('persist-progress') !== 'false';
+    const splitMode = this.getAttribute('split-mode') || 'lossless';
+    const bookTitle = this.getAttribute('book-title') || undefined;
+    const author = this.getAttribute('author') || undefined;
 
     let initialMode: ViewMode = 'double';
     if (viewMode === 'single' || viewMode === 'double') {
@@ -44,6 +65,7 @@ export class MinecraftBookElement extends BaseElement {
       appearance,
       engine,
       highContrast,
+      persistReadingProgress: persistProgress,
       scale,
       controls: showControls,
       theme,
@@ -66,17 +88,26 @@ export class MinecraftBookElement extends BaseElement {
 
     await this.viewer.init();
 
-    // Check for inline content in <script> or <pre>
-    const scriptEl = this.querySelector('script[type="text/plain"], pre');
-    if (scriptEl && scriptEl.textContent) {
-      const parsed = parseBook(scriptEl.textContent.trim());
-      if (parsed) {
+    // Check for direct text attribute, inline content in <script> or <pre>, or src
+    if (typeof this.hasAttribute === 'function' && this.hasAttribute('text')) {
+      const rawText = this.getAttribute('text') || '';
+      const parsed = parseBook(rawText, { engine, splitContinuous: splitMode === 'lossless' });
+      if (bookTitle) parsed.title = bookTitle;
+      if (author) parsed.author = author;
+      this.viewer.setBook(parsed);
+    } else {
+      const scriptEl = this.querySelector ? this.querySelector('script[type="text/plain"], pre') : null;
+      if (scriptEl && scriptEl.textContent) {
+        const content = scriptEl.textContent.trim();
+        const parsed = parseBook(content, { engine, splitContinuous: splitMode === 'lossless' });
+        if (bookTitle) parsed.title = bookTitle;
+        if (author) parsed.author = author;
         this.viewer.setBook(parsed);
-      }
-    } else if (this.hasAttribute('src')) {
-      const src = this.getAttribute('src');
-      if (src) {
-        await this.viewer.loadFromUrl(src);
+      } else if (typeof this.hasAttribute === 'function' && this.hasAttribute('src')) {
+        const src = this.getAttribute('src');
+        if (src) {
+          await this.viewer.loadFromUrl(src);
+        }
       }
     }
 
@@ -99,6 +130,15 @@ export class MinecraftBookElement extends BaseElement {
 
     if (name === 'src' && newValue) {
       await this.viewer.loadFromUrl(newValue);
+    } else if (name === 'text' && newValue !== null) {
+      const splitMode = this.getAttribute('split-mode') || 'lossless';
+      if (splitMode === 'lossless') {
+        this.viewer.setText(newValue, this.getAttribute('book-title') || undefined, this.getAttribute('author') || undefined);
+      } else {
+        this.viewer.setBook(parseBook(newValue));
+      }
+    } else if (name === 'persist-progress') {
+      this.viewer.setPersistReadingProgress(newValue !== null && newValue !== 'false');
     } else if (name === 'page' && newValue) {
       this.viewer.setPage(parseInt(newValue, 10) - 1);
     } else if (name === 'view-mode' && (newValue === 'single' || newValue === 'double')) {
@@ -143,6 +183,34 @@ export class MinecraftBookElement extends BaseElement {
       this.removeAttribute('high-contrast');
     }
     if (this.viewer) this.viewer.setHighContrast(val);
+  }
+
+  get persistProgress(): boolean {
+    return this.viewer
+      ? this.viewer.getPageMemoryManager().isEnabled()
+      : typeof this.hasAttribute === 'function' && this.hasAttribute('persist-progress');
+  }
+
+  set persistProgress(val: boolean) {
+    if (typeof this.setAttribute === 'function' && typeof this.removeAttribute === 'function') {
+      if (val) {
+        this.setAttribute('persist-progress', '');
+      } else {
+        this.removeAttribute('persist-progress');
+      }
+    }
+    if (this.viewer) this.viewer.setPersistReadingProgress(val);
+  }
+
+  public setText(text: string, title?: string, author?: string): void {
+    if (!this.viewer) return;
+    this.viewer.setText(text, title, author);
+  }
+
+  public resetProgress(): void {
+    if (this.viewer) {
+      this.viewer.clearReadingProgress();
+    }
   }
 
   public setBook(book: MinecraftBook | string): void {
