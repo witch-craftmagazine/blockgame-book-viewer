@@ -117,9 +117,9 @@ export class BookEditorModal {
   }
 
   public apply(): void {
-    const text = this.textarea.value;
+    const text = this.textarea?.value || '';
     if (!text.trim()) {
-      alert('Book content cannot be empty.');
+      if (typeof alert !== 'undefined') alert('Book content cannot be empty.');
       return;
     }
     try {
@@ -128,29 +128,46 @@ export class BookEditorModal {
       this.onApply(parsed);
       this.hide();
     } catch (err: any) {
-      alert(`Failed to parse book markup: ${err?.message || err}`);
+      if (typeof alert !== 'undefined') alert(`Failed to parse book markup: ${err?.message || err}`);
     }
   }
 
   private insertTextAtCursor(text: string): void {
-    const start = this.textarea.selectionStart;
-    const end = this.textarea.selectionEnd;
-    const current = this.textarea.value;
+    if (!this.textarea) return;
+    const start = typeof this.textarea.selectionStart === 'number' ? this.textarea.selectionStart : (this.textarea.value?.length || 0);
+    const end = typeof this.textarea.selectionEnd === 'number' ? this.textarea.selectionEnd : (this.textarea.value?.length || 0);
+    const current = this.textarea.value || '';
 
     this.textarea.value = current.substring(0, start) + text + current.substring(end);
-    this.textarea.selectionStart = this.textarea.selectionEnd = start + text.length;
-    this.textarea.focus();
+    if (typeof this.textarea.setSelectionRange === 'function') {
+      this.textarea.setSelectionRange(start + text.length, start + text.length);
+    } else {
+      this.textarea.selectionStart = this.textarea.selectionEnd = start + text.length;
+    }
+    if (typeof this.textarea.focus === 'function') {
+      this.textarea.focus();
+    }
   }
 
   public open(book: MinecraftBook | null): void {
     this.currentBook = book;
-    if (book) {
-      this.textarea.value = exportToStendhal(book);
-    } else {
-      this.textarea.value = 'title: New Book\nauthor: Player\npages:\n#- Welcome to your book!\n';
+    if (this.textarea) {
+      if (book) {
+        this.textarea.value = exportToStendhal(book);
+      } else {
+        this.textarea.value = 'title: New Book\nauthor: Player\npages:\n#- Welcome to your book!\n';
+      }
     }
-    this.backdrop.style.display = 'flex';
-    setTimeout(() => this.textarea.focus(), 50);
+    if (this.backdrop) {
+      this.backdrop.style.display = 'flex';
+    }
+    if (typeof this.textarea?.focus === 'function') {
+      setTimeout(() => {
+        if (typeof this.textarea?.focus === 'function') {
+          this.textarea.focus();
+        }
+      }, 50);
+    }
   }
 
   public close(): void {
