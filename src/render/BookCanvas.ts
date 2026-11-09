@@ -865,7 +865,11 @@ export class BookCanvas {
   public setHighContrast(highContrast: boolean): void {
     if (this.highContrast !== highContrast) {
       this.highContrast = highContrast;
-      this.render();
+      if (this.isScrollMode()) {
+        this.continuousScrollView?.setBookData(this.paginatedPages, this.currentPage);
+      } else {
+        this.render();
+      }
     }
   }
 

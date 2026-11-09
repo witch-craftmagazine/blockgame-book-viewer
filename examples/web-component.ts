@@ -293,6 +293,7 @@ function initConfigurator() {
   viewModeSelect?.addEventListener('change', () => {
     const val = viewModeSelect.value as any;
     bookEl.setAttribute('view-mode', val);
+    bookEl.viewMode = val;
     updateCodeSnippet();
   });
 
@@ -313,15 +314,18 @@ function initConfigurator() {
   themeSelect?.addEventListener('change', () => {
     const val = themeSelect.value;
     bookEl.setAttribute('theme', val);
+    bookEl.theme = val;
     updateCodeSnippet();
   });
 
   highContrastCheck?.addEventListener('change', () => {
-    if (highContrastCheck.checked) {
+    const checked = highContrastCheck.checked;
+    if (checked) {
       bookEl.setAttribute('high-contrast', '');
     } else {
       bookEl.removeAttribute('high-contrast');
     }
+    bookEl.highContrast = checked;
     updateCodeSnippet();
   });
 
@@ -329,33 +333,40 @@ function initConfigurator() {
     const val = coverColorSelect.value;
     if (val && val !== 'none') {
       bookEl.setAttribute('cover-color', val);
+      bookEl.coverColor = val;
     } else {
       bookEl.removeAttribute('cover-color');
+      bookEl.coverColor = undefined;
     }
     updateCodeSnippet();
   });
 
   bookmarkCheck?.addEventListener('change', () => {
-    if (bookmarkCheck.checked) {
+    const checked = bookmarkCheck.checked;
+    if (checked) {
       bookEl.setAttribute('bookmark', '');
     } else {
       bookEl.removeAttribute('bookmark');
     }
+    bookEl.bookmark = checked;
     updateCodeSnippet();
   });
 
   bookmarkColorInput?.addEventListener('input', () => {
     const val = bookmarkColorInput.value;
     bookEl.setAttribute('bookmark-color', val);
+    bookEl.bookmarkColor = val;
     updateCodeSnippet();
   });
 
   persistProgressCheck?.addEventListener('change', () => {
-    if (persistProgressCheck.checked) {
+    const checked = persistProgressCheck.checked;
+    if (checked) {
       bookEl.setAttribute('persist-progress', '');
     } else {
       bookEl.removeAttribute('persist-progress');
     }
+    bookEl.persistProgress = checked;
     updateCodeSnippet();
   });
 
@@ -376,6 +387,32 @@ function initConfigurator() {
       if (viewModeSelect) viewModeSelect.value = 'scroll-double';
       bookEl.setAttribute('view-mode', 'scroll-double');
       bookEl.viewMode = 'scroll-double';
+      if (appearanceSelect && appearanceSelect.value === 'bedrock') {
+        appearanceSelect.value = 'java';
+        bookEl.setAttribute('appearance', 'java');
+        bookEl.appearance = 'java';
+      }
+      if (engineSelect && engineSelect.value === 'bedrock') {
+        engineSelect.value = 'java';
+        bookEl.setAttribute('engine', 'java');
+        bookEl.engine = 'java';
+      }
+    } else {
+      if (appearanceSelect && appearanceSelect.value === 'bedrock') {
+        appearanceSelect.value = 'java';
+        bookEl.setAttribute('appearance', 'java');
+        bookEl.appearance = 'java';
+      }
+      if (engineSelect && engineSelect.value === 'bedrock') {
+        engineSelect.value = 'java';
+        bookEl.setAttribute('engine', 'java');
+        bookEl.engine = 'java';
+      }
+      if (viewModeSelect && (viewModeSelect.value === 'scroll-single' || viewModeSelect.value === 'scroll-double')) {
+        viewModeSelect.value = 'double';
+        bookEl.setAttribute('view-mode', 'double');
+        bookEl.viewMode = 'double';
+      }
     }
     updateCodeSnippet();
   });

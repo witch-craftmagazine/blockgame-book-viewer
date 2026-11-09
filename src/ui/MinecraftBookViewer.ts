@@ -516,6 +516,8 @@ export class MinecraftBookViewer {
     this.container.classList.add(`mc-theme-${theme}`);
     if (theme === 'high-contrast') {
       this.setHighContrast(true);
+    } else if (oldTheme === 'high-contrast') {
+      this.setHighContrast(false);
     }
   }
 

@@ -12,6 +12,10 @@ export class MinecraftBookElement extends BaseElement {
   private internalRoot: HTMLElement | null = null;
   private resizeObserver: ResizeObserver | null = null;
   private mutationObserver: MutationObserver | null = null;
+  private scriptObserver: MutationObserver | null = null;
+  private lastParsedInlineContent: string | null = null;
+  private isInternalUpdating = false;
+  private isProgrammaticBook = false;
 
   public ready: Promise<MinecraftBookViewer>;
   private readyResolve?: (viewer: MinecraftBookViewer) => void;
@@ -227,6 +231,7 @@ export class MinecraftBookElement extends BaseElement {
       const scriptEl = this.querySelector ? this.querySelector('script[type="text/plain"], pre') : null;
       if (scriptEl && scriptEl.textContent) {
         const content = scriptEl.textContent.trim();
+        this.lastParsedInlineContent = content;
         const parsed = parseBook(content, { engine, splitContinuous: splitMode === 'lossless' });
         if (bookTitle) parsed.title = bookTitle;
         if (author) parsed.author = author;
@@ -266,21 +271,75 @@ export class MinecraftBookElement extends BaseElement {
 
   private setupMutationObserver(): void {
     if (typeof MutationObserver === 'undefined') return;
-    this.mutationObserver = new MutationObserver(() => {
-      if (!this.hasAttribute('text') && !this.hasAttribute('src') && this.viewer) {
-        const scriptEl = this.querySelector ? this.querySelector('script[type="text/plain"], pre') : null;
-        if (scriptEl && scriptEl.textContent) {
-          const content = scriptEl.textContent.trim();
-          const engine = this.engine;
-          const splitMode = this.splitMode;
-          const parsed = parseBook(content, { engine, splitContinuous: splitMode === 'lossless' });
-          if (this.bookTitle) parsed.title = this.bookTitle;
-          if (this.author) parsed.author = this.author;
-          this.viewer.setBook(parsed);
+
+    if (this.mutationObserver) {
+      this.mutationObserver.disconnect();
+      this.mutationObserver = null;
+    }
+    if (this.scriptObserver) {
+      this.scriptObserver.disconnect();
+      this.scriptObserver = null;
+    }
+
+    const handleInlineChange = () => {
+      if (this.isInternalUpdating || !this.viewer) return;
+      if (this.hasAttribute('text') || this.hasAttribute('src')) return;
+
+      const scriptEl = this.querySelector ? this.querySelector('script[type="text/plain"], pre') : null;
+      const content = scriptEl?.textContent?.trim() || '';
+      if (!content || content === this.lastParsedInlineContent) return;
+
+      this.lastParsedInlineContent = content;
+      this.isProgrammaticBook = false;
+
+      this.isInternalUpdating = true;
+      try {
+        const engine = this.engine;
+        const splitMode = this.splitMode;
+        const parsed = parseBook(content, { engine, splitContinuous: splitMode === 'lossless' });
+        const overrideTitle = this.getAttribute('book-title');
+        if (overrideTitle) parsed.title = overrideTitle;
+        const overrideAuthor = this.getAttribute('author');
+        if (overrideAuthor) parsed.author = overrideAuthor;
+        this.viewer.setBook(parsed);
+      } finally {
+        this.isInternalUpdating = false;
+      }
+    };
+
+    const scriptEl = this.querySelector ? this.querySelector('script[type="text/plain"], pre') : null;
+    if (scriptEl) {
+      this.scriptObserver = new MutationObserver(() => {
+        handleInlineChange();
+      });
+      this.scriptObserver.observe(scriptEl, { characterData: true, childList: true, subtree: true });
+    }
+
+    // Observe shallow childList additions/removals directly on <minecraft-book> (never subtree)
+    this.mutationObserver = new MutationObserver((mutations) => {
+      if (this.isInternalUpdating) return;
+      let scriptAffected = false;
+      for (const m of mutations) {
+        for (let i = 0; i < m.addedNodes.length; i++) {
+          const node = m.addedNodes[i] as HTMLElement;
+          if (node.tagName === 'SCRIPT' || node.tagName === 'PRE') scriptAffected = true;
+        }
+        for (let i = 0; i < m.removedNodes.length; i++) {
+          const node = m.removedNodes[i] as HTMLElement;
+          if (node.tagName === 'SCRIPT' || node.tagName === 'PRE') scriptAffected = true;
         }
       }
+      if (scriptAffected) {
+        const newScriptEl = this.querySelector ? this.querySelector('script[type="text/plain"], pre') : null;
+        if (newScriptEl && this.scriptObserver) {
+          this.scriptObserver.disconnect();
+          this.scriptObserver.observe(newScriptEl, { characterData: true, childList: true, subtree: true });
+        }
+        handleInlineChange();
+      }
     });
-    this.mutationObserver.observe(this, { childList: true, characterData: true, subtree: true });
+
+    this.mutationObserver.observe(this, { childList: true, subtree: false });
   }
 
   disconnectedCallback() {
@@ -290,6 +349,10 @@ export class MinecraftBookElement extends BaseElement {
     if (this.resizeObserver) {
       this.resizeObserver.disconnect();
       this.resizeObserver = null;
+    }
+    if (this.scriptObserver) {
+      this.scriptObserver.disconnect();
+      this.scriptObserver = null;
     }
     if (this.mutationObserver) {
       this.mutationObserver.disconnect();
@@ -608,8 +671,14 @@ export class MinecraftBookElement extends BaseElement {
 
   public setText(text: string, title?: string, author?: string): void {
     if (!this.viewer) return;
-    this.viewer.setText(text, title, author);
-    this.updateAriaSemantics();
+    this.isProgrammaticBook = true;
+    this.isInternalUpdating = true;
+    try {
+      this.viewer.setText(text, title, author);
+      this.updateAriaSemantics();
+    } finally {
+      this.isInternalUpdating = false;
+    }
   }
 
   public resetProgress(): void {
@@ -620,17 +689,27 @@ export class MinecraftBookElement extends BaseElement {
 
   public setBook(book: MinecraftBook | string): void {
     if (!this.viewer) return;
-    if (typeof book === 'string') {
-      const parsed = parseBook(book);
-      if (parsed) this.viewer.setBook(parsed);
-    } else {
-      this.viewer.setBook(book);
+    this.isProgrammaticBook = true;
+    this.isInternalUpdating = true;
+    try {
+      if (typeof book === 'string') {
+        const parsed = parseBook(book);
+        if (parsed) this.viewer.setBook(parsed);
+      } else {
+        this.viewer.setBook(book);
+      }
+      this.updateAriaSemantics();
+    } finally {
+      this.isInternalUpdating = false;
     }
-    this.updateAriaSemantics();
   }
 
   public getBook(): MinecraftBook | null {
     return this.viewer ? this.viewer.getBook() : null;
+  }
+
+  public isProgrammatic(): boolean {
+    return this.isProgrammaticBook;
   }
 
   public nextPage(): boolean {

@@ -425,4 +425,142 @@ pages:
     expect(el.controls).toBe(true);
     expect(el.getViewer()?.isControlsVisible()).toBe(true);
   });
+
+  it('prevents infinite loops and stale script overwrites when setBook is called with inline script', async () => {
+    // Setup mock MutationObserver
+    let observerCallbacks: Function[] = [];
+    class MockMutationObserver {
+      callback: Function;
+      observedTarget: any;
+      constructor(cb: Function) {
+        this.callback = cb;
+        observerCallbacks.push(cb);
+      }
+      observe(target: any) {
+        this.observedTarget = target;
+      }
+      disconnect() {
+        observerCallbacks = observerCallbacks.filter((c) => c !== this.callback);
+      }
+    }
+    const origMO = (globalThis as any).MutationObserver;
+    (globalThis as any).MutationObserver = MockMutationObserver;
+
+    try {
+      const { el, children } = setupElement();
+      const inlineScript = {
+        tagName: 'SCRIPT',
+        attributes: { type: 'text/plain' },
+        getAttribute: (k: string) => (k === 'type' ? 'text/plain' : null),
+        textContent: `
+title: Inline Initial
+author: Initial Scribe
+pages:
+#- Initial Page 1
+        `,
+      };
+      children.push(inlineScript);
+
+      await el.connectedCallback();
+      expect(el.bookTitle).toBe('Inline Initial');
+
+      // Programmatically switch to a different sample book
+      const newBook = {
+        title: 'New Sample Tome',
+        author: 'New Author',
+        pages: ['§1New Page 1 content', '§2New Page 2 content'],
+      };
+
+      let mutationCycles = 0;
+      // If observer callbacks fire (e.g. simulating browser microtasks), it should NOT loop or overwrite
+      el.setBook(newBook);
+      expect(el.bookTitle).toBe('New Sample Tome');
+
+      // Trigger all registered observer callbacks
+      for (const cb of [...observerCallbacks]) {
+        mutationCycles++;
+        cb([{ addedNodes: [], removedNodes: [], target: el }]);
+      }
+
+      // Title must remain New Sample Tome and not revert to Inline Initial
+      expect(el.bookTitle).toBe('New Sample Tome');
+      expect(mutationCycles).toBeLessThan(10);
+    } finally {
+      (globalThis as any).MutationObserver = origMO;
+    }
+  });
+
+  it('reactively updates book content when inline script text genuinely changes', async () => {
+    let scriptCb: Function | null = null;
+    class MockMutationObserver {
+      cb: Function;
+      constructor(cb: Function) {
+        this.cb = cb;
+      }
+      observe(target: any) {
+        if (target.tagName === 'SCRIPT') {
+          scriptCb = this.cb;
+        }
+      }
+      disconnect() {}
+    }
+    const origMO = (globalThis as any).MutationObserver;
+    (globalThis as any).MutationObserver = MockMutationObserver;
+
+    try {
+      const { el, children } = setupElement();
+      const inlineScript = {
+        tagName: 'SCRIPT',
+        attributes: { type: 'text/plain' },
+        getAttribute: (k: string) => (k === 'type' ? 'text/plain' : null),
+        textContent: `
+title: Reactive Version 1
+author: Scribe
+pages:
+#- Content V1
+        `,
+      };
+      children.push(inlineScript);
+
+      await el.connectedCallback();
+      expect(el.bookTitle).toBe('Reactive Version 1');
+
+      // Genuinely mutate the text content of the inline script
+      inlineScript.textContent = `
+title: Reactive Version 2
+author: Scribe
+pages:
+#- Content V2 Updated
+      `;
+
+      if (scriptCb) {
+        (scriptCb as Function)([{ type: 'characterData', target: inlineScript }]);
+      }
+
+      expect(el.bookTitle).toBe('Reactive Version 2');
+    } finally {
+      (globalThis as any).MutationObserver = origMO;
+    }
+  });
+
+  it('correctly toggles high-contrast in setTheme when transitioning between high-contrast and normal themes', async () => {
+    const { el } = setupElement();
+    el.text = 'Theme Test Book';
+    await el.connectedCallback();
+
+    const viewer = el.getViewer();
+    expect(viewer).toBeDefined();
+
+    // Set to high-contrast theme
+    el.setAttribute('theme', 'high-contrast');
+    expect(viewer?.isHighContrast()).toBe(true);
+
+    // Switch away to transparent
+    el.setAttribute('theme', 'transparent');
+    expect(viewer?.isHighContrast()).toBe(false);
+
+    // Switch to dark
+    el.setAttribute('theme', 'dark');
+    expect(viewer?.isHighContrast()).toBe(false);
+  });
 });
