@@ -831,7 +831,11 @@ export class BookCanvas {
       this.fitToContainer();
       this.updateCanvasDimensions();
       this.notifyPageChange();
-      this.render();
+      if (this.isScrollMode()) {
+        this.continuousScrollView?.setBookData(this.paginatedPages, this.currentPage);
+      } else {
+        this.render();
+      }
     }
   }
 
@@ -846,7 +850,11 @@ export class BookCanvas {
       this.fitToContainer();
       this.updateCanvasDimensions();
       this.notifyPageChange();
-      this.render();
+      if (this.isScrollMode()) {
+        this.continuousScrollView?.setBookData(this.paginatedPages, this.currentPage);
+      } else {
+        this.render();
+      }
     }
   }
 
@@ -1299,6 +1307,12 @@ export class BookCanvas {
     ctx.clearRect(0, 0, targetCanvas.width, targetCanvas.height);
     ctx.save();
     ctx.scale(targetScale, targetScale);
+
+    if (this.appearance === 'bedrock') {
+      this.renderBedrockSpread(ctx, pageIndex - (pageIndex % 2));
+      ctx.restore();
+      return;
+    }
 
     this.renderSinglePage({
       ctx,

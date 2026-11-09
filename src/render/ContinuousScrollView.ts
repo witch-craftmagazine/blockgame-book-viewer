@@ -152,9 +152,10 @@ export class ContinuousScrollView {
 
     const isDouble = this.isDoubleModeEffective();
     const appearance = this.bookCanvas.getAppearance();
+    const isSpread = isDouble || appearance === 'bedrock';
     const scale = this.bookCanvas.getScale() || 2;
 
-    const baseW = isDouble
+    const baseW = isSpread
       ? (appearance === 'bedrock' ? 308 : 344)
       : 192;
     const baseH = 192;
@@ -162,12 +163,12 @@ export class ContinuousScrollView {
     const itemWidth = baseW * scale;
     const itemHeight = baseH * scale;
 
-    const count = isDouble ? Math.ceil(this.totalPages / 2) : this.totalPages;
+    const count = isSpread ? Math.ceil(this.totalPages / 2) : this.totalPages;
 
     for (let i = 0; i < count; i++) {
       const wrapper = document.createElement('div');
-      wrapper.className = isDouble ? 'mc-book-scroll-spread' : 'mc-book-scroll-page';
-      if (!wrapper.dataset) wrapper.dataset = {} as any;
+      wrapper.className = isSpread ? 'mc-book-scroll-spread' : 'mc-book-scroll-page';
+      if (!wrapper.dataset) (wrapper as any).dataset = {};
       wrapper.dataset.index = String(i);
       wrapper.setAttribute('data-index', String(i));
       wrapper.style.width = `${itemWidth}px`;
@@ -244,8 +245,9 @@ export class ContinuousScrollView {
 
     const isDouble = this.isDoubleModeEffective();
     const appearance = this.bookCanvas.getAppearance();
+    const isSpread = isDouble || appearance === 'bedrock';
     const scale = this.bookCanvas.getScale() || 2;
-    const baseW = isDouble
+    const baseW = isSpread
       ? (appearance === 'bedrock' ? 308 : 344)
       : 192;
     const baseH = 192;
@@ -257,7 +259,7 @@ export class ContinuousScrollView {
     canvas.style.height = '100%';
     canvas.style.imageRendering = 'pixelated';
 
-    if (isDouble) {
+    if (isSpread) {
       const leftPageIdx = itemIndex * 2;
       this.bookCanvas.renderSpreadToCanvas(leftPageIdx, canvas, scale);
     } else {

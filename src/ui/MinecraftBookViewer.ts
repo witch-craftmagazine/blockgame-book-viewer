@@ -143,7 +143,11 @@ export class MinecraftBookViewer {
 
     // Load initial book URL if provided
     if (this.options.bookUrl) {
-      await this.loadFromUrl(this.options.bookUrl);
+      try {
+        await this.loadFromUrl(this.options.bookUrl);
+      } catch (err) {
+        console.error('Failed to load initial bookUrl:', err);
+      }
     }
   }
 
@@ -382,6 +386,7 @@ export class MinecraftBookViewer {
       }
     } catch (err) {
       console.error(`Failed to load book from ${url}:`, err);
+      throw err;
     }
   }
 
@@ -514,8 +519,34 @@ export class MinecraftBookViewer {
     }
   }
 
+  public setControlsVisible(visible: boolean): void {
+    if (this.toolbarElement) {
+      this.toolbarElement.style.display = visible ? '' : 'none';
+    }
+  }
+
+  public isControlsVisible(): boolean {
+    return this.toolbarElement ? this.toolbarElement.style.display !== 'none' : false;
+  }
+
   public destroy(): void {
     this.bookCanvas?.destroy();
-    this.container.innerHTML = '';
+    const removeEl = (el?: HTMLElement | null) => {
+      if (!el) return;
+      if (typeof el.remove === 'function') {
+        el.remove();
+      } else if (el.parentNode && typeof el.parentNode.removeChild === 'function') {
+        el.parentNode.removeChild(el);
+      }
+    };
+    removeEl(this.canvasWrapper);
+    removeEl(this.toolbarElement);
+    removeEl(this.exportModal?.getElement());
+    removeEl(this.importModal?.getElement());
+    removeEl(this.packModal?.getElement());
+    removeEl(this.editorModal?.getElement());
+    if (this.options.theme && this.container.classList) {
+      this.container.classList.remove('mc-book-viewer-root', `mc-theme-${this.options.theme}`);
+    }
   }
 }

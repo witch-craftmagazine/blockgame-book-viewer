@@ -1,12 +1,21 @@
 import { MinecraftBook, ViewMode, BookAppearance, BookEngine } from '../engine/types';
 import { MinecraftBookViewer } from '../ui/MinecraftBookViewer';
 import { parseBook } from '../io/BookParser';
+import { soundManager } from '../render/SoundEffects';
 
 const BaseElement: typeof HTMLElement = typeof HTMLElement !== 'undefined' ? HTMLElement : (class {} as any);
 
 export class MinecraftBookElement extends BaseElement {
   private viewer: MinecraftBookViewer | null = null;
   private isInitialized = false;
+  private hostContainer: HTMLElement | ShadowRoot;
+  private internalRoot: HTMLElement | null = null;
+  private resizeObserver: ResizeObserver | null = null;
+  private mutationObserver: MutationObserver | null = null;
+
+  public ready: Promise<MinecraftBookViewer>;
+  private readyResolve?: (viewer: MinecraftBookViewer) => void;
+  private readyReject?: (err: unknown) => void;
 
   static get observedAttributes() {
     return [
@@ -29,16 +38,96 @@ export class MinecraftBookElement extends BaseElement {
       'cover-color',
       'bookmark',
       'bookmark-color',
+      'shadow',
     ];
   }
 
   constructor() {
     super();
+    this.hostContainer = this;
+    this.ready = new Promise<MinecraftBookViewer>((resolve, reject) => {
+      this.readyResolve = resolve;
+      this.readyReject = reject;
+    });
   }
+
+  private dispatchCustomEvent(name: string, detail?: any): void {
+    if (typeof this.dispatchEvent === 'function') {
+      try {
+        this.dispatchEvent(new CustomEvent(name, { detail, bubbles: true, composed: true }));
+      } catch {
+        // Fallback if environment doesn't support EventInit in CustomEvent
+        this.dispatchEvent(new CustomEvent(name, { detail }));
+      }
+    }
+  }
+
+  private updateAriaSemantics(): void {
+    if (typeof this.setAttribute !== 'function') return;
+    if (typeof this.hasAttribute === 'function') {
+      if (!this.hasAttribute('role')) this.setAttribute('role', 'region');
+      if (!this.hasAttribute('aria-roledescription')) this.setAttribute('aria-roledescription', 'book');
+      if (!this.hasAttribute('tabindex')) this.setAttribute('tabindex', '0');
+    }
+    const title = this.getAttribute('book-title') || this.viewer?.getBook()?.title || 'Minecraft Book';
+    const author = this.getAttribute('author') || this.viewer?.getBook()?.author;
+    const label = author ? `${title} by ${author}` : title;
+    this.setAttribute('aria-label', label);
+  }
+
+  private handleKeyDown = (e: KeyboardEvent): void => {
+    // Ignore keyboard shortcuts if the user is typing in an input or textarea
+    const activeEl = typeof document !== 'undefined' ? (document.activeElement as HTMLElement) : null;
+    if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable)) {
+      return;
+    }
+    if (e.altKey || e.ctrlKey || e.metaKey) return;
+
+    switch (e.key) {
+      case 'ArrowRight':
+      case 'PageDown':
+      case ' ':
+        e.preventDefault();
+        this.nextPage();
+        break;
+      case 'ArrowLeft':
+      case 'PageUp':
+        e.preventDefault();
+        this.prevPage();
+        break;
+      case 'Home':
+        e.preventDefault();
+        this.firstPage();
+        break;
+      case 'End':
+        e.preventDefault();
+        this.lastPage();
+        break;
+    }
+  };
 
   async connectedCallback() {
     if (this.isInitialized) return;
     this.isInitialized = true;
+
+    const isShadow = typeof this.hasAttribute === 'function' && this.hasAttribute('shadow') && this.getAttribute('shadow') !== 'false';
+    if (isShadow && typeof this.attachShadow === 'function' && !this.shadowRoot) {
+      const shadow = this.attachShadow({ mode: 'open' });
+      // Add slot for projection of inline light DOM markup
+      const slot = document.createElement('slot');
+      shadow.appendChild(slot);
+      const innerWrapper = document.createElement('div');
+      innerWrapper.className = 'mc-book-shadow-root';
+      innerWrapper.style.width = '100%';
+      innerWrapper.style.height = '100%';
+      innerWrapper.style.position = 'relative';
+      shadow.appendChild(innerWrapper);
+      this.hostContainer = innerWrapper;
+      this.internalRoot = innerWrapper;
+    } else {
+      this.hostContainer = this;
+      this.internalRoot = null;
+    }
 
     const basePath = this.getAttribute('base-path') || './assets';
     const viewMode = (this.getAttribute('view-mode') || 'auto') as ViewMode | 'auto';
@@ -65,39 +154,69 @@ export class MinecraftBookElement extends BaseElement {
       initialMode = containerW < 680 ? 'single' : 'double';
     }
 
-    this.viewer = new MinecraftBookViewer(this, {
-      baseAssetPath: basePath,
-      defaultViewMode: initialMode,
-      appearance,
-      engine,
-      highContrast,
-      coverColor,
-      showBookmark,
-      bookmarkColor,
-      persistReadingProgress: persistProgress,
-      scale,
-      controls: showControls,
-      theme,
-      onClose: () => {
-        if (typeof this.dispatchEvent === 'function') {
-          this.dispatchEvent(new CustomEvent('close'));
-        }
-      },
-      onPageChange: (page, total) => {
-        if (typeof this.dispatchEvent === 'function') {
-          this.dispatchEvent(new CustomEvent('pagechange', { detail: { page: page + 1, total } }));
-        }
-      },
-      onBookChange: (book) => {
-        if (typeof this.dispatchEvent === 'function') {
-          this.dispatchEvent(new CustomEvent('bookload', { detail: { book } }));
-        }
-      },
-    });
+    try {
+      this.viewer = new MinecraftBookViewer(this.hostContainer as HTMLElement, {
+        baseAssetPath: basePath,
+        defaultViewMode: initialMode,
+        appearance,
+        engine,
+        highContrast,
+        coverColor,
+        showBookmark,
+        bookmarkColor,
+        persistReadingProgress: persistProgress,
+        scale,
+        controls: showControls,
+        theme,
+        onClose: () => {
+          this.dispatchCustomEvent('close');
+        },
+        onPageChange: (page, total) => {
+          this.dispatchCustomEvent('pagechange', { page: page + 1, total });
+          this.dispatchCustomEvent('page-change', { page: page + 1, total });
+        },
+        onBookChange: (book) => {
+          this.updateAriaSemantics();
+          this.dispatchCustomEvent('bookload', { book });
+          this.dispatchCustomEvent('book-load', { book });
+        },
+      });
 
-    await this.viewer.init();
+      await this.viewer.init();
 
-    // Check for direct text attribute, inline content in <script> or <pre>, or src
+      // Ingest initial content
+      await this.loadInitialContent(engine, splitMode, bookTitle, author);
+
+      if (this.hasAttribute('page')) {
+        const p = parseInt(this.getAttribute('page') || '1', 10);
+        this.viewer.setPage(p - 1);
+      }
+
+      this.updateAriaSemantics();
+
+      // Keyboard navigation
+      if (typeof this.addEventListener === 'function') {
+        this.addEventListener('keydown', this.handleKeyDown);
+      }
+
+      // Responsive observer
+      this.setupResizeObserver();
+
+      // Mutation observer for reactive inline content
+      this.setupMutationObserver();
+
+      this.readyResolve?.(this.viewer);
+      this.dispatchCustomEvent('ready', { viewer: this.viewer });
+    } catch (err) {
+      this.readyReject?.(err);
+      this.dispatchCustomEvent('error', { error: err });
+      console.error('Failed to initialize <minecraft-book>:', err);
+    }
+  }
+
+  private async loadInitialContent(engine: BookEngine, splitMode: string, bookTitle?: string, author?: string): Promise<void> {
+    if (!this.viewer) return;
+
     if (typeof this.hasAttribute === 'function' && this.hasAttribute('text')) {
       const rawText = this.getAttribute('text') || '';
       const parsed = parseBook(rawText, { engine, splitContinuous: splitMode === 'lossless' });
@@ -115,22 +234,79 @@ export class MinecraftBookElement extends BaseElement {
       } else if (typeof this.hasAttribute === 'function' && this.hasAttribute('src')) {
         const src = this.getAttribute('src');
         if (src) {
-          await this.viewer.loadFromUrl(src);
+          try {
+            await this.viewer.loadFromUrl(src);
+          } catch (err) {
+            this.dispatchCustomEvent('error', { error: err, src });
+          }
         }
       }
     }
+  }
 
-    if (this.hasAttribute('page')) {
-      const p = parseInt(this.getAttribute('page') || '1', 10);
-      this.viewer.setPage(p - 1);
-    }
+  private setupResizeObserver(): void {
+    if (typeof ResizeObserver === 'undefined') return;
+    this.resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        if (width > 0 && height > 0 && this.viewer) {
+          const currentMode = this.getAttribute('view-mode');
+          if (!currentMode || currentMode === 'auto') {
+            const desiredMode: ViewMode = width < 680 ? 'single' : 'double';
+            if (this.viewer.getViewMode() !== desiredMode) {
+              this.viewer.setViewMode(desiredMode);
+            }
+          }
+          this.viewer.getCanvas().fitToContainer();
+        }
+      }
+    });
+    this.resizeObserver.observe(this);
+  }
+
+  private setupMutationObserver(): void {
+    if (typeof MutationObserver === 'undefined') return;
+    this.mutationObserver = new MutationObserver(() => {
+      if (!this.hasAttribute('text') && !this.hasAttribute('src') && this.viewer) {
+        const scriptEl = this.querySelector ? this.querySelector('script[type="text/plain"], pre') : null;
+        if (scriptEl && scriptEl.textContent) {
+          const content = scriptEl.textContent.trim();
+          const engine = this.engine;
+          const splitMode = this.splitMode;
+          const parsed = parseBook(content, { engine, splitContinuous: splitMode === 'lossless' });
+          if (this.bookTitle) parsed.title = this.bookTitle;
+          if (this.author) parsed.author = this.author;
+          this.viewer.setBook(parsed);
+        }
+      }
+    });
+    this.mutationObserver.observe(this, { childList: true, characterData: true, subtree: true });
   }
 
   disconnectedCallback() {
+    if (typeof this.removeEventListener === 'function') {
+      this.removeEventListener('keydown', this.handleKeyDown);
+    }
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+      this.resizeObserver = null;
+    }
+    if (this.mutationObserver) {
+      this.mutationObserver.disconnect();
+      this.mutationObserver = null;
+    }
     if (this.viewer) {
       this.viewer.destroy();
       this.viewer = null;
       this.isInitialized = false;
+    }
+    this.ready = new Promise<MinecraftBookViewer>((resolve, reject) => {
+      this.readyResolve = resolve;
+      this.readyReject = reject;
+    });
+    if (this.internalRoot && typeof this.internalRoot.remove === 'function') {
+      this.internalRoot.remove();
+      this.internalRoot = null;
     }
   }
 
@@ -138,7 +314,11 @@ export class MinecraftBookElement extends BaseElement {
     if (!this.isInitialized || oldValue === newValue || !this.viewer) return;
 
     if (name === 'src' && newValue) {
-      await this.viewer.loadFromUrl(newValue);
+      try {
+        await this.viewer.loadFromUrl(newValue);
+      } catch (err) {
+        this.dispatchCustomEvent('error', { error: err, src: newValue });
+      }
     } else if (name === 'text' && newValue !== null) {
       const splitMode = this.getAttribute('split-mode') || 'lossless';
       if (splitMode === 'lossless') {
@@ -160,15 +340,156 @@ export class MinecraftBookElement extends BaseElement {
       this.viewer.setBookmarkColor(newValue || undefined);
     } else if (name === 'theme' && newValue) {
       this.viewer.setTheme(newValue as any);
-    } else if (name === 'appearance' && (newValue === 'java' || newValue === 'bedrock')) {
-      this.viewer.setAppearance(newValue as BookAppearance);
-    } else if (name === 'engine' && (newValue === 'java' || newValue === 'bedrock')) {
-      this.viewer.setEngine(newValue as BookEngine);
+    } else if (name === 'sound') {
+      soundManager.setEnabled(newValue !== null && newValue !== 'false');
+    } else if (name === 'controls') {
+      this.viewer.setControlsVisible(newValue !== null && newValue !== 'false');
+    } else if (name === 'book-title') {
+      const currentBook = this.viewer.getBook();
+      if (currentBook) {
+        currentBook.title = newValue || '';
+      }
+      this.updateAriaSemantics();
+    } else if (name === 'author') {
+      const currentBook = this.viewer.getBook();
+      if (currentBook) {
+        currentBook.author = newValue || '';
+      }
+      this.updateAriaSemantics();
+    } else if (name === 'split-mode') {
+      if (this.hasAttribute('text')) {
+        const rawText = this.getAttribute('text') || '';
+        if (newValue === 'lossless') {
+          this.viewer.setText(rawText, this.getAttribute('book-title') || undefined, this.getAttribute('author') || undefined);
+        } else {
+          this.viewer.setBook(parseBook(rawText));
+        }
+      }
+    } else if (name === 'appearance') {
+      const app = (newValue === 'bedrock' ? 'bedrock' : 'java') as BookAppearance;
+      this.viewer.setAppearance(app);
+    } else if (name === 'engine') {
+      const eng = (newValue === 'bedrock' ? 'bedrock' : 'java') as BookEngine;
+      this.viewer.setEngine(eng);
     } else if (name === 'high-contrast') {
       this.viewer.setHighContrast(newValue !== null && newValue !== 'false');
     } else if (name === 'scale' && newValue) {
       this.viewer.getCanvas().setScale(parseInt(newValue, 10));
     }
+  }
+
+  // Properties
+
+  get src(): string {
+    return this.getAttribute('src') || '';
+  }
+
+  set src(val: string) {
+    if (val) this.setAttribute('src', val);
+    else this.removeAttribute('src');
+  }
+
+  get text(): string {
+    return this.getAttribute('text') || '';
+  }
+
+  set text(val: string) {
+    if (val) this.setAttribute('text', val);
+    else this.removeAttribute('text');
+  }
+
+  get bookTitle(): string {
+    return this.getAttribute('book-title') || (this.viewer?.getBook()?.title ?? '');
+  }
+
+  set bookTitle(val: string) {
+    if (val) this.setAttribute('book-title', val);
+    else this.removeAttribute('book-title');
+    this.updateAriaSemantics();
+  }
+
+  get author(): string {
+    return this.getAttribute('author') || (this.viewer?.getBook()?.author ?? '');
+  }
+
+  set author(val: string) {
+    if (val) this.setAttribute('author', val);
+    else this.removeAttribute('author');
+    this.updateAriaSemantics();
+  }
+
+  get page(): number {
+    return this.viewer ? this.viewer.getCurrentPage() + 1 : parseInt(this.getAttribute('page') || '1', 10);
+  }
+
+  set page(val: number) {
+    this.setAttribute('page', String(val));
+    if (this.viewer) this.viewer.setPage(val - 1);
+  }
+
+  get totalPages(): number {
+    return this.viewer ? this.viewer.getTotalPages() : 0;
+  }
+
+  get total(): number {
+    return this.totalPages;
+  }
+
+  get theme(): string {
+    return this.getAttribute('theme') || 'dark';
+  }
+
+  set theme(val: string) {
+    this.setAttribute('theme', val);
+    if (this.viewer) this.viewer.setTheme(val as any);
+  }
+
+  get controls(): boolean {
+    return this.getAttribute('controls') !== 'false';
+  }
+
+  set controls(val: boolean) {
+    this.setAttribute('controls', val ? 'true' : 'false');
+    if (this.viewer) this.viewer.setControlsVisible(val);
+  }
+
+  get sound(): boolean {
+    return soundManager.isEnabled();
+  }
+
+  set sound(val: boolean) {
+    this.setAttribute('sound', val ? 'true' : 'false');
+    soundManager.setEnabled(val);
+  }
+
+  get scale(): number | undefined {
+    const s = this.getAttribute('scale');
+    return s ? parseInt(s, 10) : (this.viewer?.getCanvas()?.getScale() ?? undefined);
+  }
+
+  set scale(val: number | undefined) {
+    if (val !== undefined) {
+      this.setAttribute('scale', String(val));
+      this.viewer?.getCanvas()?.setScale(val);
+    } else {
+      this.removeAttribute('scale');
+    }
+  }
+
+  get splitMode(): 'lossless' | 'standard' {
+    return (this.getAttribute('split-mode') as any) || 'lossless';
+  }
+
+  set splitMode(val: 'lossless' | 'standard') {
+    this.setAttribute('split-mode', val);
+  }
+
+  get basePath(): string {
+    return this.getAttribute('base-path') || './assets';
+  }
+
+  set basePath(val: string) {
+    this.setAttribute('base-path', val);
   }
 
   get appearance(): BookAppearance {
@@ -190,7 +511,7 @@ export class MinecraftBookElement extends BaseElement {
   }
 
   get highContrast(): boolean {
-    return this.viewer ? this.viewer.isHighContrast() : this.hasAttribute('high-contrast');
+    return this.viewer ? this.viewer.isHighContrast() : (this.hasAttribute('high-contrast') && this.getAttribute('high-contrast') !== 'false');
   }
 
   set highContrast(val: boolean) {
@@ -205,7 +526,7 @@ export class MinecraftBookElement extends BaseElement {
   get persistProgress(): boolean {
     return this.viewer
       ? this.viewer.getPageMemoryManager().isEnabled()
-      : typeof this.hasAttribute === 'function' && this.hasAttribute('persist-progress');
+      : typeof this.hasAttribute === 'function' && this.hasAttribute('persist-progress') && this.getAttribute('persist-progress') !== 'false';
   }
 
   set persistProgress(val: boolean) {
@@ -217,35 +538,6 @@ export class MinecraftBookElement extends BaseElement {
       }
     }
     if (this.viewer) this.viewer.setPersistReadingProgress(val);
-  }
-
-  public setText(text: string, title?: string, author?: string): void {
-    if (!this.viewer) return;
-    this.viewer.setText(text, title, author);
-  }
-
-  public resetProgress(): void {
-    if (this.viewer) {
-      this.viewer.clearReadingProgress();
-    }
-  }
-
-  public setBook(book: MinecraftBook | string): void {
-    if (!this.viewer) return;
-    if (typeof book === 'string') {
-      const parsed = parseBook(book);
-      if (parsed) this.viewer.setBook(parsed);
-    } else {
-      this.viewer.setBook(book);
-    }
-  }
-
-  public nextPage(): boolean {
-    return this.viewer ? this.viewer.nextPage() : false;
-  }
-
-  public prevPage(): boolean {
-    return this.viewer ? this.viewer.prevPage() : false;
   }
 
   get viewMode(): ViewMode {
@@ -271,7 +563,7 @@ export class MinecraftBookElement extends BaseElement {
   }
 
   get bookmark(): boolean {
-    return this.viewer ? this.viewer.isBookmarkVisible() : this.hasAttribute('bookmark');
+    return this.viewer ? this.viewer.isBookmarkVisible() : (this.hasAttribute('bookmark') && this.getAttribute('bookmark') !== 'false');
   }
 
   set bookmark(val: boolean) {
@@ -294,6 +586,94 @@ export class MinecraftBookElement extends BaseElement {
       this.removeAttribute('bookmark-color');
     }
     if (this.viewer) this.viewer.setBookmarkColor(val);
+  }
+
+  get shadow(): boolean {
+    return this.hasAttribute('shadow') && this.getAttribute('shadow') !== 'false';
+  }
+
+  set shadow(val: boolean) {
+    if (val) {
+      this.setAttribute('shadow', '');
+    } else {
+      this.removeAttribute('shadow');
+    }
+  }
+
+  // Public Methods
+
+  public whenReady(): Promise<MinecraftBookViewer> {
+    return this.ready;
+  }
+
+  public setText(text: string, title?: string, author?: string): void {
+    if (!this.viewer) return;
+    this.viewer.setText(text, title, author);
+    this.updateAriaSemantics();
+  }
+
+  public resetProgress(): void {
+    if (this.viewer) {
+      this.viewer.clearReadingProgress();
+    }
+  }
+
+  public setBook(book: MinecraftBook | string): void {
+    if (!this.viewer) return;
+    if (typeof book === 'string') {
+      const parsed = parseBook(book);
+      if (parsed) this.viewer.setBook(parsed);
+    } else {
+      this.viewer.setBook(book);
+    }
+    this.updateAriaSemantics();
+  }
+
+  public getBook(): MinecraftBook | null {
+    return this.viewer ? this.viewer.getBook() : null;
+  }
+
+  public nextPage(): boolean {
+    return this.viewer ? this.viewer.nextPage() : false;
+  }
+
+  public prevPage(): boolean {
+    return this.viewer ? this.viewer.prevPage() : false;
+  }
+
+  public firstPage(): boolean {
+    if (!this.viewer) return false;
+    this.viewer.setPage(0);
+    return true;
+  }
+
+  public lastPage(): boolean {
+    if (!this.viewer) return false;
+    this.viewer.setPage(Math.max(0, this.viewer.getTotalPages() - 1));
+    return true;
+  }
+
+  public zoomIn(): void {
+    if (!this.viewer) return;
+    const canvas = this.viewer.getCanvas();
+    const current = canvas.getScale();
+    const maxFitting = canvas.getMaxFittingScale();
+    if (current < maxFitting) {
+      canvas.setScale(current + 1);
+    }
+  }
+
+  public zoomOut(): void {
+    if (!this.viewer) return;
+    const canvas = this.viewer.getCanvas();
+    const current = canvas.getScale();
+    if (current > 1) {
+      canvas.setScale(current - 1);
+    }
+  }
+
+  public toggleSound(): boolean {
+    return soundManager.toggle();
   }
 
   public setViewMode(mode: ViewMode): void {
@@ -326,11 +706,9 @@ export class MinecraftBookElement extends BaseElement {
     if (!this.viewer) return;
     await this.viewer.exportCurrentPage(options);
     const page = options?.pageIndex ?? this.viewer.getCurrentPage();
-    this.dispatchEvent(
-      new CustomEvent('pageexport', {
-        detail: { page: page + 1, dataUrl: this.getPageDataUrl(page) },
-      })
-    );
+    const dataUrl = this.getPageDataUrl(page);
+    this.dispatchCustomEvent('pageexport', { page: page + 1, dataUrl });
+    this.dispatchCustomEvent('page-export', { page: page + 1, dataUrl });
   }
 
   public getPageDataUrl(pageIndex?: number): string {

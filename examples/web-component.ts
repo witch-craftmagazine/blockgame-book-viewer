@@ -226,8 +226,8 @@ fit perfectly in bounds.§r`
   }
 };
 
-if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
-  window.addEventListener('DOMContentLoaded', () => {
+function initConfigurator() {
+  if (typeof document === 'undefined' || typeof document.getElementById !== 'function') return;
   const bookEl = document.getElementById('preview-book') as MinecraftBookElement | null;
   const codeSnippet = document.getElementById('code-snippet');
   const copyBtn = document.getElementById('btn-copy-code');
@@ -299,12 +299,14 @@ if (typeof window !== 'undefined' && typeof window.addEventListener === 'functio
   appearanceSelect?.addEventListener('change', () => {
     const val = appearanceSelect.value as any;
     bookEl.setAttribute('appearance', val);
+    bookEl.appearance = val;
     updateCodeSnippet();
   });
 
   engineSelect?.addEventListener('change', () => {
     const val = engineSelect.value as any;
     bookEl.setAttribute('engine', val);
+    bookEl.engine = val;
     updateCodeSnippet();
   });
 
@@ -363,6 +365,18 @@ if (typeof window !== 'undefined' && typeof window.addEventListener === 'functio
     if (sample) {
       bookEl.setBook(sample);
     }
+    if (currentSampleKey === 'bedrock') {
+      if (appearanceSelect) appearanceSelect.value = 'bedrock';
+      bookEl.setAttribute('appearance', 'bedrock');
+      bookEl.appearance = 'bedrock';
+      if (engineSelect) engineSelect.value = 'bedrock';
+      bookEl.setAttribute('engine', 'bedrock');
+      bookEl.engine = 'bedrock';
+    } else if (currentSampleKey === 'continuous') {
+      if (viewModeSelect) viewModeSelect.value = 'scroll-double';
+      bookEl.setAttribute('view-mode', 'scroll-double');
+      bookEl.viewMode = 'scroll-double';
+    }
     updateCodeSnippet();
   });
 
@@ -414,5 +428,12 @@ if (typeof window !== 'undefined' && typeof window.addEventListener === 'functio
   });
 
   updateCodeSnippet();
-});
+}
+
+if (typeof window !== 'undefined') {
+  if (typeof document !== 'undefined' && document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', initConfigurator);
+  } else {
+    initConfigurator();
+  }
 }

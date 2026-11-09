@@ -167,15 +167,8 @@ minecraft-book {
   justify-content: center;
   flex-shrink: 0;
   box-sizing: border-box;
-  border-radius: 2px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-  background-color: rgba(30, 24, 18, 0.2);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.mc-book-scroll-page:hover,
-.mc-book-scroll-spread:hover {
-  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.55);
+  background: transparent;
+  box-shadow: none;
 }
 
 .mc-book-scroll-page canvas,

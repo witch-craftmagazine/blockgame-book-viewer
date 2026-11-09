@@ -24,17 +24,56 @@ The simplest way to embed a book is using the `<minecraft-book>` custom element.
 </minecraft-book>
 ```
 
-### Supported Attributes:
-| Attribute | Type | Default | Description |
-| :--- | :--- | :--- | :--- |
-| `src` | string | `undefined` | URL to a `.stendhal`, `.json`, or `.txt` file |
-| `view-mode` | `'single' \| 'double' \| 'auto'` | `'auto'` | Page display layout |
-| `scale` | number | `3` | Integer pixel-scaling multiplier |
-| `sound` | `'true' \| 'false'` | `'true'` | Enable or disable page-flip sound effects |
-| `controls` | `'true' \| 'false'` | `'true'` | Show or hide the bottom control toolbar |
-| `theme` | `'dark' \| 'light' \| 'transparent'` | `'dark'` | Visual theme of the container |
-| `page` | number | `1` | Initial page to open (1-based index) |
-| `base-path` | string | `'./assets'` | Base URL where textures and fonts are located |
+### Supported Attributes & Properties:
+| Attribute | Property | Type | Default | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `src` | `.src` | `string` | `''` | URL to a `.stendhal`, `.json`, or raw book file |
+| `text` | `.text` | `string` | `''` | Raw continuous text content to paginate automatically |
+| `book-title` | `.bookTitle` | `string` | `''` | Book title metadata |
+| `author` | `.author` | `string` | `''` | Author metadata |
+| `view-mode` | `.viewMode` | `'single' \| 'double' \| 'scroll-single' \| 'scroll-double' \| 'auto'` | `'auto'` | Page display layout |
+| `appearance` | `.appearance` | `'java' \| 'bedrock'` | `'java'` | Book GUI appearance |
+| `engine` | `.engine` | `'java' \| 'bedrock'` | `'java'` | Text width engine (114px Java vs 122px Bedrock) |
+| `high-contrast`| `.highContrast`| `boolean` | `false` | Bedrock high-contrast reading mode |
+| `cover-color` | `.coverColor` | `string` | `undefined` | 16 Minecraft dye cover tint colors |
+| `bookmark` | `.bookmark` | `boolean` | `false` | Silk ribbon bookmark |
+| `bookmark-color`| `.bookmarkColor`| `string` | `undefined` | Custom ribbon color hex |
+| `scale` | `.scale` | `number` | Auto | Integer pixel-scaling multiplier |
+| `sound` | `.sound` | `boolean` | `true` | Enable or disable page-turn sound effects |
+| `controls` | `.controls` | `boolean` | `true` | Show or hide the bottom control toolbar |
+| `theme` | `.theme` | `'dark' \| 'light' \| 'parchment' \| 'minimal' \| 'transparent'` | `'dark'` | Visual theme |
+| `page` | `.page` | `number` | `1` | Current active page (1-based index) |
+| `persist-progress` | `.persistProgress` | `boolean` | `false` | Opt-in localStorage reading progress save |
+| `split-mode` | `.splitMode` | `'lossless' \| 'standard'` | `'lossless'` | Lossless split mode |
+| `base-path` | `.basePath` | `string` | `'./assets'` | Base URL where textures and fonts are located |
+| `shadow` | `.shadow` | `boolean` | `false` | Open Shadow DOM isolation with `<slot>` |
+
+### Custom Events:
+Dispatched with `{ bubbles: true, composed: true }`:
+- `pagechange` / `page-change`: detail `{ page: number, total: number }`
+- `bookload` / `book-load`: detail `{ book: MinecraftBook }`
+- `pageexport` / `page-export`: detail `{ page: number, dataUrl: string }`
+- `close`: fired when book close is requested
+- `ready`: detail `{ viewer: MinecraftBookViewer }` fired when viewer is initialized
+- `error`: detail `{ error: Error, src?: string }` fired when URL fetch fails
+
+### Public JavaScript Methods:
+- `el.whenReady(): Promise<MinecraftBookViewer>`
+- `el.nextPage(): boolean`
+- `el.prevPage(): boolean`
+- `el.firstPage(): boolean`
+- `el.lastPage(): boolean`
+- `el.goToPage(pageOneIndexed: number): void`
+- `el.scrollToPage(pageNumber: number, options?)`
+- `el.setText(text, title?, author?)`
+- `el.setBook(book)`
+- `el.getBook(): MinecraftBook | null`
+- `el.zoomIn()` / `el.zoomOut()`
+- `el.toggleSound(): boolean`
+- `el.exportCurrentPage(options?)`
+- `el.getPageDataUrl(pageIndex?): string`
+- `el.getPageBlob(pageIndex?): Promise<Blob | null>`
+- `el.resetProgress()`
 
 ---
 
