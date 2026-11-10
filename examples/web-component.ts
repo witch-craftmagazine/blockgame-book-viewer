@@ -31,10 +31,7 @@ attributes live!§r`,
   java | bedrock
 • §9engine§0:
   java (114px) |
-  bedrock (122px)
-• §5theme§0:
-  transparent | dark |
-  light`,
+  bedrock (122px)`,
 
       `§5§lPersistence & API§r
 
@@ -203,7 +200,6 @@ function initConfigurator() {
   const viewModeSelect = document.getElementById('cfg-view-mode') as HTMLSelectElement | null;
   const appearanceSelect = document.getElementById('cfg-appearance') as HTMLSelectElement | null;
   const engineSelect = document.getElementById('cfg-engine') as HTMLSelectElement | null;
-  const themeSelect = document.getElementById('cfg-theme') as HTMLSelectElement | null;
   const persistProgressCheck = document.getElementById('cfg-persist-progress') as HTMLInputElement | null;
   const sampleSelect = document.getElementById('cfg-sample') as HTMLSelectElement | null;
 
@@ -222,14 +218,12 @@ function initConfigurator() {
     const vm = viewModeSelect?.value || 'double';
     const app = appearanceSelect?.value || 'java';
     const eng = engineSelect?.value || 'java';
-    const thm = themeSelect?.value || 'transparent';
     const persist = persistProgressCheck?.checked;
 
     const lines: string[] = ['<blockgame-book'];
     lines.push(`  view-mode="${vm}"`);
     if (app !== 'java') lines.push(`  appearance="${app}"`);
     if (eng !== 'java') lines.push(`  engine="${eng}"`);
-    if (thm !== 'transparent') lines.push(`  theme="${thm}"`);
     if (persist) lines.push('  persist-progress');
     lines.push('  controls="true"');
     lines.push('  base-path="../assets">');
@@ -258,13 +252,6 @@ function initConfigurator() {
     const val = engineSelect.value as any;
     bookEl.setAttribute('engine', val);
     bookEl.engine = val;
-    updateCodeSnippet();
-  });
-
-  themeSelect?.addEventListener('change', () => {
-    const val = themeSelect.value;
-    bookEl.setAttribute('theme', val);
-    bookEl.theme = val;
     updateCodeSnippet();
   });
 

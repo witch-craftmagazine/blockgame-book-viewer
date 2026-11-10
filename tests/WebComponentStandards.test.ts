@@ -224,10 +224,10 @@ describe('Web Component Standards Compliance (<blockgame-book>)', () => {
     expect(el.getAttribute('author')).toBe('Explorer');
     expect(el.author).toBe('Explorer');
 
-    // theme
+    // theme: only `transparent` exists; legacy values are ignored
     el.theme = 'parchment';
-    expect(el.getAttribute('theme')).toBe('parchment');
-    expect(el.theme).toBe('parchment');
+    expect(el.hasAttribute('theme')).toBe(false);
+    expect(el.theme).toBe('transparent');
 
     // controls
     el.controls = false;
@@ -399,15 +399,15 @@ pages:
     expect(el.bookTitle).toBe('Preserved Book');
   });
 
-  it('handles dynamic changes to theme, sound, and controls attributes at runtime', async () => {
+  it('handles dynamic changes to sound and controls attributes at runtime and ignores theme', async () => {
     const { el } = setupElement();
     el.text = 'Sample Text';
 
     await el.connectedCallback();
 
-    // Update theme
+    // A stray legacy theme attribute never changes the theme
     el.setAttribute('theme', 'parchment');
-    expect(el.theme).toBe('parchment');
+    expect(el.theme).toBe('transparent');
 
     // Update sound
     el.setAttribute('sound', 'false');
@@ -543,7 +543,7 @@ pages:
     }
   });
 
-  it('correctly toggles high-contrast in setTheme when transitioning between high-contrast and normal themes', async () => {
+  it('does not treat a legacy theme="high-contrast" attribute as high contrast', async () => {
     const { el } = setupElement();
     el.text = 'Theme Test Book';
     await el.connectedCallback();
@@ -551,16 +551,8 @@ pages:
     const viewer = el.getViewer();
     expect(viewer).toBeDefined();
 
-    // Set to high-contrast theme
     el.setAttribute('theme', 'high-contrast');
-    expect(viewer?.isHighContrast()).toBe(true);
-
-    // Switch away to transparent
-    el.setAttribute('theme', 'transparent');
     expect(viewer?.isHighContrast()).toBe(false);
-
-    // Switch to dark
-    el.setAttribute('theme', 'dark');
-    expect(viewer?.isHighContrast()).toBe(false);
+    expect(el.theme).toBe('transparent');
   });
 });

@@ -171,7 +171,6 @@ describe('Modular Library API & Components', () => {
 
   it('instantiates MinecraftBookViewer with options and loads arbitrary book', () => {
     const viewer = new MinecraftBookViewer(mockContainer, {
-      theme: 'dark',
       defaultViewMode: 'double',
       book: {
         title: 'Custom Tome',

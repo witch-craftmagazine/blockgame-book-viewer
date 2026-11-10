@@ -54,7 +54,8 @@ This roadmap outlines the technical architecture, milestones, and implementation
 - **Bedrock High-Contrast Theme** *(experimental)*:
   - Authentic high-contrast slate background texture (`#1C1C24`), high-contrast pure white text (`#FFFFFF`), and yellow navigational accents (`#FFFF55`).
   - Canvas rendering is active via the `highContrast: true` option / `high-contrast` attribute **only when `experimental` is also set**. Default text (`#000000`) is drawn white so it stays readable on the slate.
-  - Container styling responds to `theme="high-contrast"` and the `@media (prefers-contrast: more)` query without the flag.
+  - Container styling responds to the `@media (prefers-contrast: more)` query without the flag.
+  - The `theme` attribute and `theme` viewer option were removed; the reader is always `transparent` and inherits the host page's colors through CSS variables (`--ink`, `--plate`, `--gold`, and so on). `theme` / `setTheme()` remain as deprecated no-ops.
 - *(Note on MC-61489: Evaluated and confirmed not applicable — MC-61489 was an in-game OpenGL/LWJGL projection matrix bug in vanilla Minecraft's `BookScreen.java`; HTML5 canvas rendering uses CSS pixel ratio scaling and is unaffected).*
 
 ### Priority 5: Format Expansion & Interchange - [Completed in v1.5]

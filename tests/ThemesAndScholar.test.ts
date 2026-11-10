@@ -202,10 +202,10 @@ describe('Themes, Accessibility & Scholar Extensions (v1.4 & v1.6)', () => {
       expect(canvas.isHighContrast()).toBe(true);
     });
 
-    it('applies high-contrast theme class to viewer container in MinecraftBookViewer', async () => {
+    it('applies the high-contrast container class in MinecraftBookViewer when experimental', async () => {
       const viewer = new MinecraftBookViewer(mockContainer, {
         book: testBook,
-        theme: 'high-contrast',
+        experimental: true,
         highContrast: true,
       });
       await viewer.init();
@@ -488,13 +488,17 @@ describe('Themes, Accessibility & Scholar Extensions (v1.4 & v1.6)', () => {
       expect(mockContainer.classList.contains('mc-theme-high-contrast')).toBe(true);
     });
 
-    it('viewer: the high-contrast theme class survives without experimental', async () => {
-      const viewer = new BlockgameBookViewer(mockContainer, { book: testBook, theme: 'dark' });
+    it('viewer: always uses the transparent theme and ignores legacy theme values', async () => {
+      const viewer = new BlockgameBookViewer(mockContainer, { book: testBook, theme: 'dark' as any });
       await viewer.init();
+      expect(mockContainer.classList.contains('mc-theme-transparent')).toBe(true);
+      expect(mockContainer.classList.contains('mc-theme-dark')).toBe(false);
+
+      // Deprecated no-op: no class swap and no high-contrast side effect.
       viewer.setTheme('high-contrast');
-      expect(mockContainer.classList.contains('mc-theme-high-contrast')).toBe(true);
-      viewer.setTheme('dark');
+      expect(mockContainer.classList.contains('mc-theme-transparent')).toBe(true);
       expect(mockContainer.classList.contains('mc-theme-high-contrast')).toBe(false);
+      expect(viewer.isHighContrast()).toBe(false);
     });
 
     it('<blockgame-book> maps the experimental attribute and property to the viewer', async () => {

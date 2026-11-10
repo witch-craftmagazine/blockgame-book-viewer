@@ -191,12 +191,12 @@ describe('Web Component Live Preview & Configurator Options', () => {
     expect(SAMPLES.scholar).toBeUndefined();
   });
 
-  it('guide sample documents only core attributes (no Scholar, Braille, or phantom classic theme)', () => {
+  it('guide sample documents only core attributes (no Scholar, Braille, or any theme)', () => {
     const text = SAMPLES.guide.pages.join('\n');
-    for (const core of ['view-mode', 'appearance', 'engine', 'theme', 'persist-progress', 'setBook', 'scrollToPage']) {
+    for (const core of ['view-mode', 'appearance', 'engine', 'persist-progress', 'setBook', 'scrollToPage']) {
       expect(text).toContain(core);
     }
-    for (const gone of ['cover-color', 'bookmark', 'Scholar', 'Braille', 'classic', 'high-contrast']) {
+    for (const gone of ['cover-color', 'bookmark', 'Scholar', 'Braille', 'classic', 'high-contrast', 'theme']) {
       expect(text).not.toContain(gone);
     }
   });
@@ -220,10 +220,10 @@ describe('Web Component Live Preview & Configurator Options', () => {
       }
     });
 
-    it('offers only transparent, dark, and light themes and no scholar sample', () => {
-      const themeSelect = html.match(/<select id="cfg-theme"[\s\S]*?<\/select>/)![0];
-      const values = [...themeSelect.matchAll(/<option value="([^"]+)"/g)].map((m) => m[1]);
-      expect(values).toEqual(['transparent', 'dark', 'light']);
+    it('has no theme control or theme attribute and no scholar sample', () => {
+      expect(html).not.toContain('cfg-theme');
+      // `\s` excludes the page's own `[data-theme="dark"]` CSS selectors.
+      expect(html).not.toMatch(/\stheme="/);
 
       const sampleSelect = html.match(/<select id="cfg-sample"[\s\S]*?<\/select>/)![0];
       const samples = [...sampleSelect.matchAll(/<option value="([^"]+)"/g)].map((m) => m[1]);
@@ -231,7 +231,7 @@ describe('Web Component Live Preview & Configurator Options', () => {
     });
 
     it('keeps the production controls and has no Scholar or Braille copy', () => {
-      for (const id of ['cfg-view-mode', 'cfg-appearance', 'cfg-engine', 'cfg-theme', 'cfg-persist-progress', 'cfg-sample']) {
+      for (const id of ['cfg-view-mode', 'cfg-appearance', 'cfg-engine', 'cfg-persist-progress', 'cfg-sample']) {
         expect(html).toContain(`id="${id}"`);
       }
       expect(html).not.toMatch(/braille|scholar|dye|silk/i);
@@ -309,8 +309,9 @@ describe('Web Component Live Preview & Configurator Options', () => {
     bookEl.setAttribute('high-contrast', 'true');
     expect(bookEl.highContrast).toBe(true);
 
-    // 7. Update theme to dark
+    // 7. A legacy theme attribute is ignored
     bookEl.setAttribute('theme', 'dark');
+    expect(bookEl.theme).toBe('transparent');
 
     // 8. Load continuous sample and test scrollToPage
     bookEl.setBook(SAMPLES.continuous);

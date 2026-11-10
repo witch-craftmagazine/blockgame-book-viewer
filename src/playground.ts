@@ -49,7 +49,6 @@ window.addEventListener('DOMContentLoaded', async () => {
   viewer = new BlockgameBookViewer(container, {
     book: welcomeBook,
     baseAssetPath: './assets',
-    theme: 'transparent',
     defaultViewMode: 'single', // Single-page showcase
     controls: false, // Hide toolbar for main showcase
     plugins: [witchcraftPlugin],

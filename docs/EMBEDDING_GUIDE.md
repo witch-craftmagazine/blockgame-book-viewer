@@ -42,7 +42,6 @@ The simplest way to embed a book is using the `<blockgame-book>` custom element 
 | `scale` | `.scale` | `number` | Auto | Integer pixel-scaling multiplier |
 | `sound` | `.sound` | `boolean` | `true` | Enable or disable page-turn sound effects |
 | `controls` | `.controls` | `boolean` | `true` | Show or hide the bottom control toolbar |
-| `theme` | `.theme` | `'dark' \| 'light' \| 'parchment' \| 'minimal' \| 'transparent'` | `'dark'` | Visual theme |
 | `page` | `.page` | `number` | `1` | Current active page (1-based index) |
 | `persist-progress` | `.persistProgress` | `boolean` | `false` | Opt-in localStorage reading progress save |
 | `split-mode` | `.splitMode` | `'lossless' \| 'standard'` | `'lossless'` | Lossless split mode |
@@ -98,7 +97,6 @@ export function BookViewerComponent({ bookData }) {
     viewerRef.current = new BlockgameBookViewer(containerRef.current, {
       book: bookData,
       viewMode: 'double',
-      theme: 'dark',
       controls: true,
       onPageChange: (current, total) => {
         console.log(`Current page: ${current + 1}/${total}`);

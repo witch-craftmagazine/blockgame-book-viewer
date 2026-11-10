@@ -33,7 +33,6 @@ export class BlockgameBookElement extends BaseElement {
       'scale',
       'sound',
       'controls',
-      'theme',
       'page',
       'base-path',
       'appearance',
@@ -139,7 +138,6 @@ export class BlockgameBookElement extends BaseElement {
     const scaleAttr = this.getAttribute('scale');
     const scale = scaleAttr ? parseInt(scaleAttr, 10) : undefined;
     const showControls = this.getAttribute('controls') !== 'false';
-    const theme = (this.getAttribute('theme') || 'dark') as any;
     const appearance = (this.getAttribute('appearance') || 'java') as BookAppearance;
     const engine = (this.getAttribute('engine') || 'java') as BookEngine;
     const experimental = this.hasAttribute('experimental') && this.getAttribute('experimental') !== 'false';
@@ -174,7 +172,6 @@ export class BlockgameBookElement extends BaseElement {
         persistReadingProgress: persistProgress,
         scale,
         controls: showControls,
-        theme,
         onClose: () => {
           this.dispatchCustomEvent('close');
         },
@@ -404,8 +401,6 @@ export class BlockgameBookElement extends BaseElement {
       this.viewer.setShowBookmark(newValue !== null && newValue !== 'false');
     } else if (name === 'bookmark-color') {
       this.viewer.setBookmarkColor(newValue || undefined);
-    } else if (name === 'theme' && newValue) {
-      this.viewer.setTheme(newValue as any);
     } else if (name === 'sound') {
       soundManager.setEnabled(newValue !== null && newValue !== 'false');
     } else if (name === 'controls') {
@@ -503,14 +498,13 @@ export class BlockgameBookElement extends BaseElement {
     return this.totalPages;
   }
 
-  get theme(): string {
-    return this.getAttribute('theme') || 'dark';
+  /** Always `'transparent'`; the only supported theme. */
+  get theme(): 'transparent' {
+    return 'transparent';
   }
 
-  set theme(val: string) {
-    this.setAttribute('theme', val);
-    if (this.viewer) this.viewer.setTheme(val as any);
-  }
+  /** @deprecated Ignored. Kept so existing callers keep compiling. */
+  set theme(_val: string) {}
 
   get controls(): boolean {
     return this.getAttribute('controls') !== 'false';
@@ -826,6 +820,9 @@ if (typeof window !== 'undefined') {
     customElements.define('blockgame-book', BlockgameBookElement);
   }
   if (!customElements.get('minecraft-book')) {
-    customElements.define('minecraft-book', BlockgameBookElement);
+    // A constructor can be registered under only one tag name, so the legacy
+    // tag needs its own subclass. Defining the same class twice throws
+    // NotSupportedError and aborts the module, which broke the configurator.
+    customElements.define('minecraft-book', class LegacyMinecraftBookElement extends BlockgameBookElement {});
   }
 }

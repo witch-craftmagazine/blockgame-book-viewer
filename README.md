@@ -69,7 +69,6 @@ Include the script and stylesheet, then use the `<blockgame-book>` tag:
 | `view-mode` | `'single'` \| `'double'` \| `'scroll-single'` \| `'scroll-double'` \| `'auto'` | `'auto'` | Flipbook modes or PDF-style continuous vertical scrolling |
 | `appearance` | `'java'` \| `'bedrock'` | `'java'` | Visual GUI texture shell ($512\times256$ Bedrock or Java parchment) |
 | `engine` | `'java'` \| `'bedrock'` | `'java'` | Layout engine: $114\text{px}$ Java vs $122\text{px}$ Bedrock line width and `§g`–`§u` palette |
-| `theme` | `'transparent'` \| `'dark'` \| `'light'` \| `'parchment'` \| `'high-contrast'` | `'dark'` | Reader container backdrop styling |
 | `experimental` | boolean (`experimental`) | `false` | Opt in to the experimental features below (`high-contrast`, `cover-color`, `bookmark`, `bookmark-color`). Ignored while off |
 | `high-contrast` | boolean (`high-contrast`) | `false` | **Experimental.** Bedrock high-contrast slate background with white text and yellow page indicators. With `appearance="java"` only the text colors change |
 | `cover-color` | 16 Minecraft dye colors (e.g. `'purple'`, `'cyan'`) | un-dyed | **Experimental.** Scholar-style dye tint around the book |
@@ -93,7 +92,7 @@ Scholar dye covers, the silk ribbon bookmark, and high contrast are off by defau
 </blockgame-book>
 ```
 
-Values set while `experimental` is off are remembered and take effect as soon as it is turned on. The `theme="high-contrast"` container styling is separate and does not need the flag, but the canvas high-contrast rendering still does. These features may change between releases.
+Values set while `experimental` is off are remembered and take effect as soon as it is turned on. The `@media (prefers-contrast: more)` container styling is separate and does not need the flag, but the canvas high-contrast rendering still does. These features may change between releases.
 
 ### 2. JavaScript / TypeScript API
 
@@ -111,7 +110,6 @@ import 'blockgame-book-viewer/style.css';
 const container = document.getElementById('book-container')!;
 const viewer = new BlockgameBookViewer(container, {
   viewMode: 'double', // 'single' | 'double' | 'auto'
-  theme: 'dark',      // 'dark' | 'light' | 'parchment' | 'minimal'
   controls: true,     // built-in toolbar
   book: {
     title: 'The Great Journey',

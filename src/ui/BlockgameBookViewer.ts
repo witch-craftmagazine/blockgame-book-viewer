@@ -40,7 +40,8 @@ export interface BlockgameBookViewerOptions {
   showBookmark?: boolean;
   bookmarkColor?: string;
   onClose?: () => void;
-  theme?: 'dark' | 'light' | 'parchment' | 'minimal' | 'transparent' | 'high-contrast';
+  /** @deprecated The viewer is always `transparent`; any value passed here is ignored. */
+  theme?: 'transparent';
   controls?: boolean | ViewerControlsOptions;
   scale?: number;
   plugins?: BookPlugin[];
@@ -161,9 +162,8 @@ export class BlockgameBookViewer {
   }
 
   private buildDOM(): void {
-    const theme = this.options.theme || 'dark';
-    this.container.classList.add('mc-book-viewer-root', `mc-theme-${theme}`);
-    if ((this.options.highContrast && this.options.experimental) || theme === 'high-contrast') {
+    this.container.classList.add('mc-book-viewer-root', 'mc-theme-transparent');
+    if (this.options.highContrast && this.options.experimental) {
       this.container.classList.add('mc-theme-high-contrast');
     }
 
@@ -498,13 +498,11 @@ export class BlockgameBookViewer {
   }
 
   /**
-   * The container class is shared by the `high-contrast` theme and the experimental
-   * high-contrast mode, so keep it when either one is active.
+   * The container class follows the experimental high-contrast mode: present only
+   * while both `highContrast` and `experimental` are on.
    */
   private syncHighContrastClass(): void {
-    const active =
-      (this.bookCanvas.isHighContrast() && this.bookCanvas.isExperimental()) ||
-      this.options.theme === 'high-contrast';
+    const active = this.bookCanvas.isHighContrast() && this.bookCanvas.isExperimental();
     if (active) {
       this.container.classList.add('mc-theme-high-contrast');
     } else {
@@ -540,17 +538,11 @@ export class BlockgameBookViewer {
     }
   }
 
-  public setTheme(theme: 'dark' | 'light' | 'parchment' | 'minimal' | 'transparent' | 'high-contrast'): void {
-    const oldTheme = this.options.theme || 'dark';
-    this.container.classList.remove(`mc-theme-${oldTheme}`);
-    this.options.theme = theme;
-    this.container.classList.add(`mc-theme-${theme}`);
-    if (theme === 'high-contrast') {
-      this.setHighContrast(true);
-    } else if (oldTheme === 'high-contrast') {
-      this.setHighContrast(false);
-    }
-  }
+  /**
+   * @deprecated The viewer only supports the `transparent` theme, so this does nothing.
+   * Kept so existing callers keep compiling.
+   */
+  public setTheme(_theme?: string): void {}
 
   public setControlsVisible(visible: boolean): void {
     if (this.toolbarElement) {
@@ -578,8 +570,8 @@ export class BlockgameBookViewer {
     removeEl(this.importModal?.getElement());
     removeEl(this.packModal?.getElement());
     removeEl(this.editorModal?.getElement());
-    if (this.options.theme && this.container.classList) {
-      this.container.classList.remove('mc-book-viewer-root', `mc-theme-${this.options.theme}`);
+    if (this.container.classList) {
+      this.container.classList.remove('mc-book-viewer-root', 'mc-theme-transparent');
     }
   }
 }
