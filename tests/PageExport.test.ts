@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { BookCanvas } from '../src/render/BookCanvas';
 import { MinecraftBookViewer, BlockgameBookViewer } from '../src/ui/BlockgameBookViewer';
 import { MinecraftBookElement, BlockgameBookElement } from '../src/component/blockgame-book';
@@ -6,6 +6,11 @@ import { MinecraftBookElement, BlockgameBookElement } from '../src/component/blo
 describe('Page Export & Mobile Share API', () => {
   let mockContainer: any;
   let mockCtx: any;
+
+  // navigator is getter-only on newer Node, so it is stubbed rather than assigned.
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
 
   beforeEach(() => {
     mockCtx = {
@@ -169,10 +174,10 @@ describe('Page Export & Mobile Share API', () => {
     const shareMock = vi.fn().mockResolvedValue(undefined);
     const canShareMock = vi.fn().mockReturnValue(true);
 
-    (globalThis as any).navigator = {
+    vi.stubGlobal('navigator', {
       share: shareMock,
       canShare: canShareMock,
-    };
+    });
 
     const viewer = new MinecraftBookViewer(mockContainer, {
       book: {
@@ -196,7 +201,7 @@ describe('Page Export & Mobile Share API', () => {
   });
 
   it('falls back to file download when navigator.share is unavailable', async () => {
-    (globalThis as any).navigator = {};
+    vi.stubGlobal('navigator', {});
 
     const viewer = new MinecraftBookViewer(mockContainer, {
       book: {
@@ -228,7 +233,7 @@ describe('Page Export & Mobile Share API', () => {
   });
 
   it('supports exportCurrentPage and dispatches pageexport event on MinecraftBookElement', async () => {
-    (globalThis as any).navigator = {};
+    vi.stubGlobal('navigator', {});
 
     const element = new MinecraftBookElement();
     (element as any).classList = {

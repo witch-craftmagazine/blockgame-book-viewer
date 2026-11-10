@@ -43,9 +43,10 @@ describe('Lithos Font Textures & Spacing Fidelity', () => {
     const l3 = page0Lines[2].spans.map(s => s.text).join('');
     expect(l3).toBe('     WITCH-CRAFT ');
     expect(l3.startsWith('     ')).toBe(true);
-    // Visual centering: 5 spaces * 4 = 20px left margin. Line width fits within 114px.
+    // Visual centering: this line is bold, so each space is 5px: 5 leading spaces = 25px
+    // left margin, plus the trailing space. Line width fits within 114px.
     expect(page0Lines[2].width).toBeLessThanOrEqual(114);
-    expect(page0Lines[2].width).toBe(99);
+    expect(page0Lines[2].width).toBe(105);
 
     // Line 4: MAGAZINE
     const l4 = page0Lines[3].spans.map(s => s.text).join('');
