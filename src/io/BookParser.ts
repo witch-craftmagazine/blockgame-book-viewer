@@ -1,98 +1,141 @@
 import { BlockgameBook, BookEngine } from '../engine/types';
-import { BLOCKGAME_COLORS, createDefaultStyle, parseFormattedText, StyleState } from '../engine/Formatting';
-
-function isDefaultStyle(style: StyleState): boolean {
-  const base = createDefaultStyle();
-  return (Object.keys(base) as (keyof StyleState)[]).every(k => style[k] === base[k]);
-}
+import { BLOCKGAME_COLORS } from '../engine/Formatting';
 import { splitTextLossless } from '../engine/LosslessSplit';
 import { parseSnbt, SnbtValue } from './Snbt';
 
+const NAMED_COLOR_CODES: Record<string, string> = {
+  black: '0', dark_blue: '1', dark_green: '2', dark_aqua: '3',
+  dark_red: '4', dark_purple: '5', gold: '6', gray: '7',
+  dark_gray: '8', blue: '9', green: 'a', aqua: 'b',
+  red: 'c', light_purple: 'd', yellow: 'e', white: 'f',
+};
+
+const FLAGS = ['bold', 'italic', 'underlined', 'strikethrough', 'obfuscated'] as const;
+const FLAG_CODES: Record<(typeof FLAGS)[number], string> = {
+  bold: '§l', italic: '§o', underlined: '§n', strikethrough: '§m', obfuscated: '§k',
+};
+
+/** Style as Minecraft resolves it: each property is inherited unless overridden. */
+interface ResolvedStyle {
+  color: string; // '' = default ink, otherwise a § colour code such as '§c' or '§x§f§f...'
+  bold: boolean;
+  italic: boolean;
+  underlined: boolean;
+  strikethrough: boolean;
+  obfuscated: boolean;
+}
+
+const BASE_STYLE: ResolvedStyle = {
+  color: '', bold: false, italic: false, underlined: false, strikethrough: false, obfuscated: false,
+};
+
+function colorToCode(value: unknown): string | null {
+  const color = String(value).toLowerCase();
+  for (const [code, hex] of Object.entries(BLOCKGAME_COLORS)) {
+    if (color === hex.toLowerCase()) return `§${code}`;
+  }
+  if (/^#[0-9a-f]{6}$/.test(color)) {
+    return '§x' + color.slice(1).split('').map(c => '§' + c).join('');
+  }
+  return color in NAMED_COLOR_CODES ? `§${NAMED_COLOR_CODES[color]}` : null;
+}
+
+function truthy(v: unknown): boolean {
+  return v === true || v === 1 || v === 'true';
+}
+
 /**
- * Converts a Minecraft JSON Text Component (or string) into a § formatted string.
+ * Resolves a text component into styled runs using Minecraft's inheritance rules:
+ *  - a compound's properties override those inherited from its parent;
+ *  - its `extra` children inherit from it;
+ *  - in a list, the FIRST element is the parent and every following element is
+ *    its child. Siblings after the first do not inherit from each other.
  */
-export function componentToFormattedString(component: any): string {
+function resolveRuns(component: any, inherited: ResolvedStyle, runs: { text: string; style: ResolvedStyle }[]): void {
   if (typeof component === 'string') {
-    // If it's a JSON string, try to parse it
     if ((component.startsWith('{') && component.endsWith('}')) || (component.startsWith('[') && component.endsWith(']'))) {
       try {
-        const parsed = JSON.parse(component);
-        return componentToFormattedString(parsed);
+        resolveRuns(JSON.parse(component), inherited, runs);
+        return;
       } catch {
-        return component;
+        // not JSON: plain text
       }
     }
-    return component;
+    if (component) runs.push({ text: component, style: inherited });
+    return;
   }
 
   if (Array.isArray(component)) {
-    // Sibling components in a list do not inherit each other's style, but §
-    // codes are stateful, so reset before any later sibling that does not
-    // begin with a colour (a colour code already clears the other styles).
-    let out = '';
-    component.forEach((c, i) => {
-      let part = componentToFormattedString(c);
-      if (i > 0 && !/^§[0-9a-fgjpqstux]/i.test(part)) {
-        const carried = createDefaultStyle();
-        parseFormattedText(out, carried);
-        if (!isDefaultStyle(carried)) part = '§r' + part;
-      }
-      out += part;
-    });
-    return out;
+    if (component.length === 0) return;
+    const [first, ...rest] = component;
+    // The first element is the parent, so its own style is what the rest inherit.
+    const parentStyle = styleOf(first, inherited);
+    resolveRuns(first, inherited, runs);
+    for (const child of rest) resolveRuns(child, parentStyle, runs);
+    return;
   }
 
   if (typeof component === 'object' && component !== null) {
-    let result = '';
-
-    // Apply color
-    if (component.color) {
-      const colorLower = String(component.color).toLowerCase();
-      let matchedCode = '';
-      for (const [code, hex] of Object.entries(BLOCKGAME_COLORS)) {
-        if (colorLower === hex.toLowerCase()) {
-          matchedCode = code;
-          break;
-        }
-      }
-      if (matchedCode) {
-        result += `§${matchedCode}`;
-      } else if (colorLower.startsWith('#') && colorLower.length === 7) {
-        // Hex color
-        const hex = colorLower.substring(1);
-        result += '§x' + hex.split('').map(c => '§' + c).join('');
-      } else {
-        // Named color mapping (e.g. "dark_red", "gold")
-        const namedColors: Record<string, string> = {
-          black: '0', dark_blue: '1', dark_green: '2', dark_aqua: '3',
-          dark_red: '4', dark_purple: '5', gold: '6', gray: '7',
-          dark_gray: '8', blue: '9', green: 'a', aqua: 'b',
-          red: 'c', light_purple: 'd', yellow: 'e', white: 'f',
-        };
-        if (colorLower in namedColors) {
-          result += `§${namedColors[colorLower]}`;
-        }
-      }
+    const style = styleOf(component, inherited);
+    if (component.text !== undefined && component.text !== '') {
+      runs.push({ text: String(component.text), style });
     }
-
-    if (component.bold) result += '§l';
-    if (component.italic) result += '§o';
-    if (component.underlined) result += '§n';
-    if (component.strikethrough) result += '§m';
-    if (component.obfuscated) result += '§k';
-
-    if (component.text) {
-      result += String(component.text);
+    if (Array.isArray(component.extra)) {
+      for (const child of component.extra) resolveRuns(child, style, runs);
     }
-
-    if (component.extra && Array.isArray(component.extra)) {
-      result += component.extra.map((e: any) => componentToFormattedString(e)).join('');
-    }
-
-    return result;
+    return;
   }
 
-  return String(component ?? '');
+  if (component !== undefined && component !== null) {
+    runs.push({ text: String(component), style: inherited });
+  }
+}
+
+/** The style a component establishes for itself and its children. */
+function styleOf(component: any, inherited: ResolvedStyle): ResolvedStyle {
+  if (typeof component !== 'object' || component === null || Array.isArray(component)) {
+    return inherited;
+  }
+  const style = { ...inherited };
+  if (component.color !== undefined) {
+    const code = colorToCode(component.color);
+    if (code !== null) style.color = code;
+  }
+  for (const flag of FLAGS) {
+    if (component[flag] !== undefined) style[flag] = truthy(component[flag]);
+  }
+  return style;
+}
+
+/**
+ * Converts a Minecraft text component (object, list, string or JSON string)
+ * into a § formatted string.
+ */
+export function componentToFormattedString(component: any): string {
+  const runs: { text: string; style: ResolvedStyle }[] = [];
+  resolveRuns(component, BASE_STYLE, runs);
+
+  let out = '';
+  let current = BASE_STYLE;
+  for (const { text, style } of runs) {
+    const same = style.color === current.color && FLAGS.every(f => style[f] === current[f]);
+    if (!same) {
+      // § codes only ever add; a colour code also clears every flag. So a
+      // removed flag or a changed colour needs a full reset and re-statement.
+      const needsReset =
+        style.color !== current.color || FLAGS.some(f => current[f] && !style[f]);
+      if (needsReset) {
+        if (current.color !== '' || FLAGS.some(f => current[f])) out += '§r';
+        out += style.color;
+        for (const f of FLAGS) if (style[f]) out += FLAG_CODES[f];
+      } else {
+        for (const f of FLAGS) if (style[f] && !current[f]) out += FLAG_CODES[f];
+      }
+      current = style;
+    }
+    out += text;
+  }
+  return out;
 }
 
 /**

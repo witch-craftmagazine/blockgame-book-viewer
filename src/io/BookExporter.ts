@@ -149,12 +149,18 @@ function runToSnbt(run: ComponentRun): string {
   return `{${parts.join(',')}}`;
 }
 
-/** A page as an SNBT text component (Minecraft 1.21.5+). */
+/**
+ * A page as an SNBT text component (Minecraft 1.21.5+).
+ *
+ * Styled runs are children (`extra`) of an unstyled empty parent. This matters:
+ * children inherit the parent's style, and in a bare list `[a,b,c]` the first
+ * element IS the parent, so a bold first run would turn the whole page bold.
+ */
 function pageToSnbt(page: string): string {
   const runs = pageToRuns(page);
   if (runs.length === 0) return '""';
   if (runs.length === 1 && Object.keys(runs[0]).length === 1) return snbtString(runs[0].text);
-  return `[${runs.map(runToSnbt).join(',')}]`;
+  return `{text:"",extra:[${runs.map(runToSnbt).join(',')}]}`;
 }
 
 /** A page as a JSON text component string (Minecraft 1.13 - 1.21.4). */

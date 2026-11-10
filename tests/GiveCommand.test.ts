@@ -42,6 +42,8 @@ describe('/give command generation', () => {
     const cmd = exportToGiveCommandModern(book);
     expect(cmd.startsWith('/give @p written_book[written_book_content={title:"Web Component Guide"')).toBe(true);
     expect(cmd).toContain('{text:"<blockgame-book>",bold:true}');
+    // Runs must hang off an unstyled parent, otherwise a bold first run is inherited by the whole page.
+    expect(cmd).toContain('{text:"",extra:[{text:"<blockgame-book>",bold:true},{text:"\\n\\n"}');
     expect(cmd).toContain('color:dark_green');
     expect(cmd).toContain('obfuscated:true');
     // A JSON-in-string page would contain this and display literally in 1.21.5+.
@@ -75,6 +77,19 @@ describe('/give command generation', () => {
   it('parses hand-written 26.x SNBT with unquoted keys and {raw:...} pages', () => {
     const cmd = '/give @p written_book[written_book_content={title:"T",author:"A",pages:[{raw:{text:"Hi",color:"red"}},[{text:"A",bold:true},{text:"B"}]]}]';
     const parsed = parseBook(cmd);
-    expect(parsed.pages).toEqual(['§cHi', '§lA§rB']);
+    // In a list the first element is the parent, so B inherits bold from A.
+    expect(parsed.pages).toEqual(['§cHi', '§lAB']);
+  });
+
+  it('does not let a bold first run bleed into later runs (regression)', () => {
+    const cmd = exportToGiveCommandModern({ title: 'T', author: 'A', pages: ['§lTitle§r\nbody text'] });
+    expect(cmd).toContain('pages:[{text:"",extra:[{text:"Title",bold:true},{text:"\\nbody text"}]}]');
+    // Minecraft semantics: children of the empty parent inherit nothing.
+    expect(parseBook(cmd).pages[0]).toBe('§lTitle§r\nbody text');
+  });
+
+  it('applies list inheritance when importing hand-written components', () => {
+    const cmd = '/give @p written_book[written_book_content={title:"T",author:"A",pages:[[{text:"Bold",bold:true},{text:" still bold"}],["",{text:"Bold",bold:true},{text:" plain"}]]}]';
+    expect(parseBook(cmd).pages).toEqual(['§lBold still bold', '§lBold§r plain']);
   });
 });
