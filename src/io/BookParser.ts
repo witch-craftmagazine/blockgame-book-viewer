@@ -1,5 +1,5 @@
-import { MinecraftBook, BookEngine } from '../engine/types';
-import { MINECRAFT_COLORS } from '../engine/Formatting';
+import { BlockgameBook, BookEngine } from '../engine/types';
+import { BLOCKGAME_COLORS } from '../engine/Formatting';
 import { splitTextLossless } from '../engine/LosslessSplit';
 
 /**
@@ -30,7 +30,7 @@ export function componentToFormattedString(component: any): string {
     if (component.color) {
       const colorLower = String(component.color).toLowerCase();
       let matchedCode = '';
-      for (const [code, hex] of Object.entries(MINECRAFT_COLORS)) {
+      for (const [code, hex] of Object.entries(BLOCKGAME_COLORS)) {
         if (colorLower === hex.toLowerCase()) {
           matchedCode = code;
           break;
@@ -79,7 +79,7 @@ export function componentToFormattedString(component: any): string {
 /**
  * Extracts pages and metadata from a Minecraft /give command or SNBT string.
  */
-function parseGiveCommand(cmd: string): MinecraftBook | null {
+function parseGiveCommand(cmd: string): BlockgameBook | null {
   try {
     // Check for title
     let title = 'Untitled Book';
@@ -214,7 +214,7 @@ function parseGiveCommand(cmd: string): MinecraftBook | null {
 /**
  * Parses CMI BookExport / CustomText format (<AutoPage> ... <NextPage> ...)
  */
-function parseCmiBookExport(text: string): MinecraftBook | null {
+function parseCmiBookExport(text: string): BlockgameBook | null {
   if (!text.includes('<NextPage>') && !text.includes('<AutoPage>')) {
     return null;
   }
@@ -262,7 +262,7 @@ function parseCmiBookExport(text: string): MinecraftBook | null {
  * <second line of page 1>
  * #- <first line of page 2>
  */
-export function parseStendhalBook(text: string): MinecraftBook | null {
+export function parseStendhalBook(text: string): BlockgameBook | null {
   if (!text.includes('pages:') || !text.includes('#-')) {
     return null;
   }
@@ -319,7 +319,7 @@ export function parseStendhalBook(text: string): MinecraftBook | null {
  * Parses Scribble mod JSON format (.json):
  * { "author": "...", "pages": [ "..." ] }
  */
-export function parseScribbleBook(input: string): MinecraftBook | null {
+export function parseScribbleBook(input: string): BlockgameBook | null {
   try {
     const trimmed = input.trim();
     if (!trimmed.startsWith('{') || !trimmed.endsWith('}')) return null;
@@ -342,7 +342,7 @@ export function parseScribbleBook(input: string): MinecraftBook | null {
  * Parses Bedrock Book JSON (WritableBookContent format):
  * { "title": "...", "author": "...", "pages": [ { "text": "...", "photoname": "..." } ] }
  */
-export function parseBedrockBook(input: string): MinecraftBook | null {
+export function parseBedrockBook(input: string): BlockgameBook | null {
   try {
     const trimmed = input.trim();
     if (!trimmed.startsWith('{') || !trimmed.endsWith('}')) return null;
@@ -377,7 +377,7 @@ export function parseBedrockBook(input: string): MinecraftBook | null {
  * { "id": "...", "title": "...", "author": "...", "pages": [ "..." ] }
  * Also supports forced page breaks via <br/> tags.
  */
-export function parseCocoapebblesBook(input: string): MinecraftBook | null {
+export function parseCocoapebblesBook(input: string): BlockgameBook | null {
   try {
     const trimmed = input.trim();
     if (!trimmed.startsWith('{') || !trimmed.endsWith('}')) return null;
@@ -423,7 +423,7 @@ export function parseRawTextLossless(
   title = 'Imported Text',
   author = 'Author',
   engine: BookEngine = 'java'
-): MinecraftBook {
+): BlockgameBook {
   const trimmed = text.trim();
   const pages = splitTextLossless(trimmed, { engine });
   return {
@@ -439,7 +439,7 @@ export function parseRawTextLossless(
 export function parseBook(
   input: string,
   options?: { engine?: BookEngine; splitContinuous?: boolean }
-): MinecraftBook {
+): BlockgameBook {
   const trimmed = input.trim();
 
   // 1. Check for JSON formats (Bedrock JSON, Spigot JSON, Scribble format, BookCopy format)

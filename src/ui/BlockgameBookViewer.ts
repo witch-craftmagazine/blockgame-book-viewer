@@ -1,4 +1,4 @@
-import { MinecraftBook, ViewMode, BookAppearance, BookEngine, MinecraftDyeColor } from '../engine/types';
+import { BlockgameBook, ViewMode, BookAppearance, BookEngine, BlockgameDyeColor } from '../engine/types';
 import { BookCanvas, BookCanvasOptions } from '../render/BookCanvas';
 import { soundManager } from '../render/SoundEffects';
 import { ResourcePackManager } from '../engine/ResourcePackManager';
@@ -23,15 +23,15 @@ export interface ViewerControlsOptions {
   resourcePackButton?: boolean;
 }
 
-export interface MinecraftBookViewerOptions {
-  book?: MinecraftBook | string;
+export interface BlockgameBookViewerOptions {
+  book?: BlockgameBook | string;
   bookUrl?: string;
   baseAssetPath?: string;
   defaultViewMode?: ViewMode;
   appearance?: BookAppearance;
   engine?: BookEngine;
   highContrast?: boolean;
-  coverColor?: MinecraftDyeColor | string;
+  coverColor?: BlockgameDyeColor | string;
   showBookmark?: boolean;
   bookmarkColor?: string;
   onClose?: () => void;
@@ -42,18 +42,21 @@ export interface MinecraftBookViewerOptions {
   includeWitchcraftPlugin?: boolean;
   persistReadingProgress?: boolean;
   onPageChange?: (page: number, total: number) => void;
-  onBookChange?: (book: MinecraftBook, viewer?: MinecraftBookViewer) => void;
+  onBookChange?: (book: BlockgameBook, viewer?: BlockgameBookViewer) => void;
 }
 
-export class MinecraftBookViewer {
+/** @deprecated Use BlockgameBookViewerOptions instead */
+export type MinecraftBookViewerOptions = BlockgameBookViewerOptions;
+
+export class BlockgameBookViewer {
   private container: HTMLElement;
   private canvasWrapper!: HTMLElement;
   private toolbarElement?: HTMLElement;
   private bookCanvas!: BookCanvas;
   private packManager: ResourcePackManager;
   private pageMemory: PageMemoryManager;
-  private options: MinecraftBookViewerOptions;
-  private currentBook: MinecraftBook = { title: '', author: '', pages: [''] };
+  private options: BlockgameBookViewerOptions;
+  private currentBook: BlockgameBook = { title: '', author: '', pages: [''] };
 
   private exportModal?: ExportModal;
   private importModal?: ImportModal;
@@ -64,7 +67,7 @@ export class MinecraftBookViewer {
   private soundBtn?: HTMLButtonElement;
   private viewModeBtn?: HTMLButtonElement;
 
-  constructor(container: HTMLElement, options: MinecraftBookViewerOptions = {}) {
+  constructor(container: HTMLElement, options: BlockgameBookViewerOptions = {}) {
     this.container = container;
     this.options = options;
     const baseAssetPath = options.baseAssetPath || './assets';
@@ -301,7 +304,7 @@ export class MinecraftBookViewer {
     this.editorModal?.open(this.currentBook);
   }
 
-  public setBook(book: MinecraftBook, preservePage = false): void {
+  public setBook(book: BlockgameBook, preservePage = false): void {
     this.currentBook = book;
     this.bookCanvas.setBook(book, preservePage);
     if (!preservePage && this.pageMemory.isEnabled()) {
@@ -334,11 +337,11 @@ export class MinecraftBookViewer {
     return this.bookCanvas.getViewMode();
   }
 
-  public setCoverColor(color?: MinecraftDyeColor | string): void {
+  public setCoverColor(color?: BlockgameDyeColor | string): void {
     this.bookCanvas.setCoverColor(color);
   }
 
-  public getCoverColor(): MinecraftDyeColor | string | undefined {
+  public getCoverColor(): BlockgameDyeColor | string | undefined {
     return this.bookCanvas.getCoverColor();
   }
 
@@ -430,8 +433,8 @@ export class MinecraftBookViewer {
         if (navigator.canShare({ files: [file] })) {
           await navigator.share({
             files: [file],
-            title: this.currentBook.title || 'Minecraft Book',
-            text: `Page ${page + 1} of ${this.currentBook.title || 'Minecraft Book'}`,
+            title: this.currentBook.title || 'Blockgame Book',
+            text: `Page ${page + 1} of ${this.currentBook.title || 'Blockgame Book'}`,
           });
           return;
         }
@@ -452,7 +455,7 @@ export class MinecraftBookViewer {
     }
   }
 
-  public getBook(): MinecraftBook {
+  public getBook(): BlockgameBook {
     return this.currentBook;
   }
 
@@ -552,3 +555,6 @@ export class MinecraftBookViewer {
     }
   }
 }
+
+/** @deprecated Use BlockgameBookViewer instead */
+export const MinecraftBookViewer = BlockgameBookViewer;

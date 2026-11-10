@@ -1,12 +1,12 @@
 import {
   LineLayout,
-  MinecraftBook,
+  BlockgameBook,
   ViewMode,
   BookAppearance,
   BookEngine,
   FormattedSpan,
-  MinecraftDyeColor,
-  MINECRAFT_DYE_HEX,
+  BlockgameDyeColor,
+  BLOCKGAME_DYE_HEX,
 } from '../engine/types';
 import { defaultGlyphAtlas, GlyphAtlas } from '../engine/GlyphAtlas';
 import {
@@ -46,7 +46,7 @@ export interface BookCanvasOptions {
   appearance?: BookAppearance;
   engine?: BookEngine;
   highContrast?: boolean;
-  coverColor?: MinecraftDyeColor | string;
+  coverColor?: BlockgameDyeColor | string;
   showBookmark?: boolean;
   bookmarkColor?: string;
   onClose?: () => void;
@@ -69,11 +69,11 @@ export class BookCanvas {
   private continuousScrollView?: ContinuousScrollView;
 
   // Aesthetic & Art Extensions (Scholar covers & bookmarks)
-  private coverColor?: MinecraftDyeColor | string;
+  private coverColor?: BlockgameDyeColor | string;
   private showBookmark = false;
   private bookmarkColor?: string;
 
-  private book: MinecraftBook = { title: '', author: '', pages: [''] };
+  private book: BlockgameBook = { title: '', author: '', pages: [''] };
   private paginatedPages: LineLayout[][] = [];
   private currentPage = 0; // 0-indexed
   private viewMode: ViewMode = 'double';
@@ -171,7 +171,7 @@ export class BookCanvas {
     this.stageElement = document.createElement('div');
     this.stageElement.className = `book-stage${this.textSelectionEnabled ? ' text-selection-enabled' : ''}`;
     this.stageElement.setAttribute('role', 'region');
-    this.stageElement.setAttribute('aria-label', 'Minecraft Magazine Reader');
+    this.stageElement.setAttribute('aria-label', 'Blockgame Book Reader');
 
     this.textLayerElement = document.createElement('div');
     this.textLayerElement.className = `book-text-layer${this.textSelectionEnabled ? ' text-selection-enabled' : ''}`;
@@ -491,7 +491,7 @@ export class BookCanvas {
     this.bedrockBackwardHoverBtn = bwdH;
   }
 
-  public setBook(book: MinecraftBook, preservePage = false): void {
+  public setBook(book: BlockgameBook, preservePage = false): void {
     const savedPage = this.currentPage;
     this.book = book;
     this.isWitchcraftMagazine = this.detectWitchcraftMagazine(book);
@@ -519,7 +519,7 @@ export class BookCanvas {
     }
   }
 
-  private detectWitchcraftMagazine(book: MinecraftBook): boolean {
+  private detectWitchcraftMagazine(book: BlockgameBook): boolean {
     const author = (book.author || '').toLowerCase();
     const title = (book.title || '').toLowerCase();
     return author.includes('starsweetpea') || title.includes('witchcraft');
@@ -778,7 +778,7 @@ export class BookCanvas {
     }
   }
 
-  public setCoverColor(color?: MinecraftDyeColor | string): void {
+  public setCoverColor(color?: BlockgameDyeColor | string): void {
     this.coverColor = color;
     if (this.isScrollMode()) {
       this.continuousScrollView?.setBookData(this.paginatedPages, this.currentPage);
@@ -787,7 +787,7 @@ export class BookCanvas {
     }
   }
 
-  public getCoverColor(): MinecraftDyeColor | string | undefined {
+  public getCoverColor(): BlockgameDyeColor | string | undefined {
     return this.coverColor;
   }
 
@@ -1406,7 +1406,7 @@ export class BookCanvas {
 
   public renderCoverTint(ctx: CanvasRenderingContext2D, width: number, height: number): void {
     if (!this.coverColor) return;
-    const hex = MINECRAFT_DYE_HEX[this.coverColor as MinecraftDyeColor] || this.coverColor;
+    const hex = BLOCKGAME_DYE_HEX[this.coverColor as BlockgameDyeColor] || this.coverColor;
 
     ctx.save();
     ctx.strokeStyle = hex;
@@ -1419,7 +1419,7 @@ export class BookCanvas {
   public renderBookmarkRibbon(ctx: CanvasRenderingContext2D, spineX: number, bottomY = 192): void {
     if (!this.showBookmark && !this.bookmarkColor) return;
     const ribbonColor = this.bookmarkColor
-      ? (MINECRAFT_DYE_HEX[this.bookmarkColor as MinecraftDyeColor] || this.bookmarkColor)
+      ? (BLOCKGAME_DYE_HEX[this.bookmarkColor as BlockgameDyeColor] || this.bookmarkColor)
       : '#B02E26';
 
     ctx.save();

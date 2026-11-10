@@ -176,7 +176,7 @@ describe('Accessibility Text Layer & Arrow Symmetry', () => {
     const stageEl = mockContainer.children[0];
     expect(stageEl.className).toBe('book-stage');
     expect(stageEl.getAttribute('role')).toBe('region');
-    expect(stageEl.getAttribute('aria-label')).toBe('Minecraft Magazine Reader');
+    expect(stageEl.getAttribute('aria-label')).toBe('Blockgame Book Reader');
 
     const textLayerEl = stageEl.children.find((c: any) => c.className === 'book-text-layer');
     expect(textLayerEl).toBeDefined();

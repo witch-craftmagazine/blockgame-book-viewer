@@ -1,6 +1,6 @@
 import type { BookPlugin, PageRect, CharRenderContext, CharRenderResult } from '../plugin/BookPlugin';
 import type { BookCanvas } from '../render/BookCanvas';
-import type { MinecraftBook, LineLayout } from '../engine/types';
+import type { BlockgameBook, LineLayout } from '../engine/types';
 import { soundManager } from '../render/SoundEffects';
 
 export interface WitchcraftPluginOptions {
@@ -105,7 +105,7 @@ export class WitchcraftPlugin implements BookPlugin {
     this.canvas?.render();
   }
 
-  public onBookChange(book: MinecraftBook, _pages: LineLayout[][]): void {
+  public onBookChange(book: BlockgameBook, _pages: LineLayout[][]): void {
     if (this.autoDetect) {
       const author = (book.author || '').toLowerCase();
       const title = (book.title || '').toLowerCase();

@@ -1,6 +1,6 @@
 import { FormattedSpan } from './types';
 
-export const MINECRAFT_COLORS: Record<string, string> = {
+export const BLOCKGAME_COLORS: Record<string, string> = {
   '0': '#000000', // Black
   '1': '#0000AA', // Dark Blue
   '2': '#00AA00', // Dark Green
@@ -28,6 +28,9 @@ export const MINECRAFT_COLORS: Record<string, string> = {
   't': '#21497B', // Lapis
   'u': '#9A5CC6', // Amethyst
 };
+
+/** @deprecated Use BLOCKGAME_COLORS instead */
+export const MINECRAFT_COLORS = BLOCKGAME_COLORS;
 
 export const COLOR_NAMES: Record<string, string> = {
   '0': 'Black',
@@ -161,8 +164,8 @@ export function parseFormattedText(rawText: string, activeStyle?: StyleState): F
         const code = text[i + 1].toLowerCase();
         flush();
 
-        if (code in MINECRAFT_COLORS) {
-          style.color = MINECRAFT_COLORS[code];
+        if (code in BLOCKGAME_COLORS) {
+          style.color = BLOCKGAME_COLORS[code];
           // Color codes reset style flags in vanilla Minecraft
           style.bold = false;
           style.italic = false;

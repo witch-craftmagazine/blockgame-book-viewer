@@ -1,27 +1,27 @@
-# Embedding Guide: Integrating Minecraft Book Viewer into Your Website
+# Embedding Guide: Integrating Blockgame Book Viewer into Your Website
 
-This guide walks through how to embed and customize the **Minecraft Book Viewer** on any web page or web application.
+This guide walks through how to embed and customize the **Blockgame Book Viewer** on any web page or web application.
 
 ---
 
 ## 1. Quick Drop-In: Web Component
 
-The simplest way to embed a book is using the `<minecraft-book>` custom element.
+The simplest way to embed a book is using the `<blockgame-book>` custom element (backwards-compatible alias `<minecraft-book>` is also registered).
 
 ### Step 1: Add Script and Stylesheet
 ```html
-<link rel="stylesheet" href="https://unpkg.com/minecraft-book-viewer/dist/style.css" />
-<script type="module" src="https://unpkg.com/minecraft-book-viewer/dist/minecraft-book-viewer.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/blockgame-book-viewer/dist/style.css" />
+<script type="module" src="https://unpkg.com/blockgame-book-viewer/dist/blockgame-book-viewer.js"></script>
 ```
 
 ### Step 2: Add Element
 ```html
-<minecraft-book
+<blockgame-book
   src="./path/to/my-book.stendhal"
   view-mode="double"
   controls="true"
   sound="true">
-</minecraft-book>
+</blockgame-book>
 ```
 
 ### Supported Attributes & Properties:
@@ -51,14 +51,14 @@ The simplest way to embed a book is using the `<minecraft-book>` custom element.
 ### Custom Events:
 Dispatched with `{ bubbles: true, composed: true }`:
 - `pagechange` / `page-change`: detail `{ page: number, total: number }`
-- `bookload` / `book-load`: detail `{ book: MinecraftBook }`
+- `bookload` / `book-load`: detail `{ book: BlockgameBook }`
 - `pageexport` / `page-export`: detail `{ page: number, dataUrl: string }`
 - `close`: fired when book close is requested
-- `ready`: detail `{ viewer: MinecraftBookViewer }` fired when viewer is initialized
+- `ready`: detail `{ viewer: BlockgameBookViewer }` fired when viewer is initialized
 - `error`: detail `{ error: Error, src?: string }` fired when URL fetch fails
 
 ### Public JavaScript Methods:
-- `el.whenReady(): Promise<MinecraftBookViewer>`
+- `el.whenReady(): Promise<BlockgameBookViewer>`
 - `el.nextPage(): boolean`
 - `el.prevPage(): boolean`
 - `el.firstPage(): boolean`
@@ -67,7 +67,7 @@ Dispatched with `{ bubbles: true, composed: true }`:
 - `el.scrollToPage(pageNumber: number, options?)`
 - `el.setText(text, title?, author?)`
 - `el.setBook(book)`
-- `el.getBook(): MinecraftBook | null`
+- `el.getBook(): BlockgameBook | null`
 - `el.zoomIn()` / `el.zoomOut()`
 - `el.toggleSound(): boolean`
 - `el.exportCurrentPage(options?)`
@@ -79,22 +79,22 @@ Dispatched with `{ bubbles: true, composed: true }`:
 
 ## 2. JavaScript / TypeScript Integration
 
-For single-page applications (React, Vue, Svelte, Angular, etc.), use the `MinecraftBookViewer` class.
+For single-page applications (React, Vue, Svelte, Angular, etc.), use the `BlockgameBookViewer` class.
 
 ### Example in React:
 ```tsx
 import React, { useEffect, useRef } from 'react';
-import { MinecraftBookViewer } from 'minecraft-book-viewer';
-import 'minecraft-book-viewer/style.css';
+import { BlockgameBookViewer } from 'blockgame-book-viewer';
+import 'blockgame-book-viewer/style.css';
 
 export function BookViewerComponent({ bookData }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const viewerRef = useRef<MinecraftBookViewer | null>(null);
+  const viewerRef = useRef<BlockgameBookViewer | null>(null);
 
   useEffect(() => {
     if (!containerRef.current) return;
 
-    viewerRef.current = new MinecraftBookViewer(containerRef.current, {
+    viewerRef.current = new BlockgameBookViewer(containerRef.current, {
       book: bookData,
       viewMode: 'double',
       theme: 'dark',
@@ -128,7 +128,7 @@ import {
   exportToGiveCommandModern,
   exportToBookCopyJson,
   exportToCmiText
-} from 'minecraft-book-viewer';
+} from 'blockgame-book-viewer';
 
 // Auto-detects and parses Stendhal, BookCopy JSON, CMI, /give command, or plain text
 const book = parseBook(rawInput);
@@ -147,9 +147,9 @@ const stendhalString = exportToStendhal(book);
 To load a custom resource pack (e.g. Faithful, Sphax, or custom server pack):
 
 ```typescript
-import { MinecraftBookViewer } from 'minecraft-book-viewer';
+import { BlockgameBookViewer } from 'blockgame-book-viewer';
 
-const viewer = new MinecraftBookViewer(container, options);
+const viewer = new BlockgameBookViewer(container, options);
 await viewer.init();
 
 // Load a .zip pack
@@ -168,7 +168,7 @@ await viewer.getCanvas().applyResourcePack(packInfo);
 You can add interactive Easter eggs, custom page borders, or animated elements using the `BookPlugin` interface:
 
 ```typescript
-import { BookPlugin, BookCanvas } from 'minecraft-book-viewer';
+import { BookPlugin, BookCanvas } from 'blockgame-book-viewer';
 
 export class CustomWatermarkPlugin implements BookPlugin {
   name = 'watermark-plugin';
@@ -191,7 +191,7 @@ export class CustomWatermarkPlugin implements BookPlugin {
 ```
 Register your plugin when constructing the canvas or viewer:
 ```typescript
-const viewer = new MinecraftBookViewer(container, {
+const viewer = new BlockgameBookViewer(container, {
   plugins: [new CustomWatermarkPlugin()]
 });
 ```

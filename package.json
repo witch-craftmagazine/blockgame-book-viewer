@@ -1,16 +1,16 @@
 {
-  "name": "minecraft-book-viewer",
+  "name": "blockgame-book-viewer",
   "version": "1.0.0",
-  "description": "High-fidelity, modular Minecraft written book web emulator, renderer, and web component.",
+  "description": "High-fidelity, modular blockgame written book web emulator, renderer, and web component.",
   "type": "module",
-  "main": "./dist/minecraft-book-viewer.umd.cjs",
-  "module": "./dist/minecraft-book-viewer.js",
+  "main": "./dist/blockgame-book-viewer.umd.cjs",
+  "module": "./dist/blockgame-book-viewer.js",
   "types": "./dist/types/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/types/index.d.ts",
-      "import": "./dist/minecraft-book-viewer.js",
-      "require": "./dist/minecraft-book-viewer.umd.cjs"
+      "import": "./dist/blockgame-book-viewer.js",
+      "require": "./dist/blockgame-book-viewer.umd.cjs"
     },
     "./style.css": "./dist/style.css"
   },

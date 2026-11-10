@@ -6,9 +6,9 @@ export default defineConfig({
     outDir: 'dist',
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
-      name: 'MinecraftBookViewer',
+      name: 'BlockgameBookViewer',
       formats: ['es', 'umd'],
-      fileName: (format) => `minecraft-book-viewer.${format === 'es' ? 'js' : 'umd.cjs'}`,
+      fileName: (format) => `blockgame-book-viewer.${format === 'es' ? 'js' : 'umd.cjs'}`,
     },
     rollupOptions: {
       // Keep jszip external or bundled depending on requirements.

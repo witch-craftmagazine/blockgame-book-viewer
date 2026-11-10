@@ -1,12 +1,12 @@
-import { MinecraftBook, ViewMode, BookAppearance, BookEngine } from '../engine/types';
-import { MinecraftBookViewer } from '../ui/MinecraftBookViewer';
+import { BlockgameBook, ViewMode, BookAppearance, BookEngine } from '../engine/types';
+import { BlockgameBookViewer } from '../ui/BlockgameBookViewer';
 import { parseBook } from '../io/BookParser';
 import { soundManager } from '../render/SoundEffects';
 
 const BaseElement: typeof HTMLElement = typeof HTMLElement !== 'undefined' ? HTMLElement : (class {} as any);
 
-export class MinecraftBookElement extends BaseElement {
-  private viewer: MinecraftBookViewer | null = null;
+export class BlockgameBookElement extends BaseElement {
+  private viewer: BlockgameBookViewer | null = null;
   private isInitialized = false;
   private hostContainer: HTMLElement | ShadowRoot;
   private internalRoot: HTMLElement | null = null;
@@ -17,8 +17,8 @@ export class MinecraftBookElement extends BaseElement {
   private isInternalUpdating = false;
   private isProgrammaticBook = false;
 
-  public ready: Promise<MinecraftBookViewer>;
-  private readyResolve?: (viewer: MinecraftBookViewer) => void;
+  public ready: Promise<BlockgameBookViewer>;
+  private readyResolve?: (viewer: BlockgameBookViewer) => void;
   private readyReject?: (err: unknown) => void;
 
   static get observedAttributes() {
@@ -49,7 +49,7 @@ export class MinecraftBookElement extends BaseElement {
   constructor() {
     super();
     this.hostContainer = this;
-    this.ready = new Promise<MinecraftBookViewer>((resolve, reject) => {
+    this.ready = new Promise<BlockgameBookViewer>((resolve, reject) => {
       this.readyResolve = resolve;
       this.readyReject = reject;
     });
@@ -73,7 +73,7 @@ export class MinecraftBookElement extends BaseElement {
       if (!this.hasAttribute('aria-roledescription')) this.setAttribute('aria-roledescription', 'book');
       if (!this.hasAttribute('tabindex')) this.setAttribute('tabindex', '0');
     }
-    const title = this.getAttribute('book-title') || this.viewer?.getBook()?.title || 'Minecraft Book';
+    const title = this.getAttribute('book-title') || this.viewer?.getBook()?.title || 'Blockgame Book';
     const author = this.getAttribute('author') || this.viewer?.getBook()?.author;
     const label = author ? `${title} by ${author}` : title;
     this.setAttribute('aria-label', label);
@@ -159,7 +159,7 @@ export class MinecraftBookElement extends BaseElement {
     }
 
     try {
-      this.viewer = new MinecraftBookViewer(this.hostContainer as HTMLElement, {
+      this.viewer = new BlockgameBookViewer(this.hostContainer as HTMLElement, {
         baseAssetPath: basePath,
         defaultViewMode: initialMode,
         appearance,
@@ -214,7 +214,7 @@ export class MinecraftBookElement extends BaseElement {
     } catch (err) {
       this.readyReject?.(err);
       this.dispatchCustomEvent('error', { error: err });
-      console.error('Failed to initialize <minecraft-book>:', err);
+      console.error('Failed to initialize <blockgame-book>:', err);
     }
   }
 
@@ -315,7 +315,7 @@ export class MinecraftBookElement extends BaseElement {
       this.scriptObserver.observe(scriptEl, { characterData: true, childList: true, subtree: true });
     }
 
-    // Observe shallow childList additions/removals directly on <minecraft-book> (never subtree)
+    // Observe shallow childList additions/removals directly on <blockgame-book> (never subtree)
     this.mutationObserver = new MutationObserver((mutations) => {
       if (this.isInternalUpdating) return;
       let scriptAffected = false;
@@ -363,7 +363,7 @@ export class MinecraftBookElement extends BaseElement {
       this.viewer = null;
       this.isInitialized = false;
     }
-    this.ready = new Promise<MinecraftBookViewer>((resolve, reject) => {
+    this.ready = new Promise<BlockgameBookViewer>((resolve, reject) => {
       this.readyResolve = resolve;
       this.readyReject = reject;
     });
@@ -665,7 +665,7 @@ export class MinecraftBookElement extends BaseElement {
 
   // Public Methods
 
-  public whenReady(): Promise<MinecraftBookViewer> {
+  public whenReady(): Promise<BlockgameBookViewer> {
     return this.ready;
   }
 
@@ -687,7 +687,7 @@ export class MinecraftBookElement extends BaseElement {
     }
   }
 
-  public setBook(book: MinecraftBook | string): void {
+  public setBook(book: BlockgameBook | string): void {
     if (!this.viewer) return;
     this.isProgrammaticBook = true;
     this.isInternalUpdating = true;
@@ -704,7 +704,7 @@ export class MinecraftBookElement extends BaseElement {
     }
   }
 
-  public getBook(): MinecraftBook | null {
+  public getBook(): BlockgameBook | null {
     return this.viewer ? this.viewer.getBook() : null;
   }
 
@@ -777,7 +777,7 @@ export class MinecraftBookElement extends BaseElement {
     }
   }
 
-  public getViewer(): MinecraftBookViewer | null {
+  public getViewer(): BlockgameBookViewer | null {
     return this.viewer;
   }
 
@@ -799,7 +799,15 @@ export class MinecraftBookElement extends BaseElement {
   }
 }
 
+/** @deprecated Use BlockgameBookElement instead */
+export const MinecraftBookElement = BlockgameBookElement;
+
 // Auto-register custom element if window is available
-if (typeof window !== 'undefined' && !customElements.get('minecraft-book')) {
-  customElements.define('minecraft-book', MinecraftBookElement);
+if (typeof window !== 'undefined') {
+  if (!customElements.get('blockgame-book')) {
+    customElements.define('blockgame-book', BlockgameBookElement);
+  }
+  if (!customElements.get('minecraft-book')) {
+    customElements.define('minecraft-book', BlockgameBookElement);
+  }
 }

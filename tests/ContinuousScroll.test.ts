@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { BookCanvas } from '../src/render/BookCanvas';
-import { MinecraftBookViewer } from '../src/ui/MinecraftBookViewer';
-import { MinecraftBookElement } from '../src/component/minecraft-book';
-import { MinecraftBook } from '../src/engine/types';
+import { MinecraftBookViewer, BlockgameBookViewer } from '../src/ui/BlockgameBookViewer';
+import { MinecraftBookElement, BlockgameBookElement } from '../src/component/blockgame-book';
+import { MinecraftBook, BlockgameBook } from '../src/engine/types';
 
 describe('PDF-Style Continuous Scroll Engine (v1.3)', () => {
   let mockContainer: any;

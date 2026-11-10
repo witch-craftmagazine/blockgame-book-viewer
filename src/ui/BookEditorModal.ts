@@ -1,4 +1,4 @@
-import { MinecraftBook } from '../engine/types';
+import { BlockgameBook } from '../engine/types';
 import { exportToStendhal } from '../io/BookExporter';
 import { parseBook } from '../io/BookParser';
 
@@ -10,11 +10,11 @@ export const WYSIWYG_BOOK_EDITOR_ENABLED = false;
 
 export class BookEditorModal {
   private backdrop: HTMLElement;
-  private currentBook: MinecraftBook | null = null;
-  private onApply: (book: MinecraftBook) => void;
+  private currentBook: BlockgameBook | null = null;
+  private onApply: (book: BlockgameBook) => void;
   private textarea!: HTMLTextAreaElement;
 
-  constructor(onApply: (book: MinecraftBook) => void) {
+  constructor(onApply: (book: BlockgameBook) => void) {
     this.onApply = onApply;
 
     this.backdrop = document.createElement('div');
@@ -149,7 +149,7 @@ export class BookEditorModal {
     }
   }
 
-  public open(book: MinecraftBook | null): void {
+  public open(book: BlockgameBook | null): void {
     this.currentBook = book;
     if (this.textarea) {
       if (book) {
@@ -186,7 +186,7 @@ export class BookEditorModal {
     return this.textarea;
   }
 
-  public getCurrentBook(): MinecraftBook | null {
+  public getCurrentBook(): BlockgameBook | null {
     return this.currentBook;
   }
 }

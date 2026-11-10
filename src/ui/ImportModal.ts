@@ -1,11 +1,11 @@
 import { parseBook } from '../io/BookParser';
-import { MinecraftBook } from '../engine/types';
+import { BlockgameBook } from '../engine/types';
 
 export class ImportModal {
   private backdrop: HTMLElement;
-  private onImport: (book: MinecraftBook) => void;
+  private onImport: (book: BlockgameBook) => void;
 
-  constructor(onImport: (book: MinecraftBook) => void) {
+  constructor(onImport: (book: BlockgameBook) => void) {
     this.onImport = onImport;
 
     this.backdrop = document.createElement('div');

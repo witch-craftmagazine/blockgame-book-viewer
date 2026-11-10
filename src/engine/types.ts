@@ -1,10 +1,13 @@
-export interface MinecraftBook {
+export interface BlockgameBook {
   id?: string;         // Optional server-assigned identifier (e.g. Spigot cocoapebbles-book)
   title: string;
   author: string;
   generation?: number; // 0 = Original, 1 = Copy of original, 2 = Copy of copy, 3 = Tattered
   pages: string[];     // Array of raw page strings (may contain § or & or plain text)
 }
+
+/** @deprecated Use BlockgameBook instead */
+export type MinecraftBook = BlockgameBook;
 
 export interface FormattedSpan {
   text: string;
@@ -43,7 +46,7 @@ export type ViewMode = 'single' | 'double' | 'scroll-single' | 'scroll-double';
 export type BookAppearance = 'java' | 'bedrock';
 export type BookEngine = 'java' | 'bedrock';
 
-export type MinecraftDyeColor =
+export type BlockgameDyeColor =
   | 'white'
   | 'orange'
   | 'magenta'
@@ -61,7 +64,10 @@ export type MinecraftDyeColor =
   | 'red'
   | 'black';
 
-export const MINECRAFT_DYE_HEX: Record<MinecraftDyeColor, string> = {
+/** @deprecated Use BlockgameDyeColor instead */
+export type MinecraftDyeColor = BlockgameDyeColor;
+
+export const BLOCKGAME_DYE_HEX: Record<BlockgameDyeColor, string> = {
   white: '#F9FFFE',
   orange: '#F9801D',
   magenta: '#C74EBD',
@@ -79,3 +85,6 @@ export const MINECRAFT_DYE_HEX: Record<MinecraftDyeColor, string> = {
   red: '#B02E26',
   black: '#1D1D21',
 };
+
+/** @deprecated Use BLOCKGAME_DYE_HEX instead */
+export const MINECRAFT_DYE_HEX = BLOCKGAME_DYE_HEX;

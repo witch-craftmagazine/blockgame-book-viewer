@@ -1,4 +1,4 @@
-import { MinecraftBook } from './types';
+import { BlockgameBook } from './types';
 
 /**
  * Computes a fast deterministic 32-bit FNV-1a hash of a string.
@@ -12,10 +12,13 @@ function fnv1a(str: string): string {
   return (hash >>> 0).toString(16);
 }
 
+const DEFAULT_PREFIX = 'blockgame_book_progress_';
+const LEGACY_PREFIX = 'mc_book_progress_';
+
 /**
  * Generates a unique, deterministic storage key for a book.
  */
-export function getBookStorageKey(book: MinecraftBook, prefix = 'mc_book_progress_'): string {
+export function getBookStorageKey(book: BlockgameBook, prefix = DEFAULT_PREFIX): string {
   const title = book.title || 'untitled';
   const author = book.author || 'unknown';
   const totalPages = book.pages?.length || 0;
@@ -34,7 +37,7 @@ export class PageMemoryManager {
 
   constructor(options: { enabled?: boolean; prefix?: string } = {}) {
     this.enabled = options.enabled ?? false;
-    this.prefix = options.prefix ?? 'mc_book_progress_';
+    this.prefix = options.prefix ?? DEFAULT_PREFIX;
   }
 
   public isEnabled(): boolean {
@@ -48,7 +51,7 @@ export class PageMemoryManager {
   /**
    * Persists the current 0-based page index to localStorage if enabled.
    */
-  public save(book: MinecraftBook, pageIndex: number): void {
+  public save(book: BlockgameBook, pageIndex: number): void {
     if (!this.enabled || !book) return;
     if (typeof window === 'undefined' || !window.localStorage) return;
 
@@ -70,13 +73,18 @@ export class PageMemoryManager {
    * Retrieves the saved 0-based page index from localStorage if enabled.
    * Returns null if disabled, no record exists, or index is out of bounds.
    */
-  public load(book: MinecraftBook): number | null {
+  public load(book: BlockgameBook): number | null {
     if (!this.enabled || !book) return null;
     if (typeof window === 'undefined' || !window.localStorage) return null;
 
     try {
       const key = getBookStorageKey(book, this.prefix);
-      const raw = window.localStorage.getItem(key);
+      let raw = window.localStorage.getItem(key);
+      if (!raw && this.prefix === DEFAULT_PREFIX) {
+        // Fallback to check legacy prefix
+        const legacyKey = getBookStorageKey(book, LEGACY_PREFIX);
+        raw = window.localStorage.getItem(legacyKey);
+      }
       if (!raw) return null;
 
       const data = JSON.parse(raw);
@@ -95,18 +103,22 @@ export class PageMemoryManager {
   /**
    * Clears saved reading progress for a given book, or clears all book progress records if omitted.
    */
-  public clear(book?: MinecraftBook): void {
+  public clear(book?: BlockgameBook): void {
     if (typeof window === 'undefined' || !window.localStorage) return;
 
     try {
       if (book) {
         const key = getBookStorageKey(book, this.prefix);
         window.localStorage.removeItem(key);
+        if (this.prefix === DEFAULT_PREFIX) {
+          const legacyKey = getBookStorageKey(book, LEGACY_PREFIX);
+          window.localStorage.removeItem(legacyKey);
+        }
       } else {
         const keysToRemove: string[] = [];
         for (let i = 0; i < window.localStorage.length; i++) {
           const key = window.localStorage.key(i);
-          if (key && key.startsWith(this.prefix)) {
+          if (key && (key.startsWith(this.prefix) || (this.prefix === DEFAULT_PREFIX && key.startsWith(LEGACY_PREFIX)))) {
             keysToRemove.push(key);
           }
         }

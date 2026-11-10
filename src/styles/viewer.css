@@ -115,6 +115,7 @@
   box-sizing: border-box;
 }
 
+blockgame-book,
 minecraft-book {
   display: block;
   width: 100%;

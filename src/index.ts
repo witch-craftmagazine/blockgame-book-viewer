@@ -2,10 +2,16 @@
 import './styles/viewer.css';
 
 // Web Component registration
-export { MinecraftBookElement } from './component/minecraft-book';
+export { BlockgameBookElement, MinecraftBookElement } from './component/blockgame-book';
 
 // High-level Viewer
-export { MinecraftBookViewer, type MinecraftBookViewerOptions, type ViewerControlsOptions } from './ui/MinecraftBookViewer';
+export {
+  BlockgameBookViewer,
+  MinecraftBookViewer,
+  type BlockgameBookViewerOptions,
+  type MinecraftBookViewerOptions,
+  type ViewerControlsOptions,
+} from './ui/BlockgameBookViewer';
 export { BookEditorModal, WYSIWYG_BOOK_EDITOR_ENABLED } from './ui/BookEditorModal';
 
 // Canvas & Rendering
@@ -38,12 +44,21 @@ export {
   normalizeFormattingCodes,
   createDefaultStyle,
   type StyleState,
+  BLOCKGAME_COLORS,
   MINECRAFT_COLORS,
   COLOR_NAMES,
   DEFAULT_BOOK_TEXT_COLOR,
 } from './engine/Formatting';
 
-export { GlyphAtlas, defaultGlyphAtlas, type GlyphMapEntry, type CustomBitmapGlyphEntry, MINECRAFT_SYMBOL_ADVANCES } from './engine/GlyphAtlas';
+export {
+  GlyphAtlas,
+  defaultGlyphAtlas,
+  type GlyphMapEntry,
+  type CustomBitmapGlyphEntry,
+  BLOCKGAME_SYMBOL_ADVANCES,
+  MINECRAFT_SYMBOL_ADVANCES,
+} from './engine/GlyphAtlas';
+export { getBlockgameGlyphSizes, getMinecraftGlyphSizes } from './engine/glyphSizesData';
 export {
   ResourcePackManager,
   type ResourcePackInfo,
@@ -93,6 +108,7 @@ export {
 
 // Types
 export type {
+  BlockgameBook,
   MinecraftBook,
   FormattedSpan,
   LineLayout,
@@ -101,7 +117,8 @@ export type {
   ViewMode,
   BookAppearance,
   BookEngine,
+  BlockgameDyeColor,
   MinecraftDyeColor,
 } from './engine/types';
 
-export { MINECRAFT_DYE_HEX } from './engine/types';
+export { BLOCKGAME_DYE_HEX, MINECRAFT_DYE_HEX } from './engine/types';

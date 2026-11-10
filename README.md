@@ -1,12 +1,12 @@
-# Minecraft Book Viewer & Web Engine
+# Blockgame Book Viewer & Web Engine
 
-A modular, pixel-perfect, zero-dependency Minecraft written book web emulator, renderer, and Web Component. Designed to allow any website to embed and render authentic Minecraft books with custom resource packs, accurate typography, page-turn sounds, and multi-format import/export.
+A modular, pixel-perfect, zero-dependency blockgame written book web emulator, renderer, and Web Component. Designed to allow any website to embed and render authentic written books with custom resource packs, accurate typography, page-turn sounds, and multi-format import/export.
 
 ![Demo](public/assets/textures/gui/book.png)
 
 ## Features
 
-- 📖 **Authentic Minecraft Book GUI**: Pixel-perfect rendering of Minecraft written books in single-page (1:1 in-game GUI) and two-page spread (magazine/tome) modes.
+- 📖 **Authentic Book GUI**: Pixel-perfect rendering of written books in single-page (1:1 in-game GUI) and two-page spread (magazine/tome) modes.
 - 🔤 **High-Fidelity Typography**:
   - Exact 114px line wrapping and 14 lines/page pagination matching vanilla `StringSplitter.java`.
   - Full support for Minecraft formatting codes (`§0`–`§f`, `§l`, `§o`, `§n`, `§m`, `§k` animated obfuscation, `§r`).
@@ -26,7 +26,7 @@ A modular, pixel-perfect, zero-dependency Minecraft written book web emulator, r
 - 🧩 **Extensible Plugin System**:
   - Lifecycle hooks for custom rendering, animations, character replacements, and click handling.
   - Ships with `WitchcraftPlugin` (custom animated ending page celebration GIF and interactive hooks).
-- 🌐 **Web Component `<minecraft-book>`**:
+- 🌐 **Web Component `<blockgame-book>` (alias `<minecraft-book>`)**:
   - Drop a single `<script>` tag on any HTML page, React, Vue, Svelte, or WordPress site.
 - 🔊 **Web Audio Sound Effects**: Realistic page-turn sounds with synthesized audio fallback.
 - ♿ **Accessibility**: Invisible DOM text overlay with ARIA labels for screen readers and selectable text.
@@ -37,14 +37,14 @@ A modular, pixel-perfect, zero-dependency Minecraft written book web emulator, r
 
 ### 1. Web Component (HTML / CDN)
 
-Include the script and stylesheet, then use the `<minecraft-book>` tag:
+Include the script and stylesheet, then use the `<blockgame-book>` tag:
 
 ```html
-<link rel="stylesheet" href="https://unpkg.com/minecraft-book-viewer/dist/style.css" />
-<script type="module" src="https://unpkg.com/minecraft-book-viewer/dist/minecraft-book-viewer.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/blockgame-book-viewer/dist/style.css" />
+<script type="module" src="https://unpkg.com/blockgame-book-viewer/dist/blockgame-book-viewer.js"></script>
 
 <!-- Embedded with PDF continuous scroll, Bedrock GUI, Scholar cover dye, and silk bookmark -->
-<minecraft-book
+<blockgame-book
   view-mode="scroll-double"
   appearance="bedrock"
   engine="bedrock"
@@ -62,10 +62,10 @@ Include the script and stylesheet, then use the `<minecraft-book>` tag:
     §0Rule 1: Be nice.
     Rule 2: Have fun!
   </script>
-</minecraft-book>
+</blockgame-book>
 ```
 
-#### `<minecraft-book>` Supported Attributes
+#### `<blockgame-book>` Supported Attributes
 
 | Attribute | Type / Values | Default | Description |
 | :--- | :--- | :--- | :--- |
@@ -88,18 +88,18 @@ Include the script and stylesheet, then use the `<minecraft-book>` tag:
 ### 2. JavaScript / TypeScript API
 
 ```bash
-npm install minecraft-book-viewer
+npm install blockgame-book-viewer
 # or
-bun add minecraft-book-viewer
+bun add blockgame-book-viewer
 ```
 
 ```typescript
-import { MinecraftBookViewer, parseBook } from 'minecraft-book-viewer';
-import 'minecraft-book-viewer/style.css';
+import { BlockgameBookViewer, parseBook } from 'blockgame-book-viewer';
+import 'blockgame-book-viewer/style.css';
 
 // 1. Mount to any container
 const container = document.getElementById('book-container')!;
-const viewer = new MinecraftBookViewer(container, {
+const viewer = new BlockgameBookViewer(container, {
   viewMode: 'double', // 'single' | 'double' | 'auto'
   theme: 'dark',      // 'dark' | 'light' | 'parchment' | 'minimal'
   controls: true,     // built-in toolbar
@@ -124,7 +124,7 @@ viewer.setPage(0);
 ### 3. Low-Level Canvas Renderer
 
 ```typescript
-import { BookCanvas, defaultGlyphAtlas } from 'minecraft-book-viewer';
+import { BookCanvas, defaultGlyphAtlas } from 'blockgame-book-viewer';
 
 const canvas = new BookCanvas({
   container: document.getElementById('canvas-wrapper')!,
@@ -143,7 +143,7 @@ canvas.setBook({ title: 'My Book', author: 'Author', pages: ['Page 1 content'] }
 Plugins let you hook into the rendering cycle to add animations, interactive elements, or custom graphics:
 
 ```typescript
-import { BookPlugin, BookCanvas } from 'minecraft-book-viewer';
+import { BookPlugin, BookCanvas } from 'blockgame-book-viewer';
 
 const myCustomPlugin: BookPlugin = {
   name: 'gold-text-glow',
@@ -169,7 +169,7 @@ const canvas = new BookCanvas({
 ## Loading Custom Resource Packs
 
 ```typescript
-import { ResourcePackManager } from 'minecraft-book-viewer';
+import { ResourcePackManager } from 'blockgame-book-viewer';
 
 const packManager = new ResourcePackManager('./assets');
 
@@ -195,7 +195,7 @@ bun install
 # Start development server (Playground & Demos)
 bun run dev
 
-# Run unit and integration tests (99 tests)
+# Run unit and integration tests (177 tests)
 bun test
 
 # Build production library and demo app

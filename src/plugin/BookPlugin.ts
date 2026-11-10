@@ -1,4 +1,4 @@
-import type { MinecraftBook, LineLayout, FormattedSpan } from '../engine/types';
+import type { BlockgameBook, LineLayout, FormattedSpan } from '../engine/types';
 import type { BookCanvas } from '../render/BookCanvas';
 
 export interface PageRect {
@@ -32,7 +32,7 @@ export interface BookPlugin {
   destroy?(): void;
 
   /** Called when a new book is loaded or pages recalculated */
-  onBookChange?(book: MinecraftBook, paginatedPages: LineLayout[][]): void;
+  onBookChange?(book: BlockgameBook, paginatedPages: LineLayout[][]): void;
 
   /** Called whenever the active page changes */
   onPageChange?(currentPage: number, totalPages: number): void;

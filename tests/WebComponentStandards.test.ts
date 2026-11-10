@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { MinecraftBookElement } from '../src/component/minecraft-book';
+import { BlockgameBookElement, MinecraftBookElement } from '../src/component/blockgame-book';
 
-describe('Web Component Standards Compliance (<minecraft-book>)', () => {
+describe('Web Component Standards Compliance (<blockgame-book>)', () => {
   let mockCtx: any;
 
   beforeEach(() => {

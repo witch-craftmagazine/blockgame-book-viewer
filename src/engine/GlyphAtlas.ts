@@ -1,6 +1,6 @@
 import { GlyphDrawInfo } from './types';
 import glyphsData from '../../public/assets/font/glyphs.json';
-import { getMinecraftGlyphSizes } from './glyphSizesData';
+import { getBlockgameGlyphSizes } from './glyphSizesData';
 
 export interface GlyphMapEntry {
   sheet: 'ascii' | 'accented' | 'nonlatin';
@@ -30,7 +30,7 @@ export interface CustomBitmapGlyphEntry {
   file: string;
 }
 
-export const MINECRAFT_SYMBOL_ADVANCES: Record<string, number> = {
+export const BLOCKGAME_SYMBOL_ADVANCES: Record<string, number> = {
   '§': 0,
   '\n': 0,
   '\r': 0,
@@ -92,6 +92,9 @@ export const MINECRAFT_SYMBOL_ADVANCES: Record<string, number> = {
   '🥔': 9, '💀': 9, '🔥': 9, '🖤': 9,
 };
 
+/** @deprecated Use BLOCKGAME_SYMBOL_ADVANCES instead */
+export const MINECRAFT_SYMBOL_ADVANCES = BLOCKGAME_SYMBOL_ADVANCES;
+
 // Server resource pack bitmap overrides to explicitly ignore.
 // (e.g. Craftadia later mapped custom weapon textures to standard Unicode stars like ✯ (U+272F),
 // which broke pre-existing written books that used the star character).
@@ -116,7 +119,7 @@ export class GlyphAtlas {
 
   constructor() {
     // 1. Populate official Minecraft glyph_sizes.bin for all 65,536 Basic Multilingual Plane characters
-    const sizes = getMinecraftGlyphSizes();
+    const sizes = getBlockgameGlyphSizes();
     for (let cp = 0; cp < 65536; cp++) {
       const byte = sizes[cp];
       if (byte !== 0) {
@@ -140,7 +143,7 @@ export class GlyphAtlas {
     }
 
     // 3. Custom and calibrated symbol advances (horoscope borders, SMP custom emojis, math letters)
-    for (const [char, adv] of Object.entries(MINECRAFT_SYMBOL_ADVANCES)) {
+    for (const [char, adv] of Object.entries(BLOCKGAME_SYMBOL_ADVANCES)) {
       this.advances.set(char, adv);
     }
 
@@ -228,7 +231,7 @@ export class GlyphAtlas {
     this.initMeasureCanvas();
     if (!this.measureCtx) {
       if (code < 65536) {
-        const sizes = getMinecraftGlyphSizes();
+        const sizes = getBlockgameGlyphSizes();
         const byte = sizes[code];
         if (byte !== 0) {
           const start = (byte >> 4) & 0x0f;

@@ -1,14 +1,14 @@
 import '../src/index';
-import type { MinecraftBookElement } from '../src/component/minecraft-book';
-import type { MinecraftBook } from '../src/engine/types';
+import type { BlockgameBookElement } from '../src/component/blockgame-book';
+import type { BlockgameBook } from '../src/engine/types';
 
 // Sample books illustrating different capabilities
-export const SAMPLES: Record<string, MinecraftBook> = {
+export const SAMPLES: Record<string, BlockgameBook> = {
   guide: {
     title: 'Web Component Guide',
-    author: 'Minecraft Book Engine',
+    author: 'Blockgame Book Engine',
     pages: [
-      `§0§l<minecraft-book>§r
+      `§0§l<blockgame-book>§r
 
 §2A zero-dependency custom
 element for embedding
@@ -228,7 +228,7 @@ fit perfectly in bounds.§r`
 
 function initConfigurator() {
   if (typeof document === 'undefined' || typeof document.getElementById !== 'function') return;
-  const bookEl = document.getElementById('preview-book') as MinecraftBookElement | null;
+  const bookEl = document.getElementById('preview-book') as BlockgameBookElement | null;
   const codeSnippet = document.getElementById('code-snippet');
   const copyBtn = document.getElementById('btn-copy-code');
   const themeToggle = document.getElementById('theme-toggle');
@@ -269,7 +269,7 @@ function initConfigurator() {
     const bmColor = bookmarkColorInput?.value || '#8b0000';
     const persist = persistProgressCheck?.checked;
 
-    const lines: string[] = ['<minecraft-book'];
+    const lines: string[] = ['<blockgame-book'];
     lines.push(`  view-mode="${vm}"`);
     if (app !== 'java') lines.push(`  appearance="${app}"`);
     if (eng !== 'java') lines.push(`  engine="${eng}"`);
@@ -284,12 +284,12 @@ function initConfigurator() {
     lines.push('  controls="true"');
     lines.push('  base-path="../assets">');
     lines.push('  <!-- Inline book content or src="..." -->');
-    lines.push('</minecraft-book>');
+    lines.push('</blockgame-book>');
 
     codeSnippet.textContent = lines.join('\n');
   }
 
-  // Bind change listeners to update <minecraft-book> live
+  // Bind change listeners to update <blockgame-book> live
   viewModeSelect?.addEventListener('change', () => {
     const val = viewModeSelect.value as any;
     bookEl.setAttribute('view-mode', val);

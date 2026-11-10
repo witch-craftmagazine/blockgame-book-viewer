@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   BookCanvas,
+  BlockgameBookViewer,
+  BlockgameBookElement,
   MinecraftBookViewer,
   MinecraftBookElement,
   BookPlugin,
@@ -112,6 +114,8 @@ describe('Modular Library API & Components', () => {
 
   it('exports all expected core utilities and classes', () => {
     expect(BookCanvas).toBeDefined();
+    expect(BlockgameBookViewer).toBeDefined();
+    expect(BlockgameBookElement).toBeDefined();
     expect(MinecraftBookViewer).toBeDefined();
     expect(MinecraftBookElement).toBeDefined();
     expect(splitTextToLines).toBeDefined();

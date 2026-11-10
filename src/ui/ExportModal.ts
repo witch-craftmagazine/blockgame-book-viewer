@@ -1,4 +1,4 @@
-import { MinecraftBook } from '../engine/types';
+import { BlockgameBook } from '../engine/types';
 import {
   exportToBookCopyJson,
   exportToScribbleJson,
@@ -13,7 +13,7 @@ import {
 
 export class ExportModal {
   private backdrop: HTMLElement;
-  private currentBook: MinecraftBook | null = null;
+  private currentBook: BlockgameBook | null = null;
   private getCanvasDataUrl?: () => string;
 
   constructor(getCanvasDataUrl?: () => string) {
@@ -277,7 +277,7 @@ export class ExportModal {
     return this.backdrop;
   }
 
-  public open(book: MinecraftBook): void {
+  public open(book: BlockgameBook): void {
     this.show(book);
   }
 
@@ -285,7 +285,7 @@ export class ExportModal {
     this.hide();
   }
 
-  public show(book: MinecraftBook): void {
+  public show(book: BlockgameBook): void {
     this.currentBook = book;
     this.updateGiveCommand();
 

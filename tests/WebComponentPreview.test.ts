@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { SAMPLES } from '../examples/web-component';
-import { MinecraftBookElement } from '../src/component/minecraft-book';
+import { BlockgameBookElement, MinecraftBookElement } from '../src/component/blockgame-book';
 
 describe('Web Component Live Preview & Configurator Options', () => {
   let mockCtx: any;

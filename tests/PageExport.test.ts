@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { BookCanvas } from '../src/render/BookCanvas';
-import { MinecraftBookViewer } from '../src/ui/MinecraftBookViewer';
-import { MinecraftBookElement } from '../src/component/minecraft-book';
+import { MinecraftBookViewer, BlockgameBookViewer } from '../src/ui/BlockgameBookViewer';
+import { MinecraftBookElement, BlockgameBookElement } from '../src/component/blockgame-book';
 
 describe('Page Export & Mobile Share API', () => {
   let mockContainer: any;

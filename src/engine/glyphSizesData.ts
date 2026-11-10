@@ -4,7 +4,7 @@ const B64_DATA = 'Dw8PDw8PDw8PDw8PDw8PDw8PDw8PDw8PDw8PDw8PDw8PRCYWFxcXRDUkFxc0Fj
 
 let cachedSizes: Uint8Array | null = null;
 
-export function getMinecraftGlyphSizes(): Uint8Array {
+export function getBlockgameGlyphSizes(): Uint8Array {
   if (!cachedSizes) {
     const binary = atob(B64_DATA);
     const len = binary.length;
@@ -15,3 +15,6 @@ export function getMinecraftGlyphSizes(): Uint8Array {
   }
   return cachedSizes;
 }
+
+/** @deprecated Use getBlockgameGlyphSizes instead */
+export const getMinecraftGlyphSizes = getBlockgameGlyphSizes;

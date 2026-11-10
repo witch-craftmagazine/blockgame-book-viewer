@@ -1,13 +1,13 @@
-import { MinecraftBookViewer } from './ui/MinecraftBookViewer';
+import { BlockgameBookViewer } from './ui/BlockgameBookViewer';
 import { WitchcraftPlugin } from './plugins/WitchcraftPlugin';
 import { parseBook } from './io/BookParser';
 import { exportToStendhal, exportToGiveCommandModern } from './io/BookExporter';
 
 const welcomeBook = {
   title: 'Welcome to Book Viewer',
-  author: 'Minecraft Book Engine',
+  author: 'Blockgame Book Engine',
   pages: [
-    '§0§lWelcome!§r\n\nThis is a §2modular§r, pixel-perfect §6Minecraft Book Viewer§r.\n\nEdit this text live in the editor on the right to see instant page updates!\n\n§8Turn page to continue...§r',
+    '§0§lWelcome!§r\n\nThis is a §2modular§r, pixel-perfect §6Blockgame Book Viewer§r.\n\nEdit this text live in the editor on the right to see instant page updates!\n\n§8Turn page to continue...§r',
     '§1§lSupported Formats§r\n\n§0Native export & import for:\n\n§4• Stendhal (.stendhal)\n§2• Scribble JSON (.json)\n§9• BookCopy (.json)\n§5• CMI BookExport (<NextPage>)\n§6• Vanilla /give commands\n\n§8Type your own content anytime!§r',
     '§5§lCustom Resource Packs§r\n\n§0Engine support for:\n- Vanilla (16x)\n- High-res HD packs (32x)\n- Server resource packs\n- Custom bitmap fonts & emojis\n\nFull Minecraft Unicode & Unifont coverage.',
     '§6§lModular Plugin System§r\n\n§0Extend the reader with custom plugins, click hitboxes, interactive sound effects, and animated page overlays.'
@@ -45,8 +45,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
   };
 
-  let viewer: MinecraftBookViewer;
-  viewer = new MinecraftBookViewer(container, {
+  let viewer: BlockgameBookViewer;
+  viewer = new BlockgameBookViewer(container, {
     book: welcomeBook,
     baseAssetPath: './assets',
     theme: 'transparent',
