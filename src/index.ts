@@ -99,6 +99,7 @@ export {
   exportToScribbleJson,
   exportToCmiText,
   exportToGiveCommandModern,
+  exportToGiveCommandJsonPages,
   exportToGiveCommandLegacy,
   exportToBedrockJson,
   exportToCocoapebblesJson,

@@ -1,6 +1,12 @@
 import { BlockgameBook, BookEngine } from '../engine/types';
-import { BLOCKGAME_COLORS } from '../engine/Formatting';
+import { BLOCKGAME_COLORS, createDefaultStyle, parseFormattedText, StyleState } from '../engine/Formatting';
+
+function isDefaultStyle(style: StyleState): boolean {
+  const base = createDefaultStyle();
+  return (Object.keys(base) as (keyof StyleState)[]).every(k => style[k] === base[k]);
+}
 import { splitTextLossless } from '../engine/LosslessSplit';
+import { parseSnbt, SnbtValue } from './Snbt';
 
 /**
  * Converts a Minecraft JSON Text Component (or string) into a § formatted string.
@@ -20,7 +26,20 @@ export function componentToFormattedString(component: any): string {
   }
 
   if (Array.isArray(component)) {
-    return component.map(c => componentToFormattedString(c)).join('');
+    // Sibling components in a list do not inherit each other's style, but §
+    // codes are stateful, so reset before any later sibling that does not
+    // begin with a colour (a colour code already clears the other styles).
+    let out = '';
+    component.forEach((c, i) => {
+      let part = componentToFormattedString(c);
+      if (i > 0 && !/^§[0-9a-fgjpqstux]/i.test(part)) {
+        const carried = createDefaultStyle();
+        parseFormattedText(out, carried);
+        if (!isDefaultStyle(carried)) part = '§r' + part;
+      }
+      out += part;
+    });
+    return out;
   }
 
   if (typeof component === 'object' && component !== null) {
@@ -183,6 +202,20 @@ function parseGiveCommand(cmd: string): BlockgameBook | null {
     // Clean up and decode each page element
     const pages = rawPages.map(p => {
       let trimmed = p.trim();
+
+      // Minecraft 1.21.5+: pages are SNBT components ({text:"..."}, [{...},{...}],
+      // {raw:...}) or SNBT strings. Real SNBT parsing handles unquoted keys,
+      // escapes and nesting that the legacy string handling below cannot.
+      try {
+        let value: SnbtValue = parseSnbt(trimmed);
+        if (value && typeof value === 'object' && !Array.isArray(value) && 'raw' in value) {
+          value = value.raw;
+        }
+        return componentToFormattedString(value);
+      } catch {
+        // Not valid SNBT: fall through to the legacy handling.
+      }
+
       // Remove outer quotes if present
       if ((trimmed.startsWith("'") && trimmed.endsWith("'")) || (trimmed.startsWith('"') && trimmed.endsWith('"'))) {
         trimmed = trimmed.substring(1, trimmed.length - 1);

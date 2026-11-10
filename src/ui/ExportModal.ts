@@ -5,6 +5,7 @@ import {
   exportToCmiText,
   exportToStendhal,
   exportToGiveCommandModern,
+  exportToGiveCommandJsonPages,
   exportToGiveCommandLegacy,
   exportToUrlHash,
   exportToBedrockJson,
@@ -45,7 +46,8 @@ export class ExportModal {
           <div class="tab-content" id="tab-give">
             <p class="tab-sub">Minecraft Java command to give the written book in-game:</p>
             <div class="give-selector">
-              <label><input type="radio" name="give-ver" value="modern" checked /> Modern (1.20.5+)</label>
+              <label><input type="radio" name="give-ver" value="modern" checked /> 1.21.5+ (incl. 26.x)</label>
+              <label><input type="radio" name="give-ver" value="json-pages" /> 1.20.5 - 1.21.4</label>
               <label><input type="radio" name="give-ver" value="legacy" /> Legacy (1.13 - 1.20.4)</label>
             </div>
             <textarea id="export-give-text" readonly></textarea>
@@ -266,10 +268,11 @@ export class ExportModal {
   private updateGiveCommand(): void {
     if (!this.currentBook) return;
     const checked = this.backdrop.querySelector('input[name="give-ver"]:checked') as HTMLInputElement;
-    const isLegacy = checked && checked.value === 'legacy';
+    const version = checked ? checked.value : 'modern';
     const giveArea = this.backdrop.querySelector('#export-give-text') as HTMLTextAreaElement;
-    giveArea.value = isLegacy
-      ? exportToGiveCommandLegacy(this.currentBook)
+    giveArea.value =
+      version === 'legacy' ? exportToGiveCommandLegacy(this.currentBook)
+      : version === 'json-pages' ? exportToGiveCommandJsonPages(this.currentBook)
       : exportToGiveCommandModern(this.currentBook);
   }
 

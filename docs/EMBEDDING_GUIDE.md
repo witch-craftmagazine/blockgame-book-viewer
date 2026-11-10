@@ -134,7 +134,8 @@ import {
 // Auto-detects and parses Stendhal, BookCopy JSON, CMI, /give command, or plain text
 const book = parseBook(rawInput);
 
-// Convert to in-game /give command (1.20.5+ format):
+// Convert to in-game /give command for Minecraft 1.21.5+ (incl. 26.x).
+// Use exportToGiveCommandJsonPages for 1.20.5-1.21.4, exportToGiveCommandLegacy for 1.13-1.20.4.
 const giveCommand = exportToGiveCommandModern(book);
 
 // Convert to Stendhal format:

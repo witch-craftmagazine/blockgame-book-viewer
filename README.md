@@ -20,7 +20,7 @@ A modular, pixel-perfect, zero-dependency blockgame written book web emulator, r
   - **Stendhal** (`.stendhal` files)
   - **BookCopy** (`.json` files)
   - **CMI BookExport** (`.txt` files with `<NextPage>` / `<AutoPage>`)
-  - **Vanilla `/give` commands** (both modern 1.20.5+ item components and 1.13-1.20.4 NBT syntax)
+  - **Vanilla `/give` commands** (1.21.5+ SNBT text components incl. 26.x, 1.20.5-1.21.4 item components with JSON string pages, and 1.13-1.20.4 NBT syntax)
   - **Plain Text / Markdown**
   - **URL Hash Sharing** (zero-backend instant link sharing)
 - 🧩 **Extensible Plugin System**:

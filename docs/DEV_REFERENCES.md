@@ -134,7 +134,7 @@ It highlights projects that are directly useful for extending, testing, and refi
 | **`BookCopy`** | Java record JSON | `.json` (`{ title, author, generation, pages }`) | Fully Supported |
 | **`Scribble`** | Modern Fabric/NeoForge JSON | `.json` (`{ author, pages }`) | Fully Supported |
 | **`1MB-CMI-BookExport`** | CMI CustomText with `<NextPage>` | `.txt` | Fully Supported |
-| **`Vanilla /give`** | SNBT command | Modern 1.20.5+ & Legacy 1.13–1.20.4 | Fully Supported |
+| **`Vanilla /give`** | SNBT command | 1.21.5+ (SNBT pages), 1.20.5–1.21.4 (JSON-string pages) & Legacy 1.13–1.20.4 | Fully Supported |
 | **`cocoapebbles-book`** | REST / Server JSON | `.json` (`{ id, title, author, pages }`) | Compatible with standard JSON parser |
 | **`Textbook`** | Preserved-whitespace text | `.txt` | Compatible with continuous text importer |
 | **`flexibook`** | Custom component JSON | `.json` (`{ components: { flexibook: {...} } }`) | High-priority candidate for future pack loader |

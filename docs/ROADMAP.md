@@ -31,7 +31,8 @@ This roadmap outlines the technical architecture, milestones, and implementation
   - **Scribble JSON** (`.json`): `{ "author": string, "pages": string[] }`.
   - **BookCopy JSON** (`.json`): `{ "title": string, "author": string, "generation": number, "pages": string[] }`.
   - **CMI CustomText** (`.txt`): `<AutoPage>` and `<NextPage>` page separators with `# Title:` / `# Author:` headers.
-  - **Modern `/give` SNBT**: Minecraft 1.20.5+ item component syntax (`written_book[written_book_content=...]`).
+  - **Modern `/give` SNBT**: Minecraft 1.21.5+ (incl. 26.x) item components with SNBT text-component pages (`pages:[[{text:"Hi",color:red}]]`).
+  - **JSON-page `/give`**: Minecraft 1.20.5–1.21.4 item components whose pages are JSON strings.
   - **Legacy `/give` SNBT**: Minecraft 1.13–1.20.4 NBT tag syntax (`written_book{...}`).
   - **URL Hash**: Base64 encoded JSON round-trip for deep linking.
   - **Delimited Text**: Auto-split by `\n---\n` or `=== Page X ===`.

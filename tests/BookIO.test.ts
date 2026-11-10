@@ -91,7 +91,7 @@ Line 3
   it('exports valid Minecraft /give commands', () => {
     const modern = exportToGiveCommandModern(sampleBook);
     expect(modern).toContain('/give @p written_book[written_book_content=');
-    expect(modern).toContain("title:'Test Chronicle'");
+    expect(modern).toContain('title:"Test Chronicle"');
 
     const legacy = exportToGiveCommandLegacy(sampleBook);
     expect(legacy).toContain('/give @p written_book{');
