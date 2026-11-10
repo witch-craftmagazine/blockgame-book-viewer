@@ -1,4 +1,15 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+
+// `navigator` is getter-only on newer Node, so plain assignment throws. Redefine it
+// instead. This avoids vi.stubGlobal, which Bun's test runner (used in CI) lacks.
+const originalNavigator = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+function stubNavigator(value: unknown): void {
+  Object.defineProperty(globalThis, 'navigator', { value, configurable: true, writable: true });
+}
+function restoreNavigator(): void {
+  if (originalNavigator) Object.defineProperty(globalThis, 'navigator', originalNavigator);
+  else delete (globalThis as any).navigator;
+}
 import { BookCanvas } from '../src/render/BookCanvas';
 import { MinecraftBookViewer, BlockgameBookViewer } from '../src/ui/BlockgameBookViewer';
 import { MinecraftBookElement, BlockgameBookElement } from '../src/component/blockgame-book';
@@ -7,9 +18,8 @@ describe('Page Export & Mobile Share API', () => {
   let mockContainer: any;
   let mockCtx: any;
 
-  // navigator is getter-only on newer Node, so it is stubbed rather than assigned.
   afterEach(() => {
-    vi.unstubAllGlobals();
+    restoreNavigator();
   });
 
   beforeEach(() => {
@@ -174,7 +184,7 @@ describe('Page Export & Mobile Share API', () => {
     const shareMock = vi.fn().mockResolvedValue(undefined);
     const canShareMock = vi.fn().mockReturnValue(true);
 
-    vi.stubGlobal('navigator', {
+    stubNavigator({
       share: shareMock,
       canShare: canShareMock,
     });
@@ -201,7 +211,7 @@ describe('Page Export & Mobile Share API', () => {
   });
 
   it('falls back to file download when navigator.share is unavailable', async () => {
-    vi.stubGlobal('navigator', {});
+    stubNavigator({});
 
     const viewer = new MinecraftBookViewer(mockContainer, {
       book: {
@@ -233,7 +243,7 @@ describe('Page Export & Mobile Share API', () => {
   });
 
   it('supports exportCurrentPage and dispatches pageexport event on MinecraftBookElement', async () => {
-    vi.stubGlobal('navigator', {});
+    stubNavigator({});
 
     const element = new MinecraftBookElement();
     (element as any).classList = {
