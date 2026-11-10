@@ -236,6 +236,21 @@ describe('Web Component Live Preview & Configurator Options', () => {
       }
       expect(html).not.toMatch(/braille|scholar|dye|silk/i);
     });
+
+    it('has a page-numbers checkbox that starts checked to match the default', () => {
+      const input = html.match(/<input[^>]*id="cfg-page-numbers"[^>]*>/)?.[0];
+      expect(input).toBeDefined();
+      expect(input).toContain('type="checkbox"');
+      expect(input).toMatch(/\schecked(\s|\/|>)/);
+    });
+
+    it('only writes page-numbers into the snippet when it differs from the default', () => {
+      expect(ts).toContain("document.getElementById('cfg-page-numbers')");
+      expect(ts).toContain(`lines.push('  page-numbers="false"')`);
+      expect(ts).toMatch(/if \(!pageNumbers\) lines\.push/);
+      // The checked state drives the live element through the property.
+      expect(ts).toContain('bookEl.pageNumbers = pageNumbersCheck.checked');
+    });
   });
 
   it('updates live options on MinecraftBookElement dynamically', async () => {

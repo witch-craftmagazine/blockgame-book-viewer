@@ -42,6 +42,7 @@ export class BlockgameBookElement extends BaseElement {
       'cover-color',
       'bookmark',
       'bookmark-color',
+      'page-numbers',
       'shadow',
     ];
   }
@@ -145,6 +146,8 @@ export class BlockgameBookElement extends BaseElement {
     const coverColor = this.getAttribute('cover-color') || undefined;
     const showBookmark = this.hasAttribute('bookmark') && this.getAttribute('bookmark') !== 'false';
     const bookmarkColor = this.getAttribute('bookmark-color') || undefined;
+    // Default on: only an explicit page-numbers="false" turns the on-book page numbers off.
+    const pageNumbers = this.getAttribute('page-numbers') !== 'false';
     const persistProgress = this.hasAttribute('persist-progress') && this.getAttribute('persist-progress') !== 'false';
     const splitMode = this.getAttribute('split-mode') || 'lossless';
     const bookTitle = this.getAttribute('book-title') || undefined;
@@ -169,6 +172,7 @@ export class BlockgameBookElement extends BaseElement {
         coverColor,
         showBookmark,
         bookmarkColor,
+        pageNumbers,
         persistReadingProgress: persistProgress,
         scale,
         controls: showControls,
@@ -436,6 +440,8 @@ export class BlockgameBookElement extends BaseElement {
       this.viewer.setExperimental(newValue !== null && newValue !== 'false');
     } else if (name === 'high-contrast') {
       this.viewer.setHighContrast(newValue !== null && newValue !== 'false');
+    } else if (name === 'page-numbers') {
+      this.viewer.setPageNumbers(newValue !== 'false');
     } else if (name === 'scale' && newValue) {
       this.viewer.getCanvas().setScale(parseInt(newValue, 10));
     }
@@ -570,6 +576,19 @@ export class BlockgameBookElement extends BaseElement {
   set engine(val: BookEngine) {
     this.setAttribute('engine', val);
     if (this.viewer) this.viewer.setEngine(val);
+  }
+
+  get pageNumbers(): boolean {
+    return this.viewer ? this.viewer.isPageNumbersEnabled() : this.getAttribute('page-numbers') !== 'false';
+  }
+
+  set pageNumbers(val: boolean) {
+    if (val) {
+      this.removeAttribute('page-numbers');
+    } else {
+      this.setAttribute('page-numbers', 'false');
+    }
+    if (this.viewer) this.viewer.setPageNumbers(val);
   }
 
   get highContrast(): boolean {

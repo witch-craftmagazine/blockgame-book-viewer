@@ -55,6 +55,10 @@ export interface BookCanvasOptions {
   showBookmark?: boolean;
   bookmarkColor?: string;
   onClose?: () => void;
+  /**
+   * Draw the page number inside the book canvas: Java "Page X of Y" or Bedrock "N of M".
+   * Defaults to true. This is separate from the toolbar text indicator.
+   */
   showPageIndicator?: boolean;
   textSelectionEnabled?: boolean;
   scale?: number;
@@ -86,12 +90,12 @@ export class BookCanvas {
   private scale = 3; // Integer scaling factor
   private isScaleLocked = false;
   private resizeObserver: any = null;
-  private showPageIndicator = false;
+  private showPageIndicator = true;
   private textSelectionEnabled = false; // Off by default
 
   // Layout Debug & Inspector support
   private showLayoutGrid = false;
-  private highlightedLineIndex: number | null = null; // Off by default (toggleable via setShowPageIndicator)
+  private highlightedLineIndex: number | null = null;
 
   // Decoupled Appearance & Engine
   private appearance: BookAppearance = 'java';
@@ -149,7 +153,7 @@ export class BookCanvas {
     this.baseAssetPath = options.baseAssetPath || './assets';
     this.starSweetPeaGifUrl = `${this.baseAssetPath}/textures/starsweetpea.gif`;
     this.onPageChange = options.onPageChange;
-    this.showPageIndicator = options.showPageIndicator ?? false;
+    this.showPageIndicator = options.showPageIndicator ?? true;
     this.textSelectionEnabled = options.textSelectionEnabled ?? false;
     this.appearance = options.appearance || 'java';
     this.engine = options.engine || 'java';
@@ -983,7 +987,11 @@ export class BookCanvas {
   public setShowPageIndicator(show: boolean): void {
     if (this.showPageIndicator !== show) {
       this.showPageIndicator = show;
-      this.render();
+      if (this.isScrollMode()) {
+        this.continuousScrollView?.setBookData(this.paginatedPages, this.currentPage);
+      } else {
+        this.render();
+      }
     }
   }
 
@@ -1554,18 +1562,20 @@ export class BookCanvas {
       }
     }
 
-    // 3. Page Indicators in Bedrock parchment tan (#BCA387) or yellow in HC (#FFFF55)
-    const indicatorColor = this.isHighContrastActive() ? '#FFFF55' : '#BCA387';
-    const leftIndicatorText = `${leftIdx + 1} of ${Math.max(totalPages, 1)}`;
-    const leftSpans = parseFormattedText(leftIndicatorText);
-    const leftIndicatorW = measureLineWidth(leftSpans, this.atlas);
-    this.renderSpans(leftSpans, Math.round(82 - leftIndicatorW / 2), 13, indicatorColor, undefined, ctx);
+    // 3. Page Indicators in Bedrock parchment tan (#BCA387) or yellow in HC (#FFFF55), toggleable, on by default
+    if (this.showPageIndicator) {
+      const indicatorColor = this.isHighContrastActive() ? '#FFFF55' : '#BCA387';
+      const leftIndicatorText = `${leftIdx + 1} of ${Math.max(totalPages, 1)}`;
+      const leftSpans = parseFormattedText(leftIndicatorText);
+      const leftIndicatorW = measureLineWidth(leftSpans, this.atlas);
+      this.renderSpans(leftSpans, Math.round(82 - leftIndicatorW / 2), 13, indicatorColor, undefined, ctx);
 
-    if (rightIdx < totalPages) {
-      const rightIndicatorText = `${rightIdx + 1} of ${totalPages}`;
-      const rightSpans = parseFormattedText(rightIndicatorText);
-      const rightIndicatorW = measureLineWidth(rightSpans, this.atlas);
-      this.renderSpans(rightSpans, Math.round(226 - rightIndicatorW / 2), 13, indicatorColor, undefined, ctx);
+      if (rightIdx < totalPages) {
+        const rightIndicatorText = `${rightIdx + 1} of ${totalPages}`;
+        const rightSpans = parseFormattedText(rightIndicatorText);
+        const rightIndicatorW = measureLineWidth(rightSpans, this.atlas);
+        this.renderSpans(rightSpans, Math.round(226 - rightIndicatorW / 2), 13, indicatorColor, undefined, ctx);
+      }
     }
 
     // 4. Text Content (Left Page X = 25, Right Page X = 169)
@@ -1754,7 +1764,7 @@ export class BookCanvas {
       }
     }
 
-    // 2. Draw Page Indicator ("Page X of Y") - toggleable, off by default
+    // 2. Draw Page Indicator ("Page X of Y") - toggleable, on by default
     if (this.showPageIndicator) {
       const pageMsg = `Page ${pageIndex + 1} of ${Math.max(1, this.paginatedPages.length)}`;
       this.renderTextLineRightAligned(

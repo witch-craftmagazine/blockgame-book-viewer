@@ -201,6 +201,7 @@ function initConfigurator() {
   const appearanceSelect = document.getElementById('cfg-appearance') as HTMLSelectElement | null;
   const engineSelect = document.getElementById('cfg-engine') as HTMLSelectElement | null;
   const persistProgressCheck = document.getElementById('cfg-persist-progress') as HTMLInputElement | null;
+  const pageNumbersCheck = document.getElementById('cfg-page-numbers') as HTMLInputElement | null;
   const sampleSelect = document.getElementById('cfg-sample') as HTMLSelectElement | null;
 
   // Programmatic action buttons
@@ -219,12 +220,15 @@ function initConfigurator() {
     const app = appearanceSelect?.value || 'java';
     const eng = engineSelect?.value || 'java';
     const persist = persistProgressCheck?.checked;
+    const pageNumbers = pageNumbersCheck?.checked ?? true;
 
     const lines: string[] = ['<blockgame-book'];
     lines.push(`  view-mode="${vm}"`);
     if (app !== 'java') lines.push(`  appearance="${app}"`);
     if (eng !== 'java') lines.push(`  engine="${eng}"`);
     if (persist) lines.push('  persist-progress');
+    // page-numbers defaults to on, so the snippet only carries it when turned off.
+    if (!pageNumbers) lines.push('  page-numbers="false"');
     lines.push('  controls="true"');
     lines.push('  base-path="../assets">');
     lines.push('  <!-- Inline book content or src="..." -->');
@@ -263,6 +267,12 @@ function initConfigurator() {
       bookEl.removeAttribute('persist-progress');
     }
     bookEl.persistProgress = checked;
+    updateCodeSnippet();
+  });
+
+  pageNumbersCheck?.addEventListener('change', () => {
+    // The property keeps the attribute in sync: removed when on (the default), "false" when off.
+    bookEl.pageNumbers = pageNumbersCheck.checked;
     updateCodeSnippet();
   });
 

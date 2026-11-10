@@ -38,6 +38,11 @@ export interface BlockgameBookViewerOptions {
   highContrast?: boolean;
   coverColor?: BlockgameDyeColor | string;
   showBookmark?: boolean;
+  /**
+   * Draw the page number on the book itself (Java "Page X of Y", Bedrock "N of M").
+   * Defaults to true. Independent of `controls.pageIndicator`, which is the toolbar text.
+   */
+  pageNumbers?: boolean;
   bookmarkColor?: string;
   onClose?: () => void;
   /** @deprecated The viewer is always `transparent`; any value passed here is ignored. */
@@ -98,6 +103,7 @@ export class BlockgameBookViewer {
       highContrast: this.options.highContrast,
       coverColor: this.options.coverColor,
       showBookmark: this.options.showBookmark,
+      showPageIndicator: this.options.pageNumbers,
       bookmarkColor: this.options.bookmarkColor,
       onClose: this.options.onClose,
       plugins: this.options.plugins,
@@ -489,6 +495,14 @@ export class BlockgameBookViewer {
 
   public getEngine(): BookEngine {
     return this.bookCanvas.getEngine();
+  }
+
+  public setPageNumbers(show: boolean): void {
+    this.bookCanvas.setShowPageIndicator(show);
+  }
+
+  public isPageNumbersEnabled(): boolean {
+    return this.bookCanvas.getShowPageIndicator();
   }
 
   public setHighContrast(highContrast: boolean): void {

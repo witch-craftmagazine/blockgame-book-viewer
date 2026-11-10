@@ -42,6 +42,7 @@ The simplest way to embed a book is using the `<blockgame-book>` custom element 
 | `scale` | `.scale` | `number` | Auto | Integer pixel-scaling multiplier |
 | `sound` | `.sound` | `boolean` | `true` | Enable or disable page-turn sound effects |
 | `controls` | `.controls` | `boolean` | `true` | Show or hide the bottom control toolbar |
+| `page-numbers` | `.pageNumbers` | `boolean` | `true` | Page number drawn on the book itself (Java `Page X of Y`, Bedrock `N of M`). Use `page-numbers="false"` to hide it; the property setter keeps the attribute in sync. Separate from the toolbar page text |
 | `page` | `.page` | `number` | `1` | Current active page (1-based index) |
 | `persist-progress` | `.persistProgress` | `boolean` | `false` | Opt-in localStorage reading progress save |
 | `split-mode` | `.splitMode` | `'lossless' \| 'standard'` | `'lossless'` | Lossless split mode |
@@ -98,6 +99,7 @@ export function BookViewerComponent({ bookData }) {
       book: bookData,
       viewMode: 'double',
       controls: true,
+      pageNumbers: true, // default; false hides the page number on the book
       onPageChange: (current, total) => {
         console.log(`Current page: ${current + 1}/${total}`);
       }

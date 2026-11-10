@@ -74,6 +74,7 @@ Include the script and stylesheet, then use the `<blockgame-book>` tag:
 | `cover-color` | 16 Minecraft dye colors (e.g. `'purple'`, `'cyan'`) | un-dyed | **Experimental.** Scholar-style dye tint around the book |
 | `bookmark` | boolean (`bookmark`) | `false` | **Experimental.** Hanging silk ribbon bookmark |
 | `bookmark-color`| CSS color / hex (e.g. `'#8B0000'`) | `'#B02E26'` | **Experimental.** Color of the silk ribbon bookmark |
+| `page-numbers` | boolean (`true` \| `false`) | `true` | Page number drawn on the book itself: Java `Page X of Y` or Bedrock `N of M`. Set `page-numbers="false"` to hide it. Separate from the toolbar `1 / 12` text, which `controls` governs |
 | `persist-progress` | boolean (`persist-progress`) | `false` | Opt-in `localStorage` reading progress memory |
 | `split-mode` | `'lossless'` \| `'legacy'` | `'lossless'` | Continuous text splitting engine |
 | `text` | string | `""` | Raw text attribute for direct continuous pagination |
@@ -111,6 +112,7 @@ const container = document.getElementById('book-container')!;
 const viewer = new BlockgameBookViewer(container, {
   viewMode: 'double', // 'single' | 'double' | 'auto'
   controls: true,     // built-in toolbar
+  pageNumbers: true,  // page number drawn on the book (default true)
   book: {
     title: 'The Great Journey',
     author: 'Alex',
