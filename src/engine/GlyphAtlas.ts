@@ -188,9 +188,10 @@ export class GlyphAtlas {
    */
   public getAdvance(char: string, isBold = false): number {
     if (char === '§' || char === '\n' || char === '\r' || this.isCombining(char)) return 0;
-    // In Minecraft Java Edition, spaces (' ' and non-breaking space) have a fixed width of 4px
-    // and bold formatting never increases space width (SpaceGlyphInfo bold offset is 0.0f).
-    if (char === ' ' || char === '\u00a0') return 4;
+    // Spaces (' ' and non-breaking space) are 4px, and like every other glyph they
+    // gain the 1px bold offset: 5px when bold. Verified in-game on 26.3, where a bold
+    // 20-character title (97px regular + 20px bold offset = 117px) wraps at 114px.
+    if (char === ' ' || char === '\u00a0') return isBold ? 5 : 4;
 
     const custom = this.customGlyphs.get(char);
     if (custom) {

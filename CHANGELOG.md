@@ -15,6 +15,7 @@
 - Assets ship once, in `dist/assets`.
 
 ### Fixed
+- Bold spaces are now 5px wide instead of 4px. The emulator under-measured bold lines, so text that wrapped in Minecraft 26.3 (for example a bold `II. The Ink of Souls`) stayed on one line in the viewer.
 - `/give` export produced books showing raw JSON and stripped colours in Minecraft 1.21.5+ (including 26.x). Pages were JSON wrapped in strings, which 1.21.5+ treats as plain text, and `§` codes were typed into the command, which the chat box strips. `exportToGiveCommandModern` now emits SNBT text components with colours and styles as properties and never writes `§`. Titles are capped at 32 characters and `generation` is written when set.
 - The old 1.20.5-1.21.4 format moved to the new `exportToGiveCommandJsonPages`; the export dialog has a radio for it. The legacy exporter also stopped emitting `§`.
 - Importing `/give` commands now parses real SNBT (unquoted keys, `{raw:...}`, nested lists) and resolves style inheritance like Minecraft: `extra` children inherit from their parent, and in a list the first element is the parent of the rest. Exported pages hang their runs off an unstyled empty parent (`{text:"",extra:[...]}`) so a bold first run cannot bleed into the whole page.

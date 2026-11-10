@@ -5,16 +5,22 @@ import { createLithosPack, createCraftadiaPack } from '../src/presets/example-pa
 import { splitTextToLines } from '../src/engine/StringSplitter';
 
 describe('Lithos Font Textures & Spacing Fidelity', () => {
-  it('guarantees space advance is fixed at 4px and never expands when bolded', () => {
+  it('keeps space advance at 4px, and 5px when bolded like every other glyph', () => {
     const atlas = new GlyphAtlas();
     expect(atlas.getAdvance(' ', false)).toBe(4);
-    expect(atlas.getAdvance(' ', true)).toBe(4);
+    expect(atlas.getAdvance(' ', true)).toBe(5);
     expect(atlas.getAdvance('\u00a0', false)).toBe(4);
-    expect(atlas.getAdvance('\u00a0', true)).toBe(4);
+    expect(atlas.getAdvance('\u00a0', true)).toBe(5);
 
     // Regular characters still expand by 1px when bolded
     expect(atlas.getAdvance('A', false)).toBe(6);
     expect(atlas.getAdvance('A', true)).toBe(7);
+  });
+
+  it('wraps a bold title whose spaces widen it past 114px (matches 26.3)', () => {
+    const atlas = new GlyphAtlas();
+    const lines = splitTextToLines('§1§lII. The Ink of Souls', 114, atlas);
+    expect(lines.map(l => l.spans.map(s => s.text).join(''))).toEqual(['II. The Ink of', 'Souls']);
   });
 
   it('preserves leading spaces and centers Line 3 in issue1 when wrapping from Line 2', () => {
