@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, beforeAll } from 'vitest';
 import { SAMPLES } from '../examples/web-component';
 import { BlockgameBookElement, MinecraftBookElement } from '../src/component/blockgame-book';
 
@@ -183,14 +183,59 @@ describe('Web Component Live Preview & Configurator Options', () => {
     };
   });
 
-  it('provides all 4 sample presets with valid pages and metadata', () => {
-    expect(SAMPLES.guide).toBeDefined();
+  it('provides the 3 production sample presets with valid pages and metadata', () => {
+    expect(Object.keys(SAMPLES).sort()).toEqual(['bedrock', 'continuous', 'guide']);
     expect(SAMPLES.guide.pages.length).toBeGreaterThanOrEqual(4);
-    expect(SAMPLES.continuous).toBeDefined();
     expect(SAMPLES.continuous.pages.length).toBe(7);
     expect(SAMPLES.bedrock).toBeDefined();
-    expect(SAMPLES.scholar).toBeDefined();
-    expect(SAMPLES.scholar.pages[1]).toContain('⣠⣴⣶⣶⣶⣦⣄');
+    expect(SAMPLES.scholar).toBeUndefined();
+  });
+
+  it('guide sample documents only core attributes (no Scholar, Braille, or phantom classic theme)', () => {
+    const text = SAMPLES.guide.pages.join('\n');
+    for (const core of ['view-mode', 'appearance', 'engine', 'theme', 'persist-progress', 'setBook', 'scrollToPage']) {
+      expect(text).toContain(core);
+    }
+    for (const gone of ['cover-color', 'bookmark', 'Scholar', 'Braille', 'classic', 'high-contrast']) {
+      expect(text).not.toContain(gone);
+    }
+  });
+
+  describe('examples/web-component.html configurator', () => {
+    let html = '';
+    let ts = '';
+
+    beforeAll(async () => {
+      // The repo has no @types/node, so load node:fs through a variable specifier.
+      const fsModule = 'node:fs';
+      const fs: any = await import(/* @vite-ignore */ fsModule);
+      html = fs.readFileSync(new URL('../examples/web-component.html', import.meta.url), 'utf8');
+      ts = fs.readFileSync(new URL('../examples/web-component.ts', import.meta.url), 'utf8');
+    });
+
+    it('no longer renders Scholar, bookmark, or high-contrast controls', () => {
+      for (const id of ['cfg-cover-color', 'cfg-high-contrast', 'cfg-bookmark', 'cfg-bookmark-color']) {
+        expect(html).not.toContain(`id="${id}"`);
+        expect(ts).not.toContain(id);
+      }
+    });
+
+    it('offers only transparent, dark, and light themes and no scholar sample', () => {
+      const themeSelect = html.match(/<select id="cfg-theme"[\s\S]*?<\/select>/)![0];
+      const values = [...themeSelect.matchAll(/<option value="([^"]+)"/g)].map((m) => m[1]);
+      expect(values).toEqual(['transparent', 'dark', 'light']);
+
+      const sampleSelect = html.match(/<select id="cfg-sample"[\s\S]*?<\/select>/)![0];
+      const samples = [...sampleSelect.matchAll(/<option value="([^"]+)"/g)].map((m) => m[1]);
+      expect(samples).toEqual(['guide', 'continuous', 'bedrock']);
+    });
+
+    it('keeps the production controls and has no Scholar or Braille copy', () => {
+      for (const id of ['cfg-view-mode', 'cfg-appearance', 'cfg-engine', 'cfg-theme', 'cfg-persist-progress', 'cfg-sample']) {
+        expect(html).toContain(`id="${id}"`);
+      }
+      expect(html).not.toMatch(/braille|scholar|dye|silk/i);
+    });
   });
 
   it('updates live options on MinecraftBookElement dynamically', async () => {

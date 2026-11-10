@@ -43,14 +43,11 @@ Include the script and stylesheet, then use the `<blockgame-book>` tag:
 <link rel="stylesheet" href="https://unpkg.com/blockgame-book-viewer/dist/style.css" />
 <script type="module" src="https://unpkg.com/blockgame-book-viewer/dist/blockgame-book-viewer.js"></script>
 
-<!-- Embedded with PDF continuous scroll, Bedrock GUI, Scholar cover dye, and silk bookmark -->
+<!-- Embedded with PDF-style continuous scroll, Bedrock GUI, and reading-progress memory -->
 <blockgame-book
   view-mode="scroll-double"
   appearance="bedrock"
   engine="bedrock"
-  cover-color="purple"
-  bookmark="true"
-  bookmark-color="#8B0000"
   persist-progress="true"
   controls="true"
   base-path="./assets">
@@ -72,11 +69,12 @@ Include the script and stylesheet, then use the `<blockgame-book>` tag:
 | `view-mode` | `'single'` \| `'double'` \| `'scroll-single'` \| `'scroll-double'` \| `'auto'` | `'auto'` | Flipbook modes or PDF-style continuous vertical scrolling |
 | `appearance` | `'java'` \| `'bedrock'` | `'java'` | Visual GUI texture shell ($512\times256$ Bedrock or Java parchment) |
 | `engine` | `'java'` \| `'bedrock'` | `'java'` | Layout engine: $114\text{px}$ Java vs $122\text{px}$ Bedrock line width and `§g`–`§u` palette |
-| `theme` | `'transparent'` \| `'dark'` \| `'classic'` \| `'high-contrast'` | `'dark'` | Reader container backdrop styling |
-| `high-contrast` | boolean (`high-contrast`) | `false` | Bedrock high-contrast slate background texture and white text |
-| `cover-color` | 16 Minecraft dye colors (e.g. `'purple'`, `'cyan'`) | un-dyed | Scholar-style dyed leather cover and spine |
-| `bookmark` | boolean (`bookmark`) | `false` | Authentic hanging silk ribbon bookmark |
-| `bookmark-color`| CSS color / hex (e.g. `'#8B0000'`) | `'#8B0000'` | Color of the silk ribbon bookmark |
+| `theme` | `'transparent'` \| `'dark'` \| `'light'` \| `'parchment'` \| `'high-contrast'` | `'dark'` | Reader container backdrop styling |
+| `experimental` | boolean (`experimental`) | `false` | Opt in to the experimental features below (`high-contrast`, `cover-color`, `bookmark`, `bookmark-color`). Ignored while off |
+| `high-contrast` | boolean (`high-contrast`) | `false` | **Experimental.** Bedrock high-contrast slate background with white text and yellow page indicators. With `appearance="java"` only the text colors change |
+| `cover-color` | 16 Minecraft dye colors (e.g. `'purple'`, `'cyan'`) | un-dyed | **Experimental.** Scholar-style dye tint around the book |
+| `bookmark` | boolean (`bookmark`) | `false` | **Experimental.** Hanging silk ribbon bookmark |
+| `bookmark-color`| CSS color / hex (e.g. `'#8B0000'`) | `'#B02E26'` | **Experimental.** Color of the silk ribbon bookmark |
 | `persist-progress` | boolean (`persist-progress`) | `false` | Opt-in `localStorage` reading progress memory |
 | `split-mode` | `'lossless'` \| `'legacy'` | `'lossless'` | Continuous text splitting engine |
 | `text` | string | `""` | Raw text attribute for direct continuous pagination |
@@ -84,6 +82,18 @@ Include the script and stylesheet, then use the `<blockgame-book>` tag:
 | `controls` | boolean (`true` \| `false`) | `true` | Built-in reader toolbar |
 | `scale` | integer | auto | Canvas scaling factor |
 | `page` | 1-indexed number | `1` | Initial active page number |
+
+#### Experimental features
+
+Scholar dye covers, the silk ribbon bookmark, and high contrast are off by default so the book renders exactly like vanilla Minecraft. They are ignored, even if their attributes or options are set, until you opt in with the `experimental` attribute (or `experimental: true` in the JavaScript API):
+
+```html
+<blockgame-book experimental cover-color="purple" bookmark appearance="bedrock" high-contrast>
+  ...
+</blockgame-book>
+```
+
+Values set while `experimental` is off are remembered and take effect as soon as it is turned on. The `theme="high-contrast"` container styling is separate and does not need the flag, but the canvas high-contrast rendering still does. These features may change between releases.
 
 ### 2. JavaScript / TypeScript API
 

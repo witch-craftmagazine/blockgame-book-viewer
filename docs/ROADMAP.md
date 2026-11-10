@@ -51,9 +51,10 @@ This roadmap outlines the technical architecture, milestones, and implementation
   - Programmatic API: `scrollToPage(pageNumber, options)`.
 
 ### Priority 4: Themes & Accessibility - [Completed in v1.4]
-- **Bedrock High-Contrast Theme**:
+- **Bedrock High-Contrast Theme** *(experimental)*:
   - Authentic high-contrast slate background texture (`#1C1C24`), high-contrast pure white text (`#FFFFFF`), and yellow navigational accents (`#FFFF55`).
-  - Active via `theme="high-contrast"` / `highContrast: true` option or automatic `@media (prefers-contrast: more)` query detection.
+  - Canvas rendering is active via the `highContrast: true` option / `high-contrast` attribute **only when `experimental` is also set**. Default text (`#000000`) is drawn white so it stays readable on the slate.
+  - Container styling responds to `theme="high-contrast"` and the `@media (prefers-contrast: more)` query without the flag.
 - *(Note on MC-61489: Evaluated and confirmed not applicable — MC-61489 was an in-game OpenGL/LWJGL projection matrix bug in vanilla Minecraft's `BookScreen.java`; HTML5 canvas rendering uses CSS pixel ratio scaling and is unaffected).*
 
 ### Priority 5: Format Expansion & Interchange - [Completed in v1.5]
@@ -66,11 +67,10 @@ This roadmap outlines the technical architecture, milestones, and implementation
   - Preservation of server-assigned book identifier (`id`) in metadata and export.
 
 ### Priority 6: Aesthetic & Scholar Extensions - [Completed in v1.6]
-- **Scholar-Style Dye Covers & Bookmarks**:
+- **Scholar-Style Dye Covers & Bookmarks** *(experimental, opt-in via `experimental`)*:
   - All 16 authentic Minecraft dye colors supported via `coverColor` option / `cover-color` attribute.
   - Classic silk ribbon bookmark (`showBookmark`, `bookmarkColor`, `bookmark` attribute) hanging from the bottom center of open books with authentic V-notch styling.
-- **Braille Graphic Art Support**:
-  - Full Unicode Braille (`\u2800`–`\u28FF`) advance metrics and rendering support for ASCII/Braille art books.
+  - Ignored unless the `experimental` flag is set, so the default rendering stays vanilla-accurate. Not shown in the web component preview configurator.
 
 ---
 
@@ -89,6 +89,6 @@ This roadmap outlines the technical architecture, milestones, and implementation
 | **v1.1** | **Bedrock Edition GUI & Engine** | Appearance & Parity | $512\times256$ Bedrock textures, decoupled engine, $122\text{px}$ line wrapping, Bedrock color codes (`§g`–`§u`) | ✅ Done |
 | **v1.2** | **Lossless Splitting & Ingestion** | Engine & Web Component | `LosslessSplit` engine (`join(pages) === text`), `<minecraft-book text="...">`, opt-in `PageMemoryManager` | ✅ Done |
 | **v1.3** | **Continuous Scroll Reader** | Web UX & Ergonomics | PDF-style `scroll-single` and `scroll-double` continuous scroll, DOM virtualization, floating page badge, scroll persistence | ✅ Done |
-| **v1.4** | **Themes & Accessibility** | Accessibility & UX | Bedrock high-contrast accessibility theme, slate parchment, `prefers-contrast` support | ✅ Done |
+| **v1.4** | **Themes & Accessibility** | Accessibility & UX | Bedrock high-contrast accessibility theme (experimental), slate parchment, `prefers-contrast` support | ✅ Done |
 | **v1.5** | **Format Interchange** | Serialization | Bedrock Book JSON (`WritableBookContent`), Spigot JSON (`cocoapebbles-book`), `<br/>` splitting | ✅ Done |
-| **v1.6** | **Aesthetic & Scholar Extensions** | Customization & Art | 16 Minecraft dye cover tints, silk ribbon bookmark, Braille Unicode art | ✅ Done |
+| **v1.6** | **Aesthetic & Scholar Extensions** | Customization & Art | 16 Minecraft dye cover tints and silk ribbon bookmark (both experimental) | ✅ Done |

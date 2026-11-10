@@ -34,10 +34,11 @@ The simplest way to embed a book is using the `<blockgame-book>` custom element 
 | `view-mode` | `.viewMode` | `'single' \| 'double' \| 'scroll-single' \| 'scroll-double' \| 'auto'` | `'auto'` | Page display layout |
 | `appearance` | `.appearance` | `'java' \| 'bedrock'` | `'java'` | Book GUI appearance |
 | `engine` | `.engine` | `'java' \| 'bedrock'` | `'java'` | Text width engine (114px Java vs 122px Bedrock) |
-| `high-contrast`| `.highContrast`| `boolean` | `false` | Bedrock high-contrast reading mode |
-| `cover-color` | `.coverColor` | `string` | `undefined` | 16 Minecraft dye cover tint colors |
-| `bookmark` | `.bookmark` | `boolean` | `false` | Silk ribbon bookmark |
-| `bookmark-color`| `.bookmarkColor`| `string` | `undefined` | Custom ribbon color hex |
+| `experimental` | `.experimental` | `boolean` | `false` | Enables the experimental features below. While off they are ignored |
+| `high-contrast`| `.highContrast`| `boolean` | `false` | Experimental: Bedrock high-contrast reading mode (needs `experimental`) |
+| `cover-color` | `.coverColor` | `string` | `undefined` | Experimental: 16 Minecraft dye cover tint colors (needs `experimental`) |
+| `bookmark` | `.bookmark` | `boolean` | `false` | Experimental: silk ribbon bookmark (needs `experimental`) |
+| `bookmark-color`| `.bookmarkColor`| `string` | `undefined` | Experimental: custom ribbon color hex (needs `experimental`) |
 | `scale` | `.scale` | `number` | Auto | Integer pixel-scaling multiplier |
 | `sound` | `.sound` | `boolean` | `true` | Enable or disable page-turn sound effects |
 | `controls` | `.controls` | `boolean` | `true` | Show or hide the bottom control toolbar |

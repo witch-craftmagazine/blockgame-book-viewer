@@ -295,6 +295,250 @@ describe('Themes, Accessibility & Scholar Extensions (v1.4 & v1.6)', () => {
     });
   });
 
+  describe('Experimental flag gating (Scholar covers, bookmarks, high contrast)', () => {
+    /** Records every glyph color requested from the atlas while `fn` runs. */
+    const recordGlyphColors = (canvas: BookCanvas, fn: () => void): string[] => {
+      const atlas: any = canvas.getAtlas();
+      const original = atlas.getGlyphDrawInfo;
+      const colors: string[] = [];
+      atlas.getGlyphDrawInfo = (ch: string, color: string, bold: boolean) => {
+        colors.push(color);
+        return original.call(atlas, ch, color, bold);
+      };
+      try {
+        fn();
+      } finally {
+        atlas.getGlyphDrawInfo = original;
+      }
+      return colors;
+    };
+
+    const countCalls = (name: 'strokeRect' | 'fill', fn: () => void): number => {
+      const original = mockCtx[name];
+      let count = 0;
+      mockCtx[name] = (...args: any[]) => {
+        count++;
+        return original?.(...args);
+      };
+      try {
+        fn();
+      } finally {
+        mockCtx[name] = original;
+      }
+      return count;
+    };
+
+    it('defaults to experimental=false', async () => {
+      const canvas = new BookCanvas({ container: mockContainer });
+      await canvas.init();
+      expect(canvas.isExperimental()).toBe(false);
+    });
+
+    it('does not draw cover dye or bookmark ribbon without experimental, but stores the values', async () => {
+      const plain = new BookCanvas({ container: mockContainer });
+      await plain.init();
+      plain.setBook(testBook);
+      const baselineStrokes = countCalls('strokeRect', () => plain.render());
+      const baselineFills = countCalls('fill', () => plain.render());
+
+      const canvas = new BookCanvas({
+        container: mockContainer,
+        coverColor: 'red',
+        showBookmark: true,
+        bookmarkColor: '#FED83D',
+      });
+      await canvas.init();
+      canvas.setBook(testBook);
+
+      expect(canvas.getCoverColor()).toBe('red');
+      expect(canvas.isBookmarkVisible()).toBe(true);
+      expect(countCalls('strokeRect', () => canvas.render())).toBe(baselineStrokes);
+      expect(countCalls('fill', () => canvas.render())).toBe(baselineFills);
+    });
+
+    it('draws cover dye and bookmark ribbon once experimental is enabled', async () => {
+      const canvas = new BookCanvas({
+        container: mockContainer,
+        coverColor: 'red',
+        showBookmark: true,
+      });
+      await canvas.init();
+      canvas.setBook(testBook);
+      const offStrokes = countCalls('strokeRect', () => canvas.render());
+      const offFills = countCalls('fill', () => canvas.render());
+
+      canvas.setExperimental(true);
+      expect(canvas.isExperimental()).toBe(true);
+      expect(countCalls('strokeRect', () => canvas.render())).toBeGreaterThan(offStrokes);
+      expect(countCalls('fill', () => canvas.render())).toBeGreaterThan(offFills);
+
+      canvas.setExperimental(false);
+      expect(countCalls('strokeRect', () => canvas.render())).toBe(offStrokes);
+    });
+
+    it('ignores high contrast for Bedrock slate background without experimental', async () => {
+      const canvas = new BookCanvas({
+        container: mockContainer,
+        appearance: 'bedrock',
+        highContrast: true,
+      });
+      await canvas.init();
+      canvas.setBook(testBook);
+      const hcBg = (canvas as any).bedrockBgHc;
+      expect(hcBg).toBeTruthy();
+      expect(hcBg).not.toBe((canvas as any).bedrockBg);
+
+      const usedImages: any[] = [];
+      const original = mockCtx.drawImage;
+      mockCtx.drawImage = (img: any, ...rest: any[]) => {
+        usedImages.push(img);
+        return original?.(img, ...rest);
+      };
+      try {
+        canvas.render();
+        expect(usedImages).not.toContain(hcBg);
+
+        usedImages.length = 0;
+        canvas.setExperimental(true);
+        canvas.render();
+        expect(usedImages).toContain(hcBg);
+      } finally {
+        mockCtx.drawImage = original;
+      }
+    });
+
+    it('draws default text white in Bedrock high contrast when experimental', async () => {
+      const canvas = new BookCanvas({
+        container: mockContainer,
+        appearance: 'bedrock',
+        highContrast: true,
+        experimental: true,
+      });
+      await canvas.init();
+      canvas.setBook(testBook);
+
+      const colors = recordGlyphColors(canvas, () => canvas.render());
+      expect(colors).toContain('#FFFFFF');
+      expect(colors).toContain('#FFFF55'); // page indicators
+      expect(colors).not.toContain('#000000');
+    });
+
+    it('keeps default text black in Bedrock when high contrast is set without experimental', async () => {
+      const canvas = new BookCanvas({
+        container: mockContainer,
+        appearance: 'bedrock',
+        highContrast: true,
+      });
+      await canvas.init();
+      canvas.setBook(testBook);
+
+      const colors = recordGlyphColors(canvas, () => canvas.render());
+      expect(colors).toContain('#000000');
+      expect(colors).not.toContain('#FFFFFF');
+      expect(colors).not.toContain('#FFFF55');
+    });
+
+    it('draws default text white in Java high contrast when experimental, but keeps explicit colors', async () => {
+      const canvas = new BookCanvas({
+        container: mockContainer,
+        highContrast: true,
+        experimental: true,
+      });
+      await canvas.init();
+      canvas.setBook({ title: 't', author: 'a', pages: ['plain text \u00a7cred text'] });
+
+      const colors = recordGlyphColors(canvas, () => canvas.render());
+      expect(colors).toContain('#FFFFFF');
+      expect(colors).toContain('#FF5555'); // \u00a7c stays red
+      expect(colors).not.toContain('#000000');
+    });
+
+    it('keeps Java text black when high contrast is set without experimental', async () => {
+      const canvas = new BookCanvas({ container: mockContainer, highContrast: true });
+      await canvas.init();
+      canvas.setBook({ title: 't', author: 'a', pages: ['plain text'] });
+
+      const colors = recordGlyphColors(canvas, () => canvas.render());
+      expect(colors).toContain('#000000');
+      expect(colors).not.toContain('#FFFFFF');
+    });
+
+    it('viewer: high-contrast container class requires experimental', async () => {
+      const viewer = new BlockgameBookViewer(mockContainer, {
+        book: testBook,
+        highContrast: true,
+      });
+      await viewer.init();
+      expect(viewer.isExperimental()).toBe(false);
+      expect(mockContainer.classList.contains('mc-theme-high-contrast')).toBe(false);
+
+      viewer.setExperimental(true);
+      expect(viewer.isExperimental()).toBe(true);
+      expect(mockContainer.classList.contains('mc-theme-high-contrast')).toBe(true);
+
+      viewer.setHighContrast(false);
+      expect(mockContainer.classList.contains('mc-theme-high-contrast')).toBe(false);
+
+      viewer.setHighContrast(true);
+      viewer.setExperimental(false);
+      expect(mockContainer.classList.contains('mc-theme-high-contrast')).toBe(false);
+      // The value is remembered, so re-enabling brings it back.
+      expect(viewer.isHighContrast()).toBe(true);
+      viewer.setExperimental(true);
+      expect(mockContainer.classList.contains('mc-theme-high-contrast')).toBe(true);
+    });
+
+    it('viewer: the high-contrast theme class survives without experimental', async () => {
+      const viewer = new BlockgameBookViewer(mockContainer, { book: testBook, theme: 'dark' });
+      await viewer.init();
+      viewer.setTheme('high-contrast');
+      expect(mockContainer.classList.contains('mc-theme-high-contrast')).toBe(true);
+      viewer.setTheme('dark');
+      expect(mockContainer.classList.contains('mc-theme-high-contrast')).toBe(false);
+    });
+
+    it('<blockgame-book> maps the experimental attribute and property to the viewer', async () => {
+      const el = new BlockgameBookElement();
+      const attrs: Record<string, string> = {};
+      (el as any).setAttribute = (k: string, v: string) => {
+        const old = attrs[k] ?? null;
+        attrs[k] = v;
+        el.attributeChangedCallback?.(k, old, v);
+      };
+      (el as any).getAttribute = (k: string) => attrs[k] ?? null;
+      (el as any).hasAttribute = (k: string) => k in attrs;
+      (el as any).removeAttribute = (k: string) => {
+        const old = attrs[k] ?? null;
+        delete attrs[k];
+        el.attributeChangedCallback?.(k, old, null);
+      };
+      (el as any).querySelector = () => null;
+      (el as any).classList = { add: () => {}, remove: () => {} };
+      (el as any).appendChild = (child: any) => child;
+      (el as any).dispatchEvent = () => true;
+
+      await el.connectedCallback();
+      const viewer = await el.whenReady();
+      expect(el.experimental).toBe(false);
+      expect(viewer.isExperimental()).toBe(false);
+
+      el.setAttribute('experimental', '');
+      expect(viewer.isExperimental()).toBe(true);
+      expect(el.experimental).toBe(true);
+
+      el.setAttribute('experimental', 'false');
+      expect(viewer.isExperimental()).toBe(false);
+
+      el.experimental = true;
+      expect(attrs['experimental']).toBe('');
+      expect(viewer.isExperimental()).toBe(true);
+
+      el.experimental = false;
+      expect('experimental' in attrs).toBe(false);
+      expect(viewer.isExperimental()).toBe(false);
+    });
+  });
+
   describe('Braille Art Support (v1.6 Backlog)', () => {
     it('measures Unicode Braille characters cleanly within layout line bounds', async () => {
       const canvas = new BookCanvas({ container: mockContainer });

@@ -34,21 +34,18 @@ attributes live!§r`,
   bedrock (122px)
 • §5theme§0:
   transparent | dark |
-  classic | high-contrast`,
+  light`,
 
-      `§5§lScholar Extensions§r
+      `§5§lPersistence & API§r
 
-§0• §6cover-color§0:
-  Supports all 16 Minecraft
-  leather dye colors.
-• §4bookmark§0:
-  Adds an authentic silk
-  ribbon bookmark.
-• §3bookmark-color§0:
-  Custom ribbon hex or
-  palette tone.
-• §8persist-progress§0:
-  Opt-in reading memory.`,
+§0• §8persist-progress§0:
+  Opt-in reading memory.
+• §2setBook(book)§0:
+  Swap content live.
+• §9nextPage()§0 /
+  §9prevPage()§0
+• §6scrollToPage(n)§0
+• §3exportCurrentPage()§0`,
 
       `§4§lFormatting Codes§r
 
@@ -190,39 +187,6 @@ codes:
 textures render authentic
 corner turn buttons!§r`
     ]
-  },
-
-  scholar: {
-    title: 'Scholar Dye & Braille Art',
-    author: 'Artisans Guild',
-    pages: [
-      `§0§lScholar Customization§r
-
-§0Transform any book with
-authentic Minecraft dyes!
-
-Toggle §2cover-color§0 to
-apply leather tints, and
-enable §4bookmark§0 to hang
-a silk bookmark ribbon
-from the bottom edge.
-
-§8Turn page for Braille!§r`,
-
-      `§0§lBraille Graphic Art§r
-§0Full Unicode Braille
-(U+2800 to U+28FF)
-pixel art rendering:
-
-⠀⣠⣴⣶⣶⣶⣦⣄⠀
-⢰⣿⣿⣿⣿⣿⣿⣿⣆
-⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⠻⣿⣿⣿⣿⣿⣿⣿⠟
-⠀⠈⠛⠿⠿⠿⠛⠁⠀
-
-§8Calculated pixel advances
-fit perfectly in bounds.§r`
-    ]
   }
 };
 
@@ -240,10 +204,6 @@ function initConfigurator() {
   const appearanceSelect = document.getElementById('cfg-appearance') as HTMLSelectElement | null;
   const engineSelect = document.getElementById('cfg-engine') as HTMLSelectElement | null;
   const themeSelect = document.getElementById('cfg-theme') as HTMLSelectElement | null;
-  const highContrastCheck = document.getElementById('cfg-high-contrast') as HTMLInputElement | null;
-  const coverColorSelect = document.getElementById('cfg-cover-color') as HTMLSelectElement | null;
-  const bookmarkCheck = document.getElementById('cfg-bookmark') as HTMLInputElement | null;
-  const bookmarkColorInput = document.getElementById('cfg-bookmark-color') as HTMLInputElement | null;
   const persistProgressCheck = document.getElementById('cfg-persist-progress') as HTMLInputElement | null;
   const sampleSelect = document.getElementById('cfg-sample') as HTMLSelectElement | null;
 
@@ -263,10 +223,6 @@ function initConfigurator() {
     const app = appearanceSelect?.value || 'java';
     const eng = engineSelect?.value || 'java';
     const thm = themeSelect?.value || 'transparent';
-    const hc = highContrastCheck?.checked;
-    const cover = coverColorSelect?.value || '';
-    const bm = bookmarkCheck?.checked;
-    const bmColor = bookmarkColorInput?.value || '#8b0000';
     const persist = persistProgressCheck?.checked;
 
     const lines: string[] = ['<blockgame-book'];
@@ -274,12 +230,6 @@ function initConfigurator() {
     if (app !== 'java') lines.push(`  appearance="${app}"`);
     if (eng !== 'java') lines.push(`  engine="${eng}"`);
     if (thm !== 'transparent') lines.push(`  theme="${thm}"`);
-    if (hc) lines.push('  high-contrast');
-    if (cover && cover !== 'none') lines.push(`  cover-color="${cover}"`);
-    if (bm) {
-      lines.push('  bookmark');
-      if (bmColor && bmColor !== '#8b0000') lines.push(`  bookmark-color="${bmColor}"`);
-    }
     if (persist) lines.push('  persist-progress');
     lines.push('  controls="true"');
     lines.push('  base-path="../assets">');
@@ -315,47 +265,6 @@ function initConfigurator() {
     const val = themeSelect.value;
     bookEl.setAttribute('theme', val);
     bookEl.theme = val;
-    updateCodeSnippet();
-  });
-
-  highContrastCheck?.addEventListener('change', () => {
-    const checked = highContrastCheck.checked;
-    if (checked) {
-      bookEl.setAttribute('high-contrast', '');
-    } else {
-      bookEl.removeAttribute('high-contrast');
-    }
-    bookEl.highContrast = checked;
-    updateCodeSnippet();
-  });
-
-  coverColorSelect?.addEventListener('change', () => {
-    const val = coverColorSelect.value;
-    if (val && val !== 'none') {
-      bookEl.setAttribute('cover-color', val);
-      bookEl.coverColor = val;
-    } else {
-      bookEl.removeAttribute('cover-color');
-      bookEl.coverColor = undefined;
-    }
-    updateCodeSnippet();
-  });
-
-  bookmarkCheck?.addEventListener('change', () => {
-    const checked = bookmarkCheck.checked;
-    if (checked) {
-      bookEl.setAttribute('bookmark', '');
-    } else {
-      bookEl.removeAttribute('bookmark');
-    }
-    bookEl.bookmark = checked;
-    updateCodeSnippet();
-  });
-
-  bookmarkColorInput?.addEventListener('input', () => {
-    const val = bookmarkColorInput.value;
-    bookEl.setAttribute('bookmark-color', val);
-    bookEl.bookmarkColor = val;
     updateCodeSnippet();
   });
 

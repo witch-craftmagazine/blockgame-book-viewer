@@ -38,6 +38,7 @@ export class BlockgameBookElement extends BaseElement {
       'base-path',
       'appearance',
       'engine',
+      'experimental',
       'high-contrast',
       'cover-color',
       'bookmark',
@@ -141,6 +142,7 @@ export class BlockgameBookElement extends BaseElement {
     const theme = (this.getAttribute('theme') || 'dark') as any;
     const appearance = (this.getAttribute('appearance') || 'java') as BookAppearance;
     const engine = (this.getAttribute('engine') || 'java') as BookEngine;
+    const experimental = this.hasAttribute('experimental') && this.getAttribute('experimental') !== 'false';
     const highContrast = this.hasAttribute('high-contrast') && this.getAttribute('high-contrast') !== 'false';
     const coverColor = this.getAttribute('cover-color') || undefined;
     const showBookmark = this.hasAttribute('bookmark') && this.getAttribute('bookmark') !== 'false';
@@ -164,6 +166,7 @@ export class BlockgameBookElement extends BaseElement {
         defaultViewMode: initialMode,
         appearance,
         engine,
+        experimental,
         highContrast,
         coverColor,
         showBookmark,
@@ -434,6 +437,8 @@ export class BlockgameBookElement extends BaseElement {
     } else if (name === 'engine') {
       const eng = (newValue === 'bedrock' ? 'bedrock' : 'java') as BookEngine;
       this.viewer.setEngine(eng);
+    } else if (name === 'experimental') {
+      this.viewer.setExperimental(newValue !== null && newValue !== 'false');
     } else if (name === 'high-contrast') {
       this.viewer.setHighContrast(newValue !== null && newValue !== 'false');
     } else if (name === 'scale' && newValue) {
@@ -584,6 +589,19 @@ export class BlockgameBookElement extends BaseElement {
       this.removeAttribute('high-contrast');
     }
     if (this.viewer) this.viewer.setHighContrast(val);
+  }
+
+  get experimental(): boolean {
+    return this.viewer ? this.viewer.isExperimental() : (this.hasAttribute('experimental') && this.getAttribute('experimental') !== 'false');
+  }
+
+  set experimental(val: boolean) {
+    if (val) {
+      this.setAttribute('experimental', '');
+    } else {
+      this.removeAttribute('experimental');
+    }
+    if (this.viewer) this.viewer.setExperimental(val);
   }
 
   get persistProgress(): boolean {

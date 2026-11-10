@@ -397,7 +397,7 @@
     <div>
       <p class="kick">Custom Element Playground</p>
       <h1>&lt;blockgame-book&gt;</h1>
-      <p class="tag">Explore all display modes, Bedrock GUI fidelity, Scholar dye tints, continuous scrolling, and accessibility themes.</p>
+      <p class="tag">Explore all display modes, Bedrock GUI fidelity, continuous scrolling, and format compatibility.</p>
     </div>
 
     <!-- Live Configurator Card -->
@@ -439,62 +439,21 @@
           <select id="cfg-theme" class="config-select">
             <option value="transparent" selected>transparent (embed friendly)</option>
             <option value="dark">dark (dark frame backdrop)</option>
-            <option value="classic">classic (classic frame)</option>
-            <option value="high-contrast">high-contrast (slate texture)</option>
+            <option value="light">light (light frame backdrop)</option>
           </select>
         </div>
-
-        <div class="config-field">
-          <label for="cfg-cover-color">Scholar Cover Dye (cover-color)</label>
-          <select id="cfg-cover-color" class="config-select">
-            <option value="none" selected>none (natural leather)</option>
-            <option value="white">white</option>
-            <option value="orange">orange</option>
-            <option value="magenta">magenta</option>
-            <option value="light_blue">light_blue</option>
-            <option value="yellow">yellow</option>
-            <option value="lime">lime</option>
-            <option value="pink">pink</option>
-            <option value="gray">gray</option>
-            <option value="light_gray">light_gray</option>
-            <option value="cyan">cyan</option>
-            <option value="purple">purple</option>
-            <option value="blue">blue</option>
-            <option value="brown">brown</option>
-            <option value="green">green</option>
-            <option value="red">red</option>
-            <option value="black">black</option>
-          </select>
-        </div>
-
         <div class="config-field">
           <label for="cfg-sample">Sample Book Content</label>
           <select id="cfg-sample" class="config-select">
             <option value="guide" selected>Component Guide (Getting Started)</option>
             <option value="continuous">The Alchemist Tome (Continuous Scroll, 7 Pages)</option>
             <option value="bedrock">Bedrock Palette & Formatting (§g–§u)</option>
-            <option value="scholar">Scholar Dye & Braille Graphic Art</option>
           </select>
         </div>
       </div>
 
       <!-- Toggles & Colors -->
       <div class="config-checkbox-group">
-        <label class="config-checkbox">
-          <input type="checkbox" id="cfg-high-contrast" />
-          <span>High Contrast (high-contrast)</span>
-        </label>
-
-        <label class="config-checkbox">
-          <input type="checkbox" id="cfg-bookmark" />
-          <span>Silk Ribbon Bookmark (bookmark)</span>
-        </label>
-
-        <div class="config-color-picker">
-          <label for="cfg-bookmark-color">Ribbon Color:</label>
-          <input type="color" id="cfg-bookmark-color" value="#8b0000" title="Bookmark Ribbon Color" />
-        </div>
-
         <label class="config-checkbox">
           <input type="checkbox" id="cfg-persist-progress" />
           <span>Remember Reading Progress (persist-progress)</span>
@@ -552,20 +511,17 @@ attributes live!§r
   bedrock (122px)
 • §5theme§0:
   transparent | dark |
-  classic | high-contrast
-#- §5§lScholar Extensions§r
+  light
+#- §5§lPersistence & API§r
 
-§0• §6cover-color§0:
-  Supports all 16 Minecraft
-  leather dye colors.
-• §4bookmark§0:
-  Adds an authentic silk
-  ribbon bookmark.
-• §3bookmark-color§0:
-  Custom ribbon hex or
-  palette tone.
-• §8persist-progress§0:
+§0• §8persist-progress§0:
   Opt-in reading memory.
+• §2setBook(book)§0:
+  Swap content live.
+• §9nextPage()§0 /
+  §9prevPage()§0
+• §6scrollToPage(n)§0
+• §3exportCurrentPage()§0
 #- §4§lFormatting Codes§r
 
 §cRed §6Gold §eYellow

@@ -30,6 +30,11 @@ export interface BlockgameBookViewerOptions {
   defaultViewMode?: ViewMode;
   appearance?: BookAppearance;
   engine?: BookEngine;
+  /**
+   * Enable experimental Scholar/accessibility features (cover dye, bookmark ribbon, high-contrast slate).
+   * Off by default to ensure clean, authentic rendering.
+   */
+  experimental?: boolean;
   highContrast?: boolean;
   coverColor?: BlockgameDyeColor | string;
   showBookmark?: boolean;
@@ -88,6 +93,7 @@ export class BlockgameBookViewer {
       defaultViewMode: defaultMode,
       appearance: this.options.appearance,
       engine: this.options.engine,
+      experimental: this.options.experimental,
       highContrast: this.options.highContrast,
       coverColor: this.options.coverColor,
       showBookmark: this.options.showBookmark,
@@ -157,7 +163,7 @@ export class BlockgameBookViewer {
   private buildDOM(): void {
     const theme = this.options.theme || 'dark';
     this.container.classList.add('mc-book-viewer-root', `mc-theme-${theme}`);
-    if (this.options.highContrast) {
+    if ((this.options.highContrast && this.options.experimental) || theme === 'high-contrast') {
       this.container.classList.add('mc-theme-high-contrast');
     }
 
@@ -486,8 +492,20 @@ export class BlockgameBookViewer {
   }
 
   public setHighContrast(highContrast: boolean): void {
+    // Stored on the canvas always; it only renders while `experimental` is on.
     this.bookCanvas.setHighContrast(highContrast);
-    if (highContrast) {
+    this.syncHighContrastClass();
+  }
+
+  /**
+   * The container class is shared by the `high-contrast` theme and the experimental
+   * high-contrast mode, so keep it when either one is active.
+   */
+  private syncHighContrastClass(): void {
+    const active =
+      (this.bookCanvas.isHighContrast() && this.bookCanvas.isExperimental()) ||
+      this.options.theme === 'high-contrast';
+    if (active) {
       this.container.classList.add('mc-theme-high-contrast');
     } else {
       this.container.classList.remove('mc-theme-high-contrast');
@@ -496,6 +514,16 @@ export class BlockgameBookViewer {
 
   public isHighContrast(): boolean {
     return this.bookCanvas.isHighContrast();
+  }
+
+  public setExperimental(experimental: boolean): void {
+    this.options.experimental = experimental;
+    this.bookCanvas.setExperimental(experimental);
+    this.syncHighContrastClass();
+  }
+
+  public isExperimental(): boolean {
+    return this.bookCanvas.isExperimental();
   }
 
   public setOnClose(cb?: () => void): void {

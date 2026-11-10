@@ -17,7 +17,7 @@ import {
   getTextWidthForEngine,
   LINE_HEIGHT,
 } from '../engine/StringSplitter';
-import { parseFormattedText, stripFormatting } from '../engine/Formatting';
+import { parseFormattedText, stripFormatting, DEFAULT_BOOK_TEXT_COLOR } from '../engine/Formatting';
 import { soundManager } from './SoundEffects';
 import { ResourcePackInfo, BookTextures, CompositeResourcePack } from '../engine/ResourcePackManager';
 import { BookPlugin, PageRect } from '../plugin/BookPlugin';
@@ -45,6 +45,11 @@ export interface BookCanvasOptions {
   defaultViewMode?: ViewMode;
   appearance?: BookAppearance;
   engine?: BookEngine;
+  /**
+   * Enable experimental Scholar/accessibility features.
+   * When false (default), highContrast, coverColor, and bookmark are ignored.
+   */
+  experimental?: boolean;
   highContrast?: boolean;
   coverColor?: BlockgameDyeColor | string;
   showBookmark?: boolean;
@@ -68,7 +73,8 @@ export class BookCanvas {
   private plugins: BookPlugin[] = [];
   private continuousScrollView?: ContinuousScrollView;
 
-  // Aesthetic & Art Extensions (Scholar covers & bookmarks)
+  // Aesthetic & Art Extensions (Scholar covers & bookmarks) — experimental only
+  private experimental = false;
   private coverColor?: BlockgameDyeColor | string;
   private showBookmark = false;
   private bookmarkColor?: string;
@@ -147,6 +153,7 @@ export class BookCanvas {
     this.textSelectionEnabled = options.textSelectionEnabled ?? false;
     this.appearance = options.appearance || 'java';
     this.engine = options.engine || 'java';
+    this.experimental = options.experimental ?? false;
     this.highContrast = options.highContrast || false;
     this.coverColor = options.coverColor;
     this.showBookmark = options.showBookmark ?? false;
@@ -877,6 +884,39 @@ export class BookCanvas {
     return this.highContrast;
   }
 
+  public setExperimental(experimental: boolean): void {
+    if (this.experimental !== experimental) {
+      this.experimental = experimental;
+      if (this.isScrollMode()) {
+        this.continuousScrollView?.setBookData(this.paginatedPages, this.currentPage);
+      } else {
+        this.render();
+      }
+    }
+  }
+
+  public isExperimental(): boolean {
+    return this.experimental;
+  }
+
+  /** High contrast is an experimental feature: it only takes effect when both flags are set. */
+  private isHighContrastActive(): boolean {
+    return this.experimental && this.highContrast;
+  }
+
+  /**
+   * Resolves the draw color for a span. In active high-contrast mode, text that uses the
+   * default book color (#000000 or unset) is drawn with `hcColor` (white for body text,
+   * yellow for indicators) so it stays readable on the dark slate. Otherwise the span's
+   * own color wins and `hcColor` is only used when the span has none.
+   */
+  private resolveTextColor(spanColor: string | undefined, hcColor: string): string {
+    if (this.isHighContrastActive() && (!spanColor || spanColor.toLowerCase() === DEFAULT_BOOK_TEXT_COLOR)) {
+      return hcColor;
+    }
+    return spanColor || hcColor;
+  }
+
   public setOnClose(cb?: () => void): void {
     this.onClose = cb;
   }
@@ -1405,6 +1445,7 @@ export class BookCanvas {
   }
 
   public renderCoverTint(ctx: CanvasRenderingContext2D, width: number, height: number): void {
+    if (!this.experimental) return;
     if (!this.coverColor) return;
     const hex = BLOCKGAME_DYE_HEX[this.coverColor as BlockgameDyeColor] || this.coverColor;
 
@@ -1417,6 +1458,7 @@ export class BookCanvas {
   }
 
   public renderBookmarkRibbon(ctx: CanvasRenderingContext2D, spineX: number, bottomY = 192): void {
+    if (!this.experimental) return;
     if (!this.showBookmark && !this.bookmarkColor) return;
     const ribbonColor = this.bookmarkColor
       ? (BLOCKGAME_DYE_HEX[this.bookmarkColor as BlockgameDyeColor] || this.bookmarkColor)
@@ -1456,7 +1498,7 @@ export class BookCanvas {
   private renderBedrockSpread(customCtx?: CanvasRenderingContext2D, customLeftIdx?: number): void {
     const ctx = customCtx || this.ctx;
     const isCustom = customCtx !== undefined;
-    const bg = this.highContrast ? (this.bedrockBgHc || this.bedrockBg) : (this.bedrockBg || this.bookBg);
+    const bg = this.isHighContrastActive() ? (this.bedrockBgHc || this.bedrockBg) : (this.bedrockBg || this.bookBg);
     if (bg) {
       if (bg.naturalWidth >= 512) {
         // Crop non-transparent (102, 16, 308, 192) book region from 512x256 texture
@@ -1513,7 +1555,7 @@ export class BookCanvas {
     }
 
     // 3. Page Indicators in Bedrock parchment tan (#BCA387) or yellow in HC (#FFFF55)
-    const indicatorColor = this.highContrast ? '#FFFF55' : '#BCA387';
+    const indicatorColor = this.isHighContrastActive() ? '#FFFF55' : '#BCA387';
     const leftIndicatorText = `${leftIdx + 1} of ${Math.max(totalPages, 1)}`;
     const leftSpans = parseFormattedText(leftIndicatorText);
     const leftIndicatorW = measureLineWidth(leftSpans, this.atlas);
@@ -1527,7 +1569,7 @@ export class BookCanvas {
     }
 
     // 4. Text Content (Left Page X = 25, Right Page X = 169)
-    const defaultColor = this.highContrast ? '#FFFFFF' : '#000000';
+    const defaultColor = this.isHighContrastActive() ? '#FFFFFF' : '#000000';
 
     // Left Page Lines
     const leftLines = this.paginatedPages[leftIdx] || [];
@@ -1566,7 +1608,7 @@ export class BookCanvas {
     const ctx = customCtx || this.ctx;
     let cursorX = startX;
     for (const span of spans) {
-      const color = span.color || fallbackColor;
+      const color = this.resolveTextColor(span.color, fallbackColor);
       for (let charToDraw of span.text) {
         if (span.obfuscated && charToDraw !== ' ') {
           charToDraw = this.getRandomCharFor(charToDraw, span.bold);
@@ -1715,7 +1757,13 @@ export class BookCanvas {
     // 2. Draw Page Indicator ("Page X of Y") - toggleable, off by default
     if (this.showPageIndicator) {
       const pageMsg = `Page ${pageIndex + 1} of ${Math.max(1, this.paginatedPages.length)}`;
-      this.renderTextLineRightAligned(pageMsg, pageIndicatorRightX, 16, '#000000', ctx);
+      this.renderTextLineRightAligned(
+        pageMsg,
+        pageIndicatorRightX,
+        16,
+        this.isHighContrastActive() ? '#FFFF55' : '#000000',
+        ctx
+      );
     }
 
     // 3. Draw text lines (up to 14 lines, clipped strictly to book page area)
@@ -1731,6 +1779,7 @@ export class BookCanvas {
       let cursorX = textStartX;
 
       for (const span of line.spans) {
+        const spanColor = this.resolveTextColor(span.color, '#FFFFFF');
         for (let charToDraw of span.text) {
           if (span.obfuscated && charToDraw !== ' ') {
             charToDraw = this.getRandomCharFor(charToDraw, span.bold);
@@ -1762,7 +1811,7 @@ export class BookCanvas {
             }
           }
 
-          const glyphInfo = this.atlas.getGlyphDrawInfo(glyphChar, span.color, span.bold);
+          const glyphInfo = this.atlas.getGlyphDrawInfo(glyphChar, spanColor, span.bold);
           if (glyphInfo) {
             const destW = glyphInfo.dWidth ?? glyphInfo.sWidth;
             const destH = glyphInfo.dHeight ?? glyphInfo.sHeight;
@@ -1806,12 +1855,12 @@ export class BookCanvas {
             const charAdvance = forceAdvance !== null ? forceAdvance : glyphInfo.advance;
 
             if (span.underlined) {
-              ctx.fillStyle = span.color;
+              ctx.fillStyle = spanColor;
               ctx.fillRect(cursorX - 1, y + 8, charAdvance + 1, 1);
             }
 
             if (span.strikethrough) {
-              ctx.fillStyle = span.color;
+              ctx.fillStyle = spanColor;
               ctx.fillRect(cursorX - 1, y + 4, charAdvance + 1, 1);
             }
 
