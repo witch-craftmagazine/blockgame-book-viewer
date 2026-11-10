@@ -814,15 +814,24 @@ export class BlockgameBookElement extends BaseElement {
 /** @deprecated Use BlockgameBookElement instead */
 export const MinecraftBookElement = BlockgameBookElement;
 
-// Auto-register custom element if window is available
+type ElementRegistry = Pick<CustomElementRegistry, 'get' | 'define'>;
+
+/**
+ * Registers `<blockgame-book>` and the legacy `<minecraft-book>` tag.
+ * A constructor can be registered under only one tag name, so the legacy tag gets
+ * its own subclass. Defining the same class twice throws NotSupportedError and
+ * aborts the module, which broke the configurator.
+ */
+export function defineBlockgameBookElements(registry: ElementRegistry = customElements): void {
+  if (!registry.get('blockgame-book')) {
+    registry.define('blockgame-book', BlockgameBookElement);
+  }
+  if (!registry.get('minecraft-book')) {
+    registry.define('minecraft-book', class LegacyMinecraftBookElement extends BlockgameBookElement {});
+  }
+}
+
+// Auto-register custom elements if window is available
 if (typeof window !== 'undefined') {
-  if (!customElements.get('blockgame-book')) {
-    customElements.define('blockgame-book', BlockgameBookElement);
-  }
-  if (!customElements.get('minecraft-book')) {
-    // A constructor can be registered under only one tag name, so the legacy
-    // tag needs its own subclass. Defining the same class twice throws
-    // NotSupportedError and aborts the module, which broke the configurator.
-    customElements.define('minecraft-book', class LegacyMinecraftBookElement extends BlockgameBookElement {});
-  }
+  defineBlockgameBookElements();
 }
