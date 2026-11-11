@@ -1,7 +1,8 @@
 /*
- * Unifont is the fallback face for glyphs outside the vanilla Minecraft atlas.
- * It is kept out of viewer.css on purpose: in Vite library mode every asset is
- * inlined as base64, which turned the published stylesheet into 6 MB.
- * Load this file (or the @fontsource/unifont package) next to viewer.css.
+ * Demo and development only. The published library does not use this file:
+ * its build copies unifont-latin-400-normal.woff2 into dist/assets/fonts and appends an
+ * equivalent @font-face (relative URL) to dist/style.css. See vite.config.lib.ts.
+ * Keeping the @import out of viewer.css matters because Vite library mode inlines every
+ * asset as base64, which made the published stylesheet 6 MB.
  */
 @import '@fontsource/unifont';

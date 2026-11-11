@@ -845,7 +845,7 @@ export function defineBlockgameBookElement(registry: ElementRegistry = customEle
   }
 }
 
-// Auto-register the custom element if window is available
-if (typeof window !== 'undefined') {
+// Auto-register only where a custom element registry exists (not in SSR or test shims that define a bare `window`)
+if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
   defineBlockgameBookElement();
 }

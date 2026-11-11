@@ -3,7 +3,7 @@
 This document indexes and analyzes the Minecraft book mods and tooling repositories located on-device in:
 `~/Documents/Applications/minecraftprojects/bookstuff/`
 
-It highlights projects that are directly useful for extending, testing, and refining **`minecraft-book-viewer`**.
+It highlights projects that are directly useful for extending, testing, and refining **`blockgame-book-viewer`**.
 
 ---
 
@@ -37,7 +37,7 @@ It highlights projects that are directly useful for extending, testing, and refi
     - `UnihexFont.ts`: Parses GNU Unifont / Unihex font ZIPs and extracts glyph bounding boxes and bitmap metrics.
     - `TagParser.ts`: Rich tag parser supporting `[h1]`, `[b]`, `[color=#hex]`, `[img]`, `[link]`.
     - `layout.ts`: Dynamic multi-column and reflowing page layout engine.
-- **Actionable integration**: Can inspire an extended formatting plugin or rich markup mode in `minecraft-book-viewer`.
+- **Actionable integration**: Can inspire an extended formatting plugin or rich markup mode in `blockgame-book-viewer`.
 
 ### 2.2. `double-books`
 - **Location**: `~/Documents/Applications/minecraftprojects/bookstuff/double-books/`
@@ -67,7 +67,7 @@ It highlights projects that are directly useful for extending, testing, and refi
     - `assets/eg_bedrock_books/textures/gui/book/edit_background.png`
     - `assets/eg_bedrock_books/textures/gui/book/lectern_background.png`
     - High-contrast accessibility variants in `resourcepacks/high_contrast/`.
-  - Bedrock Edition features a **122px** line boundary rather than Java's **114px**. Supporting Bedrock book mode in `minecraft-book-viewer` requires this width and styling.
+  - Bedrock Edition features a **122px** line boundary rather than Java's **114px**. Supporting Bedrock book mode in `blockgame-book-viewer` requires this width and styling.
 
 ### 2.4. `DrawInBooks`
 - **Location**: `~/Documents/Applications/minecraftprojects/bookstuff/DrawInBooks/`
@@ -78,7 +78,7 @@ It highlights projects that are directly useful for extending, testing, and refi
     - Format v2: **3 bits per pixel** (5 ink colors: none, black, red, green, blue).
     - Format v1: **2 bits per pixel** (3 ink colors).
     - Size per page: `114 * 128 * 3 / 8 = 5,472 bytes`.
-  - Enables creating a `DrawInBooksPlugin` for `minecraft-book-viewer` that reads this binary blob and renders player sketches directly on book pages.
+  - Enables creating a `DrawInBooksPlugin` for `blockgame-book-viewer` that reads this binary blob and renders player sketches directly on book pages.
 
 ### 2.5. `ImagineBook`
 - **Location**: `~/Documents/Applications/minecraftprojects/bookstuff/ImagineBook/`
@@ -88,7 +88,7 @@ It highlights projects that are directly useful for extending, testing, and refi
     `[<url>,<x>,<y>,<width%>,<height%>,<rotation°>]`
     Example: `[https://i.imgur.com/example.png,10,20,50,50,0]`
   - Also defines compact binary NBT serialization for image coordinates and scales.
-  - Can be easily parsed and rendered in `minecraft-book-viewer` via a plugin or built-in hook.
+  - Can be easily parsed and rendered in `blockgame-book-viewer` via a plugin or built-in hook.
 
 ### 2.6. `CopyPasteBooks`
 - **Location**: `~/Documents/Applications/minecraftprojects/bookstuff/CopyPasteBooks/`

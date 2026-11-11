@@ -50,7 +50,7 @@ Include the script and stylesheet, then use the `<blockgame-book>` tag:
   engine="bedrock"
   persist-progress="true"
   controls="true"
-  base-path="./assets">
+  base-path="https://unpkg.com/blockgame-book-viewer/dist/assets">
   <script type="text/plain">
     title: Server Rules
     author: Steve

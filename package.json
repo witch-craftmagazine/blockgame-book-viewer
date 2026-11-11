@@ -2,21 +2,24 @@
   "name": "blockgame-book-viewer",
   "version": "1.0.0",
   "description": "High-fidelity, modular blockgame written book web emulator, renderer, and web component.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/witch-craftmagazine/blockgame-book-viewer.git"
+  },
   "type": "module",
   "main": "./dist/blockgame-book-viewer.umd.cjs",
   "module": "./dist/blockgame-book-viewer.js",
-  "types": "./dist/types/index.d.ts",
+  "types": "./dist/types/src/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/types/index.d.ts",
+      "types": "./dist/types/src/index.d.ts",
       "import": "./dist/blockgame-book-viewer.js",
       "require": "./dist/blockgame-book-viewer.umd.cjs"
     },
     "./style.css": "./dist/style.css"
   },
   "files": [
-    "dist",
-    "public"
+    "dist"
   ],
   "keywords": [
     "minecraft",
@@ -37,8 +40,9 @@
     "build:app": "vite build",
     "build:lib": "vite build --config vite.config.lib.ts && tsc -p tsconfig.build.json",
     "preview": "vite preview",
-    "test": "vitest run",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "test": "bun test",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test:vitest": "vitest run"
   },
   "devDependencies": {
     "@types/jszip": "^3.4.0",

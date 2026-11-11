@@ -46,7 +46,7 @@ The simplest way to embed a book is using the `<blockgame-book>` custom element.
 | `page` | `.page` | `number` | `1` | Current active page (1-based index) |
 | `persist-progress` | `.persistProgress` | `boolean` | `false` | Opt-in localStorage reading progress save |
 | `split-mode` | `.splitMode` | `'lossless' \| 'standard'` | `'lossless'` | Lossless split mode |
-| `base-path` | `.basePath` | `string` | `'./assets'` | Base URL where textures and fonts are located |
+| `base-path` | `.basePath` | `string` | `'./assets'` | Base URL where textures and fonts are located. The package ships them in `dist/assets`; from a CDN use `https://unpkg.com/blockgame-book-viewer/dist/assets`. Unifont loads automatically from `style.css` |
 | `shadow` | `.shadow` | `boolean` | `false` | Open Shadow DOM isolation with `<slot>` |
 
 ### Custom Events:

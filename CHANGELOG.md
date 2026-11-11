@@ -15,12 +15,15 @@
 
 ### Changed
 - The Java `Page X of Y` number is now drawn by default. It was previously built in but off with no way to enable it. Bedrock already drew `N of M` unconditionally, so Bedrock output is unchanged by default. Hosts that want the previous Java look should set `page-numbers="false"`.
-- `style.css` no longer bundles Unifont (it was 6 MB of base64). Load `@fontsource/unifont` or `unifont.css` alongside it; without it, uncommon glyphs fall back to monospace.
-- Assets ship once, in `dist/assets`.
+- `style.css` is 11 KB instead of 6 MB. Unifont is no longer inlined as base64; the build ships only `unifont-latin-400-normal.woff2` in `dist/assets/fonts` and `style.css` references it by relative URL, so no extra font setup is needed. The 3 MB `.woff` fallback is no longer shipped.
+- Assets ship once, in `dist/assets` (the package no longer includes a second copy under `public/`). The tarball is 4.2 MB, down from 8.9 MB.
+- `npm test` runs `bun test`, matching CI. `npm run test:vitest` runs vitest. CI now also runs `typecheck`.
 
 - Glyph advances now follow vanilla 26.2's font providers exactly: space provider, then the bitmap sheets, then an exact `UnihexProvider` table for Unifont (half-pixel advances such as `✧` 8.5 and `ₑ` 3.5), then the missing glyph (6). Unifont glyphs bold by 0.5, other glyphs by 1. This replaces the legacy `glyph_sizes.bin` lookup, the canvas-measured fallback and the hand-calibrated symbol overrides. Text containing non-bitmap symbols can wrap differently: NBSP is 5.5 (was 4), `▁▂▃▅▆▇` are 5 (were 9), combining marks advance instead of being zero-width, and `✧ ✦` are 8.5 (were 5). `getBlockgameGlyphSizes()` is still exported but no longer used by the engine.
 
 ### Fixed
+- Package `types` and `exports["./style.css"]` pointed at files that did not exist (`dist/types/index.d.ts`, `dist/style.css`).
+- Importing the package where a bare `window` exists without `customElements` (SSR shims, test runners) threw a `ReferenceError`.
 - Bold spaces are now 5px wide instead of 4px. The emulator under-measured bold lines, so text that wrapped in Minecraft 26.3 (for example a bold `II. The Ink of Souls`) stayed on one line in the viewer.
 - `/give` export produced books showing raw JSON and stripped colours in Minecraft 1.21.5+ (including 26.x). Pages were JSON wrapped in strings, which 1.21.5+ treats as plain text, and `§` codes were typed into the command, which the chat box strips. `exportToGiveCommandModern` now emits SNBT text components with colours and styles as properties and never writes `§`. Titles are capped at 32 characters and `generation` is written when set.
 - The old 1.20.5-1.21.4 format moved to the new `exportToGiveCommandJsonPages`; the export dialog has a radio for it. The legacy exporter also stopped emitting `§`.
