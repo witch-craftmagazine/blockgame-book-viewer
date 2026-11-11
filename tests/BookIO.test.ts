@@ -10,10 +10,10 @@ import {
   exportToUrlHash,
   importFromUrlHash,
 } from '../src/io/BookExporter';
-import { MinecraftBook } from '../src/engine/types';
+import { BlockgameBook } from '../src/engine/types';
 
 describe('Book Parser and Exporter', () => {
-  const sampleBook: MinecraftBook = {
+  const sampleBook: BlockgameBook = {
     title: 'Test Chronicle',
     author: 'Steve',
     generation: 0,

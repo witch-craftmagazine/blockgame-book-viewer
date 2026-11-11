@@ -929,61 +929,6 @@ export class BookCanvas {
     return this.canvas;
   }
 
-  /**
-   * Returns the exact bounding rectangle in client coordinates of the visible book page
-   * (excluding transparent canvas margins).
-   */
-  public getBookPageRect(): DOMRect | null {
-    if (!this.canvas) return null;
-    const canvasRect = this.canvas.getBoundingClientRect();
-    if (!canvasRect || canvasRect.width === 0 || canvasRect.height === 0) return null;
-
-    const baseDim = this.getBaseDimensions();
-    const baseW = baseDim.width;
-    const baseH = baseDim.height;
-    const scaleX = canvasRect.width / baseW;
-    const scaleY = canvasRect.height / baseH;
-
-    let minLocalX: number;
-    let maxLocalX: number;
-    let minLocalY: number;
-    let maxLocalY: number;
-
-    if (this.appearance === 'bedrock') {
-      minLocalX = 0;
-      maxLocalX = BEDROCK_BASE_WIDTH;
-      minLocalY = 0;
-      maxLocalY = BEDROCK_BASE_HEIGHT;
-    } else {
-      minLocalY = 1;
-      maxLocalY = 181;
-      if (this.viewMode === 'double') {
-        minLocalX = 26;
-        maxLocalX = 318;
-      } else {
-        minLocalX = 20;
-        maxLocalX = 166;
-      }
-    }
-
-    const left = canvasRect.left + minLocalX * scaleX;
-    const right = canvasRect.left + maxLocalX * scaleX;
-    const top = canvasRect.top + minLocalY * scaleY;
-    const bottom = canvasRect.top + maxLocalY * scaleY;
-
-    return {
-      left,
-      right,
-      top,
-      bottom,
-      width: right - left,
-      height: bottom - top,
-      x: left,
-      y: top,
-      toJSON: () => ({ left, right, top, bottom, width: right - left, height: bottom - top }),
-    } as DOMRect;
-  }
-
   public setShowPageIndicator(show: boolean): void {
     if (this.showPageIndicator !== show) {
       this.showPageIndicator = show;

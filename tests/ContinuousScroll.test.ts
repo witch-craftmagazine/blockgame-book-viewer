@@ -1,14 +1,14 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { BookCanvas } from '../src/render/BookCanvas';
-import { MinecraftBookViewer } from '../src/ui/BlockgameBookViewer';
-import { MinecraftBookElement } from '../src/component/blockgame-book';
-import { MinecraftBook } from '../src/engine/types';
+import { BlockgameBookViewer } from '../src/ui/BlockgameBookViewer';
+import { BlockgameBookElement } from '../src/component/blockgame-book';
+import { BlockgameBook } from '../src/engine/types';
 
-describe('PDF-Style Continuous Scroll Engine (v1.3)', () => {
+describe('Continuous scroll view', () => {
   let mockContainer: any;
   let mockCtx: any;
 
-  const testBook: MinecraftBook = {
+  const testBook: BlockgameBook = {
     title: 'Continuous Scroll Odyssey',
     author: 'StarSweetpea',
     pages: [
@@ -340,8 +340,8 @@ describe('PDF-Style Continuous Scroll Engine (v1.3)', () => {
     expect(scrolledBy).toBe(0);
   });
 
-  it('integrates continuous scroll into MinecraftBookViewer toolbar and page indicator', async () => {
-    const viewer = new MinecraftBookViewer(mockContainer, {
+  it('integrates continuous scroll into BlockgameBookViewer toolbar and page indicator', async () => {
+    const viewer = new BlockgameBookViewer(mockContainer, {
       book: testBook,
       defaultViewMode: 'scroll-single',
     });
@@ -358,8 +358,8 @@ describe('PDF-Style Continuous Scroll Engine (v1.3)', () => {
     expect(viewer.getViewMode()).toBe('scroll-double');
   });
 
-  it('supports view-mode attribute and scrollToPage on <minecraft-book> custom element', async () => {
-    const el = new MinecraftBookElement();
+  it('supports view-mode attribute and scrollToPage on <blockgame-book> custom element', async () => {
+    const el = new BlockgameBookElement();
     const attrs: Record<string, string> = {};
     (el as any).setAttribute = (k: string, v: string) => { attrs[k] = v; };
     (el as any).getAttribute = (k: string) => attrs[k] ?? null;

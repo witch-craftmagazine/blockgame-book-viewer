@@ -3,7 +3,7 @@ import {
   parseFormattedText,
   stripFormatting,
   normalizeFormattingCodes,
-  MINECRAFT_COLORS,
+  BLOCKGAME_COLORS,
   createDefaultStyle,
 } from '../src/engine/Formatting';
 
@@ -14,9 +14,9 @@ describe('Formatting parser', () => {
 
     expect(spans).toHaveLength(2);
     expect(spans[0].text).toBe('Red text ');
-    expect(spans[0].color).toBe(MINECRAFT_COLORS['4']);
+    expect(spans[0].color).toBe(BLOCKGAME_COLORS['4']);
     expect(spans[1].text).toBe('Blue text');
-    expect(spans[1].color).toBe(MINECRAFT_COLORS['9']);
+    expect(spans[1].color).toBe(BLOCKGAME_COLORS['9']);
   });
 
   it('handles bold and resets properly', () => {
@@ -35,7 +35,7 @@ describe('Formatting parser', () => {
     expect(spans).toHaveLength(2);
     expect(spans[0].bold).toBe(true);
     expect(spans[1].bold).toBe(false);
-    expect(spans[1].color).toBe(MINECRAFT_COLORS['c']);
+    expect(spans[1].color).toBe(BLOCKGAME_COLORS['c']);
   });
 
   it('normalizes ampersand color codes &0-&f', () => {

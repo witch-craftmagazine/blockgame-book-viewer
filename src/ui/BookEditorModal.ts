@@ -2,12 +2,6 @@ import { BlockgameBook } from '../engine/types';
 import { exportToStendhal } from '../io/BookExporter';
 import { parseBook } from '../io/BookParser';
 
-/**
- * Feature flag for future visual in-situ / WYSIWYG editor.
- * When enabled, provides a direct canvas / rich-text visual editing surface.
- */
-export const WYSIWYG_BOOK_EDITOR_ENABLED = false;
-
 export class BookEditorModal {
   private backdrop: HTMLElement;
   private currentBook: BlockgameBook | null = null;
@@ -24,12 +18,7 @@ export class BookEditorModal {
     this.backdrop.innerHTML = `
       <div class="modal-card book-editor-card">
         <div class="modal-header">
-          <div class="editor-header-tabs">
-            <button class="editor-tab-btn active" data-mode="markup">📝 Markup Editor</button>
-            <button class="editor-tab-btn disabled" data-mode="wysiwyg" title="Visual WYSIWYG editor is planned for a future release">
-              🎨 Visual WYSIWYG <span class="badge-roadmap">Planned</span>
-            </button>
-          </div>
+          <h3>📝 Markup Editor</h3>
           <button class="modal-close-btn" id="editor-close-btn" aria-label="Close editor">&times;</button>
         </div>
         <div class="modal-body">
@@ -71,11 +60,6 @@ export class BookEditorModal {
 
           <div class="editor-textarea-container">
             <textarea id="book-editor-markup" class="editor-textarea" spellcheck="false" placeholder="title: Book Title&#10;author: Author Name&#10;pages:&#10;#- First page text..."></textarea>
-          </div>
-
-          <div class="editor-roadmap-notice">
-            <span class="roadmap-icon">💡</span>
-            <span>WYSIWYG editor mode is flagged for future development (<code>WYSIWYG_BOOK_EDITOR = false</code>). Markup editing provides 100% fidelity with in-game formatting.</span>
           </div>
         </div>
         <div class="modal-footer">

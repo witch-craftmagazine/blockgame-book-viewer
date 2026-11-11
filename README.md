@@ -26,7 +26,7 @@ A modular, pixel-perfect, zero-dependency blockgame written book web emulator, r
 - 🧩 **Extensible Plugin System**:
   - Lifecycle hooks for custom rendering, animations, character replacements, and click handling.
   - Ships with `WitchcraftPlugin` (custom animated ending page celebration GIF and interactive hooks).
-- 🌐 **Web Component `<blockgame-book>` (alias `<minecraft-book>`)**:
+- 🌐 **Web Component `<blockgame-book>`**:
   - Drop a single `<script>` tag on any HTML page, React, Vue, Svelte, or WordPress site.
 - 🔊 **Web Audio Sound Effects**: Realistic page-turn sounds with synthesized audio fallback.
 - ♿ **Accessibility**: Invisible DOM text overlay with ARIA labels for screen readers and selectable text.

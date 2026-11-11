@@ -82,8 +82,7 @@
   box-sizing: border-box;
 }
 
-blockgame-book,
-minecraft-book {
+blockgame-book {
   display: block;
   width: 100%;
   height: 100%;
@@ -645,50 +644,6 @@ minecraft-book {
   width: 95% !important;
 }
 
-.editor-header-tabs {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.editor-tab-btn {
-  background: var(--mc-btn-bg);
-  border: 1px solid var(--mc-btn-border);
-  color: var(--mc-btn-text);
-  padding: 5px 10px;
-  border-radius: 6px;
-  font-size: 13px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-family: inherit;
-}
-
-.editor-tab-btn.active {
-  background: var(--mc-accent);
-  color: #000;
-  border-color: var(--mc-accent);
-  font-weight: bold;
-}
-
-.editor-tab-btn.disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  border-style: dashed;
-}
-
-.badge-roadmap {
-  background: #3b82f6;
-  color: #fff;
-  font-size: 10px;
-  padding: 1px 5px;
-  border-radius: 10px;
-  font-weight: normal;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
 .markup-toolbar {
   display: flex;
   flex-direction: column;
@@ -765,22 +720,3 @@ minecraft-book {
   resize: vertical !important;
 }
 
-.editor-roadmap-notice {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 8px 10px;
-  background: rgba(59, 130, 246, 0.1);
-  border: 1px solid rgba(59, 130, 246, 0.25);
-  border-radius: 6px;
-  font-size: 11px;
-  color: #93c5fd;
-  margin-top: 8px;
-  line-height: 1.4;
-}
-
-.editor-roadmap-notice code {
-  background: rgba(0, 0, 0, 0.3);
-  padding: 1px 4px;
-  border-radius: 3px;
-}

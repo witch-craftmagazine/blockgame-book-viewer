@@ -11,8 +11,8 @@ function restoreNavigator(): void {
   else delete (globalThis as any).navigator;
 }
 import { BookCanvas } from '../src/render/BookCanvas';
-import { MinecraftBookViewer } from '../src/ui/BlockgameBookViewer';
-import { MinecraftBookElement } from '../src/component/blockgame-book';
+import { BlockgameBookViewer } from '../src/ui/BlockgameBookViewer';
+import { BlockgameBookElement } from '../src/component/blockgame-book';
 
 describe('Page Export & Mobile Share API', () => {
   let mockContainer: any;
@@ -189,7 +189,7 @@ describe('Page Export & Mobile Share API', () => {
       canShare: canShareMock,
     });
 
-    const viewer = new MinecraftBookViewer(mockContainer, {
+    const viewer = new BlockgameBookViewer(mockContainer, {
       book: {
         title: 'Mobile Book',
         author: 'Player',
@@ -213,7 +213,7 @@ describe('Page Export & Mobile Share API', () => {
   it('falls back to file download when navigator.share is unavailable', async () => {
     stubNavigator({});
 
-    const viewer = new MinecraftBookViewer(mockContainer, {
+    const viewer = new BlockgameBookViewer(mockContainer, {
       book: {
         title: 'Download Book',
         author: 'Player',
@@ -234,7 +234,7 @@ describe('Page Export & Mobile Share API', () => {
   });
 
   it('renders .mc-btn-export-page in toolbar when exportPageButton control option is true', () => {
-    new MinecraftBookViewer(mockContainer, {
+    new BlockgameBookViewer(mockContainer, {
       book: { title: 'Toolbar Book', author: 'Author', pages: ['Page 1'] },
       controls: { exportPageButton: true },
     });
@@ -242,10 +242,10 @@ describe('Page Export & Mobile Share API', () => {
     expect(mockContainer.innerHTML).toContain('mc-btn-export-page');
   });
 
-  it('supports exportCurrentPage and dispatches pageexport event on MinecraftBookElement', async () => {
+  it('supports exportCurrentPage and dispatches pageexport event on BlockgameBookElement', async () => {
     stubNavigator({});
 
-    const element = new MinecraftBookElement();
+    const element = new BlockgameBookElement();
     (element as any).classList = {
       add: vi.fn(),
       remove: vi.fn(),

@@ -2,7 +2,6 @@ import { BookCanvas } from '../src/render/BookCanvas';
 import { ResourcePackManager } from '../src/engine/ResourcePackManager';
 import { createCraftadiaPack } from '../src/presets/example-packs';
 import { WitchcraftPlugin } from '../src/plugins/WitchcraftPlugin';
-import { AsciiAmbientManager } from '../src/ambient/AsciiAmbientManager';
 import { WITCHCRAFT_MAGAZINE_ISSUES } from '../src/samples/sampleBooks';
 import { parseStendhalBook } from '../src/io/BookParser';
 import { soundManager } from '../src/render/SoundEffects';
@@ -12,7 +11,6 @@ class WitchcraftApp {
   private canvasWrapper!: HTMLElement;
   private bookCanvas!: BookCanvas;
   private packManager!: ResourcePackManager;
-  private asciiAmbient!: AsciiAmbientManager;
   private currentIssueId = 'issue1';
 
   constructor(container: HTMLElement) {
@@ -39,15 +37,6 @@ class WitchcraftApp {
       onPageChange: (page, total) => this.updatePageIndicator(page, total),
     });
 
-    const ambientWrapper = this.container.querySelector('#ascii-ambient-wrapper') as HTMLElement;
-    if (ambientWrapper) {
-      this.asciiAmbient = new AsciiAmbientManager(ambientWrapper);
-      this.asciiAmbient.setCanvasElement(this.bookCanvas.getCanvas());
-      this.asciiAmbient.setBoundsProvider(() => this.bookCanvas.getBookPageRect());
-      this.asciiAmbient.setIssue(this.currentIssueId);
-      this.asciiAmbient.start();
-    }
-
     this.setupListeners();
 
     await Promise.all([
@@ -66,7 +55,6 @@ class WitchcraftApp {
   private buildLayout(): void {
     this.container.innerHTML = `
       <main class="reader-viewport">
-        <div class="ascii-ambient-wrapper" id="ascii-ambient-wrapper" aria-hidden="true"></div>
         <div class="canvas-wrapper" id="canvas-wrapper"></div>
       </main>
 
@@ -111,7 +99,6 @@ class WitchcraftApp {
     if (!issue) return;
 
     this.currentIssueId = issue.id;
-    this.asciiAmbient?.setIssue(issue.id);
 
     const chips = this.container.querySelectorAll('.issue-chip') as NodeListOf<HTMLButtonElement>;
     chips.forEach(chip => {

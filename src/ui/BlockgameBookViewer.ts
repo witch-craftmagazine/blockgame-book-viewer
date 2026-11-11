@@ -56,9 +56,6 @@ export interface BlockgameBookViewerOptions {
   onBookChange?: (book: BlockgameBook, viewer?: BlockgameBookViewer) => void;
 }
 
-/** @deprecated Use BlockgameBookViewerOptions instead */
-export type MinecraftBookViewerOptions = BlockgameBookViewerOptions;
-
 export class BlockgameBookViewer {
   private container: HTMLElement;
   private canvasWrapper!: HTMLElement;
@@ -589,6 +586,3 @@ export class BlockgameBookViewer {
     }
   }
 }
-
-/** @deprecated Use BlockgameBookViewer instead */
-export const MinecraftBookViewer = BlockgameBookViewer;

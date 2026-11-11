@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { BookCanvas } from '../src/render/BookCanvas';
-import { MinecraftBook } from '../src/engine/types';
+import { BlockgameBook } from '../src/engine/types';
 import { defaultGlyphAtlas } from '../src/engine/GlyphAtlas';
 import { parseStendhalBook } from '../src/io/BookParser';
 
@@ -86,7 +86,7 @@ describe('Witchcraft Magazine Blinking Eye Easter Egg', () => {
 
   it('detects StarSweetpea as Witchcraft Magazine and enables easter egg', () => {
     const canvas = new BookCanvas({ container: mockContainer });
-    const book: MinecraftBook = {
+    const book: BlockgameBook = {
       title: 'Witchcraft Magazine Issue #1',
       author: 'StarSweetpea',
       pages: ['Cover page with eye: /( ⏼\\'],
@@ -99,7 +99,7 @@ describe('Witchcraft Magazine Blinking Eye Easter Egg', () => {
 
   it('does NOT enable easter egg for non-Witchcraft books even if they contain the eye symbol', () => {
     const canvas = new BookCanvas({ container: mockContainer });
-    const normalBook: MinecraftBook = {
+    const normalBook: BlockgameBook = {
       title: 'Random Notes',
       author: 'Steve',
       pages: ['Here is a symbol /( ⏼\\ on a normal book'],
@@ -112,7 +112,7 @@ describe('Witchcraft Magazine Blinking Eye Easter Egg', () => {
 
   it('allows manual override via setIsWitchcraftMagazine', () => {
     const canvas = new BookCanvas({ container: mockContainer });
-    const book: MinecraftBook = {
+    const book: BlockgameBook = {
       title: 'Manual Test Book',
       author: 'Alex',
       pages: ['Page with eye: ☘(⏼⏼))'],
@@ -133,7 +133,7 @@ describe('Witchcraft Magazine Blinking Eye Easter Egg', () => {
 
   it('tracks eye presence accurately across pages and view modes', () => {
     const canvas = new BookCanvas({ container: mockContainer, defaultViewMode: 'single' });
-    const book: MinecraftBook = {
+    const book: BlockgameBook = {
       title: 'Witchcraft Magazine Vol. 1',
       author: 'StarSweetpea',
       pages: [
@@ -179,7 +179,7 @@ describe('Witchcraft Magazine Blinking Eye Easter Egg', () => {
 
   it('manages blink trigger and resets on page turn', () => {
     const canvas = new BookCanvas({ container: mockContainer });
-    const book: MinecraftBook = {
+    const book: BlockgameBook = {
       title: 'Witchcraft Magazine',
       author: 'StarSweetpea',
       pages: [
@@ -203,7 +203,7 @@ describe('Witchcraft Magazine Blinking Eye Easter Egg', () => {
   it('populates eye hitboxes during render for interactive winks', () => {
     const canvas = new BookCanvas({ container: mockContainer });
     (canvas as any).bookBg = { naturalWidth: 256, naturalHeight: 256 };
-    const book: MinecraftBook = {
+    const book: BlockgameBook = {
       title: 'Witchcraft Magazine',
       author: 'StarSweetpea',
       pages: [
@@ -247,7 +247,7 @@ Normal page 2 text`;
 
   it('correctly identifies blank pages (empty, whitespace, or formatting-only)', () => {
     const canvas = new BookCanvas({ container: mockContainer });
-    const book: MinecraftBook = {
+    const book: BlockgameBook = {
       title: 'Blank Test',
       author: 'StarSweetpea',
       pages: [
@@ -273,7 +273,7 @@ Normal page 2 text`;
     // Page 0 (left): Page 1 content
     // Page 1 (right): Page 2 content
     // Page 2 (left): Page 3 BLANK
-    const book: MinecraftBook = {
+    const book: BlockgameBook = {
       title: 'Witchcraft Magazine Issue #1',
       author: 'StarSweetpea',
       pages: [
@@ -313,7 +313,7 @@ Normal page 2 text`;
     const canvas = new BookCanvas({ container: mockContainer, defaultViewMode: 'single' });
     (canvas as any).bookBg = { naturalWidth: 256, naturalHeight: 256 };
 
-    const book: MinecraftBook = {
+    const book: BlockgameBook = {
       title: 'Witchcraft Magazine Issue #1',
       author: 'StarSweetpea',
       pages: [
@@ -349,7 +349,7 @@ Normal page 2 text`;
 
     // 1 page total (odd number of pages: page 0 has text)
     // In double mode: Left page has text, right page is the blank companion page (pageIndex 1 >= totalPages)
-    const book: MinecraftBook = {
+    const book: BlockgameBook = {
       title: 'Witchcraft Magazine Single Page Special',
       author: 'StarSweetpea',
       pages: [
@@ -372,7 +372,7 @@ Normal page 2 text`;
     const canvas = new BookCanvas({ container: mockContainer, defaultViewMode: 'double' });
     (canvas as any).bookBg = { naturalWidth: 256, naturalHeight: 256 };
 
-    const book: MinecraftBook = {
+    const book: BlockgameBook = {
       title: 'Steve Mining Journal',
       author: 'Steve',
       pages: [
@@ -392,7 +392,7 @@ Normal page 2 text`;
     const canvas = new BookCanvas({ container: mockContainer, defaultViewMode: 'double', scale: 4 });
     (canvas as any).bookBg = { naturalWidth: 256, naturalHeight: 256 };
 
-    const book: MinecraftBook = {
+    const book: BlockgameBook = {
       title: 'Witchcraft Magazine Clamped Test',
       author: 'StarSweetpea',
       pages: ['Only 1 page of content here!'],

@@ -1,14 +1,14 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { BookCanvas } from '../src/render/BookCanvas';
-import { MinecraftBookViewer, BlockgameBookViewer } from '../src/ui/BlockgameBookViewer';
-import { MinecraftBookElement, BlockgameBookElement } from '../src/component/blockgame-book';
-import { MINECRAFT_DYE_HEX, MinecraftBook } from '../src/engine/types';
+import { BlockgameBookViewer } from '../src/ui/BlockgameBookViewer';
+import { BlockgameBookElement } from '../src/component/blockgame-book';
+import { BLOCKGAME_DYE_HEX, BlockgameBook } from '../src/engine/types';
 
-describe('Themes, Accessibility & Scholar Extensions (v1.4 & v1.6)', () => {
+describe('Experimental features and high contrast', () => {
   let mockContainer: any;
   let mockCtx: any;
 
-  const testBook: MinecraftBook = {
+  const testBook: BlockgameBook = {
     title: 'Witchcraft Grimoire',
     author: 'StarSweetpea',
     pages: [
@@ -181,7 +181,7 @@ describe('Themes, Accessibility & Scholar Extensions (v1.4 & v1.6)', () => {
     mockContainer = makeEl('div');
   });
 
-  describe('Bedrock High-Contrast Theme & Accessibility', () => {
+  describe('High contrast', () => {
     it('sets high-contrast mode on BookCanvas and draws with high-contrast text', async () => {
       const canvas = new BookCanvas({
         container: mockContainer,
@@ -202,8 +202,8 @@ describe('Themes, Accessibility & Scholar Extensions (v1.4 & v1.6)', () => {
       expect(canvas.isHighContrast()).toBe(true);
     });
 
-    it('applies the high-contrast container class in MinecraftBookViewer when experimental', async () => {
-      const viewer = new MinecraftBookViewer(mockContainer, {
+    it('applies the high-contrast container class in BlockgameBookViewer when experimental', async () => {
+      const viewer = new BlockgameBookViewer(mockContainer, {
         book: testBook,
         experimental: true,
         highContrast: true,
@@ -215,7 +215,7 @@ describe('Themes, Accessibility & Scholar Extensions (v1.4 & v1.6)', () => {
     });
   });
 
-  describe('Scholar Dye Covers & Silk Ribbon Bookmarks', () => {
+  describe('Dye covers and ribbon bookmarks', () => {
     it('configures 16 Minecraft dye cover colors on BookCanvas', async () => {
       const canvas = new BookCanvas({
         container: mockContainer,
@@ -234,10 +234,10 @@ describe('Themes, Accessibility & Scholar Extensions (v1.4 & v1.6)', () => {
       expect(canvas.getCoverColor()).toBe('light_blue');
 
       // Verify hex lookup exists for all 16 Minecraft dye colors
-      expect(MINECRAFT_DYE_HEX['purple']).toBe('#8932B8');
-      expect(MINECRAFT_DYE_HEX['red']).toBe('#B02E26');
-      expect(MINECRAFT_DYE_HEX['light_blue']).toBe('#3AB3DA');
-      expect(MINECRAFT_DYE_HEX['black']).toBe('#1D1D21');
+      expect(BLOCKGAME_DYE_HEX['purple']).toBe('#8932B8');
+      expect(BLOCKGAME_DYE_HEX['red']).toBe('#B02E26');
+      expect(BLOCKGAME_DYE_HEX['light_blue']).toBe('#3AB3DA');
+      expect(BLOCKGAME_DYE_HEX['black']).toBe('#1D1D21');
     });
 
     it('renders silk bookmark ribbon in BookCanvas', async () => {
@@ -256,8 +256,8 @@ describe('Themes, Accessibility & Scholar Extensions (v1.4 & v1.6)', () => {
       expect(canvas.isBookmarkVisible()).toBe(false);
     });
 
-    it('exposes cover-color, bookmark, and bookmark-color on <minecraft-book>', async () => {
-      const el = new MinecraftBookElement();
+    it('exposes cover-color, bookmark, and bookmark-color on <blockgame-book>', async () => {
+      const el = new BlockgameBookElement();
       const attrs: Record<string, string> = {};
       (el as any).setAttribute = (k: string, v: string) => {
         const old = attrs[k] ?? null;
@@ -295,7 +295,7 @@ describe('Themes, Accessibility & Scholar Extensions (v1.4 & v1.6)', () => {
     });
   });
 
-  describe('Experimental flag gating (Scholar covers, bookmarks, high contrast)', () => {
+  describe('Experimental flag gating', () => {
     /** Records every glyph color requested from the atlas while `fn` runs. */
     const recordGlyphColors = (canvas: BookCanvas, fn: () => void): string[] => {
       const atlas: any = canvas.getAtlas();
@@ -543,7 +543,7 @@ describe('Themes, Accessibility & Scholar Extensions (v1.4 & v1.6)', () => {
     });
   });
 
-  describe('Braille Art Support (v1.6 Backlog)', () => {
+  describe('Braille glyph advances', () => {
     it('measures Unicode Braille characters cleanly within layout line bounds', async () => {
       const canvas = new BookCanvas({ container: mockContainer });
       await canvas.init();

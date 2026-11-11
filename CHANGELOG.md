@@ -5,6 +5,10 @@
 ### Breaking
 - Only the transparent theme remains. The `.mc-theme-dark`, `.mc-theme-light`, `.mc-theme-parchment` and `.mc-theme-nectar` classes are gone, so host CSS targeting them no longer matches. Theme through the `--mc-*` custom properties instead.
 - The `theme` property and `setTheme()` are deprecated no-ops.
+- Removed the deprecated Minecraft-named aliases: the `<minecraft-book>` tag, `MinecraftBookElement`, `MinecraftBookViewer`, `MinecraftBookViewerOptions`, `MinecraftBook`, `MinecraftDyeColor`, `MINECRAFT_COLORS`, `MINECRAFT_DYE_HEX`, `MINECRAFT_SYMBOL_ADVANCES` and `getMinecraftGlyphSizes`, along with the `src/ui/MinecraftBookViewer` and `src/component/minecraft-book` shim modules. Use the `Blockgame*` / `BLOCKGAME_*` names and `<blockgame-book>`.
+- The registration helper is now `defineBlockgameBookElement()` and defines only `<blockgame-book>`.
+- Removed the unused `WYSIWYG_BOOK_EDITOR_ENABLED` export. The markup editor no longer shows a disabled "Visual WYSIWYG - Planned" tab or a roadmap notice.
+- Removed `BookCanvas.getBookPageRect()`. It only existed to position the site-specific ASCII backdrop, which is gone from the repo; it was never part of the web component.
 
 ### Added
 - `page-numbers` attribute, `pageNumbers` property and `pageNumbers` viewer option (plus `setPageNumbers()` / `isPageNumbersEnabled()`) control the page number drawn on the book itself: Java `Page X of Y` and Bedrock `N of M`. It is separate from the toolbar `1 / 12` text, which `controls` governs. Set `page-numbers="false"` to hide it.

@@ -4,7 +4,7 @@ import { ResourcePackManager } from '../src/engine/ResourcePackManager';
 import { createLithosPack, createCraftadiaPack } from '../src/presets/example-packs';
 import { splitTextToLines } from '../src/engine/StringSplitter';
 
-describe('Lithos Font Textures & Spacing Fidelity', () => {
+describe('Spacing and font packs', () => {
   it('keeps space advance at 4px, and 5px when bolded like every other glyph', () => {
     const atlas = new GlyphAtlas();
     expect(atlas.getAdvance(' ', false)).toBe(4);

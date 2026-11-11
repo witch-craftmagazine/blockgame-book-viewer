@@ -29,9 +29,6 @@ export const BLOCKGAME_COLORS: Record<string, string> = {
   'u': '#9A5CC6', // Amethyst
 };
 
-/** @deprecated Use BLOCKGAME_COLORS instead */
-export const MINECRAFT_COLORS = BLOCKGAME_COLORS;
-
 export const COLOR_NAMES: Record<string, string> = {
   '0': 'Black',
   '1': 'Dark Blue',

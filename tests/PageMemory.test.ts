@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { PageMemoryManager, getBookStorageKey } from '../src/engine/PageMemoryManager';
-import { MinecraftBook } from '../src/engine/types';
+import { BlockgameBook } from '../src/engine/types';
 
 describe('PageMemoryManager (Opt-In Reading Progress)', () => {
   let mockStorage: Record<string, string> = {};
@@ -18,7 +18,7 @@ describe('PageMemoryManager (Opt-In Reading Progress)', () => {
     };
   });
 
-  const testBook: MinecraftBook = {
+  const testBook: BlockgameBook = {
     title: 'The Great Journey',
     author: 'Steve',
     pages: ['Page 1', 'Page 2', 'Page 3', 'Page 4', 'Page 5'],
@@ -65,7 +65,7 @@ describe('PageMemoryManager (Opt-In Reading Progress)', () => {
 
   it('clears specific book progress or all book progress records', () => {
     const memory = new PageMemoryManager({ enabled: true });
-    const otherBook: MinecraftBook = {
+    const otherBook: BlockgameBook = {
       title: 'Redstone Handbook',
       author: 'Alex',
       pages: ['Intro'],

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { MinecraftBookElement } from '../src/component/blockgame-book';
+import { BlockgameBookElement } from '../src/component/blockgame-book';
 
-describe('Web Component Standards Compliance (<blockgame-book>)', () => {
+describe('<blockgame-book> element', () => {
   let mockCtx: any;
 
   beforeEach(() => {
@@ -134,7 +134,7 @@ describe('Web Component Standards Compliance (<blockgame-book>)', () => {
   });
 
   const setupElement = () => {
-    const el = new MinecraftBookElement();
+    const el = new BlockgameBookElement();
     const attrs: Record<string, string> = {
       'base-path': './assets',
     };

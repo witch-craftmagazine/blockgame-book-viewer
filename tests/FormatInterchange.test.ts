@@ -9,9 +9,9 @@ import {
   exportToCocoapebblesJson,
 } from '../src/io/BookExporter';
 import { ExportModal } from '../src/ui/ExportModal';
-import { MinecraftBook } from '../src/engine/types';
+import { BlockgameBook } from '../src/engine/types';
 
-describe('Format Expansion & Interchange (v1.5)', () => {
+describe('Format interchange', () => {
   beforeEach(() => {
     const elementsBySel = new Map<string, any>();
     const getOrCreateEl = (sel: string) => {
@@ -113,7 +113,7 @@ describe('Format Expansion & Interchange (v1.5)', () => {
     });
 
     it('exports book to standard Bedrock JSON format', () => {
-      const book: MinecraftBook = {
+      const book: BlockgameBook = {
         title: 'Nether Secrets',
         author: 'Alex',
         pages: ['Chapter 1: The Fortress', 'Chapter 2: Bastions'],
@@ -160,7 +160,7 @@ describe('Format Expansion & Interchange (v1.5)', () => {
     });
 
     it('exports book to cocoapebbles-book JSON preserving metadata id', () => {
-      const book: MinecraftBook = {
+      const book: BlockgameBook = {
         id: 'vault-key-77',
         title: 'Vault Cipher',
         author: 'Keeper',

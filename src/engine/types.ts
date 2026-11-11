@@ -6,9 +6,6 @@ export interface BlockgameBook {
   pages: string[];     // Array of raw page strings (may contain § or & or plain text)
 }
 
-/** @deprecated Use BlockgameBook instead */
-export type MinecraftBook = BlockgameBook;
-
 export interface FormattedSpan {
   text: string;
   color: string;           // Hex color like "#000000" or "#55FFFF"
@@ -64,9 +61,6 @@ export type BlockgameDyeColor =
   | 'red'
   | 'black';
 
-/** @deprecated Use BlockgameDyeColor instead */
-export type MinecraftDyeColor = BlockgameDyeColor;
-
 export const BLOCKGAME_DYE_HEX: Record<BlockgameDyeColor, string> = {
   white: '#F9FFFE',
   orange: '#F9801D',
@@ -85,6 +79,3 @@ export const BLOCKGAME_DYE_HEX: Record<BlockgameDyeColor, string> = {
   red: '#B02E26',
   black: '#1D1D21',
 };
-
-/** @deprecated Use BLOCKGAME_DYE_HEX instead */
-export const MINECRAFT_DYE_HEX = BLOCKGAME_DYE_HEX;

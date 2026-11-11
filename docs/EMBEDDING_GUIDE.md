@@ -6,7 +6,7 @@ This guide walks through how to embed and customize the **Blockgame Book Viewer*
 
 ## 1. Quick Drop-In: Web Component
 
-The simplest way to embed a book is using the `<blockgame-book>` custom element (backwards-compatible alias `<minecraft-book>` is also registered).
+The simplest way to embed a book is using the `<blockgame-book>` custom element.
 
 ### Step 1: Add Script and Stylesheet
 ```html

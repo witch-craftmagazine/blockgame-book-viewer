@@ -15,6 +15,3 @@ export function getBlockgameGlyphSizes(): Uint8Array {
   }
   return cachedSizes;
 }
-
-/** @deprecated Use getBlockgameGlyphSizes instead */
-export const getMinecraftGlyphSizes = getBlockgameGlyphSizes;

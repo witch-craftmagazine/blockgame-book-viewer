@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { BookCanvas } from '../src/render/BookCanvas';
-import { MinecraftBook } from '../src/engine/types';
+import { BlockgameBook } from '../src/engine/types';
 import { splitTextToLines, getTextWidthForEngine, BEDROCK_BOOK_TEXT_WIDTH, JAVA_BOOK_TEXT_WIDTH } from '../src/engine/StringSplitter';
 import { defaultGlyphAtlas } from '../src/engine/GlyphAtlas';
-import { MinecraftBookElement } from '../src/component/blockgame-book';
+import { BlockgameBookElement } from '../src/component/blockgame-book';
 
 describe('Bedrock Edition Appearance & Decoupled Engine', () => {
   let mockContainer: any;
@@ -127,7 +127,7 @@ describe('Bedrock Edition Appearance & Decoupled Engine', () => {
     mockContainer = makeEl('div');
   });
 
-  const fourPageBook: MinecraftBook = {
+  const fourPageBook: BlockgameBook = {
     title: 'Test Bedrock Book',
     author: 'Alex',
     pages: [
@@ -284,8 +284,8 @@ describe('Bedrock Edition Appearance & Decoupled Engine', () => {
     expect(canvas.isHighContrast()).toBe(false);
   });
 
-  it('supports appearance, engine, and high-contrast in MinecraftBookElement Web Component', async () => {
-    const el = new MinecraftBookElement();
+  it('supports appearance, engine, and high-contrast in BlockgameBookElement Web Component', async () => {
+    const el = new BlockgameBookElement();
     (el as any).classList = {
       add: vi.fn(),
       remove: vi.fn(),

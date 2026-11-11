@@ -8,7 +8,7 @@ import {
 } from '../src/engine/StringSplitter';
 import { defaultGlyphAtlas } from '../src/engine/GlyphAtlas';
 
-describe('StringSplitter and Pagination', () => {
+describe('StringSplitter', () => {
   it('measures character advances accurately', () => {
     // Space advance is 4
     expect(defaultGlyphAtlas.getAdvance(' ')).toBe(4);

@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { SAMPLES } from '../examples/web-component';
-import { MinecraftBookElement } from '../src/component/blockgame-book';
+import { BlockgameBookElement } from '../src/component/blockgame-book';
 
-describe('Web Component Live Preview & Configurator Options', () => {
+describe('Web component live option updates', () => {
   let mockCtx: any;
 
   beforeEach(() => {
@@ -190,8 +190,8 @@ describe('Web Component Live Preview & Configurator Options', () => {
     expect(SAMPLES.bedrock).toBeDefined();
   });
 
-  it('updates live options on MinecraftBookElement dynamically', async () => {
-    const bookEl = new MinecraftBookElement();
+  it('updates live options on BlockgameBookElement dynamically', async () => {
+    const bookEl = new BlockgameBookElement();
     const classListSet = new Set<string>();
     (bookEl as any).classList = {
       add: (...tokens: string[]) => tokens.forEach((t) => classListSet.add(t)),

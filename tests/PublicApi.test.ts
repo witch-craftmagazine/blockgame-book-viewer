@@ -3,8 +3,6 @@ import {
   BookCanvas,
   BlockgameBookViewer,
   BlockgameBookElement,
-  MinecraftBookViewer,
-  MinecraftBookElement,
   BookPlugin,
   splitTextToLines,
   parseBook,
@@ -14,10 +12,9 @@ import {
   defaultGlyphAtlas,
   ResourcePackManager,
   BookEditorModal,
-  WYSIWYG_BOOK_EDITOR_ENABLED,
 } from '../src/index';
 
-describe('Modular Library API & Components', () => {
+describe('Public API', () => {
   let mockContainer: any;
   let mockCtx: any;
 
@@ -116,8 +113,6 @@ describe('Modular Library API & Components', () => {
     expect(BookCanvas).toBeDefined();
     expect(BlockgameBookViewer).toBeDefined();
     expect(BlockgameBookElement).toBeDefined();
-    expect(MinecraftBookViewer).toBeDefined();
-    expect(MinecraftBookElement).toBeDefined();
     expect(splitTextToLines).toBeDefined();
     expect(parseBook).toBeDefined();
     expect(exportToStendhal).toBeDefined();
@@ -169,8 +164,8 @@ describe('Modular Library API & Components', () => {
     expect(canvas.getPlugin('test-custom-plugin')).toBeUndefined();
   });
 
-  it('instantiates MinecraftBookViewer with options and loads arbitrary book', () => {
-    const viewer = new MinecraftBookViewer(mockContainer, {
+  it('instantiates BlockgameBookViewer with options and loads arbitrary book', () => {
+    const viewer = new BlockgameBookViewer(mockContainer, {
       defaultViewMode: 'double',
       book: {
         title: 'Custom Tome',
@@ -197,7 +192,7 @@ describe('Modular Library API & Components', () => {
     expect(book?.author).toBe('Steve');
     expect(book?.pages.length).toBe(2);
 
-    const viewer = new MinecraftBookViewer(mockContainer);
+    const viewer = new BlockgameBookViewer(mockContainer);
     viewer.setBook(book!);
     expect(viewer.getBook().title).toBe('My Notes');
     expect(viewer.getTotalPages()).toBe(2);
@@ -267,7 +262,7 @@ describe('Modular Library API & Components', () => {
   });
 
   it('allows zoom-in button to zoom within page bounds and prevents scaling beyond max fitting scale', () => {
-    const viewer = new MinecraftBookViewer(mockContainer, {
+    const viewer = new BlockgameBookViewer(mockContainer, {
       defaultViewMode: 'double',
       controls: true,
     });
@@ -331,8 +326,8 @@ describe('Modular Library API & Components', () => {
     }
   });
 
-  it('initializes MinecraftBookElement with inline script custom book', async () => {
-    const el = new MinecraftBookElement();
+  it('initializes BlockgameBookElement with inline script custom book', async () => {
+    const el = new BlockgameBookElement();
     (el as any).classList = {
       add: vi.fn(),
       remove: vi.fn(),
@@ -380,9 +375,7 @@ pages:
     expect(v?.getBook()?.pages.length).toBe(2);
   });
 
-  it('provides BookEditorModal for editing markup and flags WYSIWYG editor', () => {
-    expect(WYSIWYG_BOOK_EDITOR_ENABLED).toBe(false);
-
+  it('provides BookEditorModal for editing book markup', () => {
     let appliedBook: any = null;
     const modal = new BookEditorModal((book) => {
       appliedBook = book;
@@ -417,8 +410,8 @@ pages:
     expect(appliedBook.pages[0]).toContain('§4§lEdited First Page§r');
   });
 
-  it('supports raw text attribute and setText API with LosslessSplit pagination on MinecraftBookElement', async () => {
-    const el = new MinecraftBookElement();
+  it('supports raw text attribute and setText API with LosslessSplit pagination on BlockgameBookElement', async () => {
+    const el = new BlockgameBookElement();
     const attrs: Record<string, string> = {};
     (el as any).setAttribute = vi.fn((k: string, v: string) => { attrs[k] = v; });
     (el as any).getAttribute = vi.fn((k: string) => attrs[k] ?? null);
@@ -462,7 +455,7 @@ pages:
   });
 
   it('honors persist-progress attribute to enable PageMemoryManager', async () => {
-    const el = new MinecraftBookElement();
+    const el = new BlockgameBookElement();
     const attrs: Record<string, string> = {};
     (el as any).setAttribute = vi.fn((k: string, v: string) => { attrs[k] = v; });
     (el as any).getAttribute = vi.fn((k: string) => attrs[k] ?? null);

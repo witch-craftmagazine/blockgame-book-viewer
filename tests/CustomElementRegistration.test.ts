@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { BlockgameBookElement, MinecraftBookElement, defineBlockgameBookElements } from '../src/component/blockgame-book';
+import { BlockgameBookElement, defineBlockgameBookElement } from '../src/component/blockgame-book';
 
 /**
- * Browsers throw NotSupportedError when one constructor is registered under two
- * tag names. This mock registry enforces the same rule, so the registration
- * function is exercised the way a real page exercises it.
+ * Browsers throw NotSupportedError when a tag name or a constructor is registered twice.
+ * This mock registry enforces the same rules, so the registration function is exercised
+ * the way a real page exercises it.
  */
 function createStrictRegistry() {
   const byName = new Map<string, Function>();
@@ -24,24 +24,16 @@ function createStrictRegistry() {
 }
 
 describe('custom element registration', () => {
-  it('registers both tags without reusing a constructor', () => {
+  it('registers <blockgame-book> with the element class', () => {
     const registry = createStrictRegistry();
-    expect(() => defineBlockgameBookElements(registry)).not.toThrow();
-
+    expect(() => defineBlockgameBookElement(registry)).not.toThrow();
     expect(registry.byName.get('blockgame-book')).toBe(BlockgameBookElement);
-    const legacy = registry.byName.get('minecraft-book') as Function;
-    expect(legacy).toBeDefined();
-    expect(legacy).not.toBe(BlockgameBookElement);
-    expect(legacy.prototype instanceof BlockgameBookElement).toBe(true);
+    expect(registry.byName.size).toBe(1);
   });
 
-  it('is idempotent when the tags are already defined', () => {
+  it('is idempotent when the tag is already defined', () => {
     const registry = createStrictRegistry();
-    defineBlockgameBookElements(registry);
-    expect(() => defineBlockgameBookElements(registry)).not.toThrow();
-  });
-
-  it('keeps MinecraftBookElement as an identity alias of BlockgameBookElement', () => {
-    expect(MinecraftBookElement).toBe(BlockgameBookElement);
+    defineBlockgameBookElement(registry);
+    expect(() => defineBlockgameBookElement(registry)).not.toThrow();
   });
 });

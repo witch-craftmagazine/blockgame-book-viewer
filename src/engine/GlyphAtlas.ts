@@ -41,9 +41,6 @@ export const BLOCKGAME_SYMBOL_ADVANCES: Record<string, number> = {
   '\r': 0,
 };
 
-/** @deprecated Use BLOCKGAME_SYMBOL_ADVANCES instead */
-export const MINECRAFT_SYMBOL_ADVANCES = BLOCKGAME_SYMBOL_ADVANCES;
-
 // Server resource pack bitmap overrides to explicitly ignore.
 // (e.g. Craftadia later mapped custom weapon textures to standard Unicode stars like ✯ (U+272F),
 // which broke pre-existing written books that used the star character).

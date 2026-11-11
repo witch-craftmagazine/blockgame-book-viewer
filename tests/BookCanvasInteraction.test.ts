@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { BookCanvas } from '../src/render/BookCanvas';
-import { MinecraftBook } from '../src/engine/types';
+import { BlockgameBook } from '../src/engine/types';
 import { splitTextToLines } from '../src/engine/StringSplitter';
 
-describe('Accessibility Text Layer & Arrow Symmetry', () => {
+describe('BookCanvas interaction and accessibility text layer', () => {
   let mockContainer: any;
 
   beforeEach(() => {
@@ -79,7 +79,7 @@ describe('Accessibility Text Layer & Arrow Symmetry', () => {
     mockContainer = makeEl('div');
   });
 
-  const sampleBook: MinecraftBook = {
+  const sampleBook: BlockgameBook = {
     title: 'Accessibility Issue',
     author: 'Steve',
     pages: [

@@ -4,7 +4,7 @@ import { parseFormattedText, stripFormatting } from '../src/engine/Formatting';
 import { defaultGlyphAtlas } from '../src/engine/GlyphAtlas';
 import { splitTextToLines, BOOK_TEXT_WIDTH } from '../src/engine/StringSplitter';
 
-describe('Pagination Fidelity and Section Symbol Handling', () => {
+describe('Pagination and section symbol handling', () => {
   it('never emits § as printable text or with positive width', () => {
     // Lone trailing section symbol
     const spans1 = parseFormattedText('Hello World§');
