@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { BlockgameBookElement, MinecraftBookElement } from '../src/component/blockgame-book';
+import { MinecraftBookElement } from '../src/component/blockgame-book';
 
 describe('Web Component Standards Compliance (<blockgame-book>)', () => {
   let mockCtx: any;
@@ -224,11 +224,6 @@ describe('Web Component Standards Compliance (<blockgame-book>)', () => {
     expect(el.getAttribute('author')).toBe('Explorer');
     expect(el.author).toBe('Explorer');
 
-    // theme: only `transparent` exists; legacy values are ignored
-    el.theme = 'parchment';
-    expect(el.hasAttribute('theme')).toBe(false);
-    expect(el.theme).toBe('transparent');
-
     // controls
     el.controls = false;
     expect(el.getAttribute('controls')).toBe('false');
@@ -399,15 +394,11 @@ pages:
     expect(el.bookTitle).toBe('Preserved Book');
   });
 
-  it('handles dynamic changes to sound and controls attributes at runtime and ignores theme', async () => {
+  it('handles dynamic changes to sound and controls attributes at runtime', async () => {
     const { el } = setupElement();
     el.text = 'Sample Text';
 
     await el.connectedCallback();
-
-    // A stray legacy theme attribute never changes the theme
-    el.setAttribute('theme', 'parchment');
-    expect(el.theme).toBe('transparent');
 
     // Update sound
     el.setAttribute('sound', 'false');

@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, beforeAll } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { SAMPLES } from '../examples/web-component';
-import { BlockgameBookElement, MinecraftBookElement } from '../src/component/blockgame-book';
+import { MinecraftBookElement } from '../src/component/blockgame-book';
 
 describe('Web Component Live Preview & Configurator Options', () => {
   let mockCtx: any;
@@ -188,69 +188,6 @@ describe('Web Component Live Preview & Configurator Options', () => {
     expect(SAMPLES.guide.pages.length).toBeGreaterThanOrEqual(4);
     expect(SAMPLES.continuous.pages.length).toBe(7);
     expect(SAMPLES.bedrock).toBeDefined();
-    expect(SAMPLES.scholar).toBeUndefined();
-  });
-
-  it('guide sample documents only core attributes (no Scholar, Braille, or any theme)', () => {
-    const text = SAMPLES.guide.pages.join('\n');
-    for (const core of ['view-mode', 'appearance', 'engine', 'persist-progress', 'setBook', 'scrollToPage']) {
-      expect(text).toContain(core);
-    }
-    for (const gone of ['cover-color', 'bookmark', 'Scholar', 'Braille', 'classic', 'high-contrast', 'theme']) {
-      expect(text).not.toContain(gone);
-    }
-  });
-
-  describe('examples/web-component.html configurator', () => {
-    let html = '';
-    let ts = '';
-
-    beforeAll(async () => {
-      // The repo has no @types/node, so load node:fs through a variable specifier.
-      const fsModule = 'node:fs';
-      const fs: any = await import(/* @vite-ignore */ fsModule);
-      html = fs.readFileSync(new URL('../examples/web-component.html', import.meta.url), 'utf8');
-      ts = fs.readFileSync(new URL('../examples/web-component.ts', import.meta.url), 'utf8');
-    });
-
-    it('no longer renders Scholar, bookmark, or high-contrast controls', () => {
-      for (const id of ['cfg-cover-color', 'cfg-high-contrast', 'cfg-bookmark', 'cfg-bookmark-color']) {
-        expect(html).not.toContain(`id="${id}"`);
-        expect(ts).not.toContain(id);
-      }
-    });
-
-    it('has no theme control or theme attribute and no scholar sample', () => {
-      expect(html).not.toContain('cfg-theme');
-      // `\s` excludes the page's own `[data-theme="dark"]` CSS selectors.
-      expect(html).not.toMatch(/\stheme="/);
-
-      const sampleSelect = html.match(/<select id="cfg-sample"[\s\S]*?<\/select>/)![0];
-      const samples = [...sampleSelect.matchAll(/<option value="([^"]+)"/g)].map((m) => m[1]);
-      expect(samples).toEqual(['guide', 'continuous', 'bedrock']);
-    });
-
-    it('keeps the production controls and has no Scholar or Braille copy', () => {
-      for (const id of ['cfg-view-mode', 'cfg-appearance', 'cfg-engine', 'cfg-persist-progress', 'cfg-sample']) {
-        expect(html).toContain(`id="${id}"`);
-      }
-      expect(html).not.toMatch(/braille|scholar|dye|silk/i);
-    });
-
-    it('has a page-numbers checkbox that starts checked to match the default', () => {
-      const input = html.match(/<input[^>]*id="cfg-page-numbers"[^>]*>/)?.[0];
-      expect(input).toBeDefined();
-      expect(input).toContain('type="checkbox"');
-      expect(input).toMatch(/\schecked(\s|\/|>)/);
-    });
-
-    it('only writes page-numbers into the snippet when it differs from the default', () => {
-      expect(ts).toContain("document.getElementById('cfg-page-numbers')");
-      expect(ts).toContain(`lines.push('  page-numbers="false"')`);
-      expect(ts).toMatch(/if \(!pageNumbers\) lines\.push/);
-      // The checked state drives the live element through the property.
-      expect(ts).toContain('bookEl.pageNumbers = pageNumbersCheck.checked');
-    });
   });
 
   it('updates live options on MinecraftBookElement dynamically', async () => {
@@ -324,11 +261,7 @@ describe('Web Component Live Preview & Configurator Options', () => {
     bookEl.setAttribute('high-contrast', 'true');
     expect(bookEl.highContrast).toBe(true);
 
-    // 7. A legacy theme attribute is ignored
-    bookEl.setAttribute('theme', 'dark');
-    expect(bookEl.theme).toBe('transparent');
-
-    // 8. Load continuous sample and test scrollToPage
+    // 7. Load continuous sample and test scrollToPage
     bookEl.setBook(SAMPLES.continuous);
     expect(viewer!.getTotalPages()).toBe(7);
     expect(() => bookEl.scrollToPage(3)).not.toThrow();

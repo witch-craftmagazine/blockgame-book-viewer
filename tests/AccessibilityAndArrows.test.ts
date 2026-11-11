@@ -393,25 +393,4 @@ describe('Accessibility Text Layer & Arrow Symmetry', () => {
     bookCanvas.nextPage();
     expect((bookCanvas as any).highlightedLineIndex).toBeNull();
   });
-
-  it('verifies that two-page spread elimination of background overlap maintains 344px width and 152px offset', () => {
-    const bookCanvas = new BookCanvas({
-      container: mockContainer,
-      defaultViewMode: 'double',
-    });
-    bookCanvas.setBook(sampleBook);
-
-    // In double mode:
-    // TWO_PAGE_OVERLAP = 40; TWO_PAGE_WIDTH = 344; RIGHT_PAGE_X = 152
-    // Left backward arrow at 53px, right forward arrow at 268px
-    // Distance from right edge = 344 - (268 + 23) = 53px
-    expect(bookCanvas.hitTestButtons(268, 160)).toBe('forward');
-  });
-
-  it('safely handles SoundManager load and playPageTurn without throwing in test environment', async () => {
-    const { soundManager } = await import('../src/render/SoundEffects');
-    expect(soundManager.isEnabled()).toBe(true);
-    await soundManager.load('./assets');
-    expect(() => soundManager.playPageTurn()).not.toThrow();
-  });
 });

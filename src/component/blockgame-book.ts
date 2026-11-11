@@ -5,6 +5,13 @@ import { soundManager } from '../render/SoundEffects';
 
 const BaseElement: typeof HTMLElement = typeof HTMLElement !== 'undefined' ? HTMLElement : (class {} as any);
 
+declare global {
+  interface HTMLElementTagNameMap {
+    'blockgame-book': BlockgameBookElement;
+    'minecraft-book': BlockgameBookElement;
+  }
+}
+
 export class BlockgameBookElement extends BaseElement {
   private viewer: BlockgameBookViewer | null = null;
   private isInitialized = false;

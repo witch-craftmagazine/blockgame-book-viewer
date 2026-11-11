@@ -11,8 +11,8 @@ function restoreNavigator(): void {
   else delete (globalThis as any).navigator;
 }
 import { BookCanvas } from '../src/render/BookCanvas';
-import { MinecraftBookViewer, BlockgameBookViewer } from '../src/ui/BlockgameBookViewer';
-import { MinecraftBookElement, BlockgameBookElement } from '../src/component/blockgame-book';
+import { MinecraftBookViewer } from '../src/ui/BlockgameBookViewer';
+import { MinecraftBookElement } from '../src/component/blockgame-book';
 
 describe('Page Export & Mobile Share API', () => {
   let mockContainer: any;

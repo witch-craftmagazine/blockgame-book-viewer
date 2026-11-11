@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { BookCanvas } from '../src/render/BookCanvas';
 import { MinecraftBookViewer, BlockgameBookViewer } from '../src/ui/BlockgameBookViewer';
 import { MinecraftBookElement, BlockgameBookElement } from '../src/component/blockgame-book';
-import { MINECRAFT_DYE_HEX, BLOCKGAME_DYE_HEX, MinecraftBook, BlockgameBook } from '../src/engine/types';
+import { MINECRAFT_DYE_HEX, MinecraftBook } from '../src/engine/types';
 
 describe('Themes, Accessibility & Scholar Extensions (v1.4 & v1.6)', () => {
   let mockContainer: any;

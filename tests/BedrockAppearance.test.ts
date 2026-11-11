@@ -3,7 +3,7 @@ import { BookCanvas } from '../src/render/BookCanvas';
 import { MinecraftBook } from '../src/engine/types';
 import { splitTextToLines, getTextWidthForEngine, BEDROCK_BOOK_TEXT_WIDTH, JAVA_BOOK_TEXT_WIDTH } from '../src/engine/StringSplitter';
 import { defaultGlyphAtlas } from '../src/engine/GlyphAtlas';
-import { BlockgameBookElement, MinecraftBookElement } from '../src/component/blockgame-book';
+import { MinecraftBookElement } from '../src/component/blockgame-book';
 
 describe('Bedrock Edition Appearance & Decoupled Engine', () => {
   let mockContainer: any;
