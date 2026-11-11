@@ -1,5 +1,6 @@
 import { BlockgameBook, ViewMode, BookAppearance, BookEngine, BlockgameDyeColor } from '../engine/types';
 import { BookCanvas, BookCanvasOptions } from '../render/BookCanvas';
+import type { AnimatedChar, BlankPageImageOptions } from '../render/EasterEggs';
 import { soundManager } from '../render/SoundEffects';
 import { ResourcePackManager } from '../engine/ResourcePackManager';
 import { parseBook, parseRawTextLossless } from '../io/BookParser';
@@ -50,7 +51,10 @@ export interface BlockgameBookViewerOptions {
   controls?: boolean | ViewerControlsOptions;
   scale?: number;
   plugins?: BookPlugin[];
-  includeWitchcraftPlugin?: boolean;
+  /** Image shown on the final page when it is blank (Java layouts, single and double view). */
+  blankPageImage?: string | BlankPageImageOptions;
+  /** Characters whose glyph is briefly swapped for other glyphs (a blink, a twinkle). */
+  animatedChars?: AnimatedChar[];
   persistReadingProgress?: boolean;
   onPageChange?: (page: number, total: number) => void;
   onBookChange?: (book: BlockgameBook, viewer?: BlockgameBookViewer) => void;
@@ -104,7 +108,8 @@ export class BlockgameBookViewer {
       bookmarkColor: this.options.bookmarkColor,
       onClose: this.options.onClose,
       plugins: this.options.plugins,
-      includeWitchcraftPlugin: this.options.includeWitchcraftPlugin ?? false,
+      blankPageImage: this.options.blankPageImage,
+      animatedChars: this.options.animatedChars,
       onProgressSave: (page) => {
         if (this.pageMemory.isEnabled()) {
           this.pageMemory.save(this.currentBook, page);
@@ -500,6 +505,14 @@ export class BlockgameBookViewer {
 
   public isPageNumbersEnabled(): boolean {
     return this.bookCanvas.getShowPageIndicator();
+  }
+
+  public setBlankPageImage(image: string | BlankPageImageOptions | null | undefined): void {
+    this.bookCanvas.setBlankPageImage(image);
+  }
+
+  public setAnimatedChars(chars: AnimatedChar[] | null | undefined): void {
+    this.bookCanvas.setAnimatedChars(chars);
   }
 
   public setHighContrast(highContrast: boolean): void {

@@ -44,6 +44,8 @@ The simplest way to embed a book is using the `<blockgame-book>` custom element.
 | `controls` | `.controls` | `boolean` | `true` | Show or hide the bottom control toolbar |
 | `page-numbers` | `.pageNumbers` | `boolean` | `true` | Page number drawn on the book itself (Java `Page X of Y`, Bedrock `N of M`). Use `page-numbers="false"` to hide it; the property setter keeps the attribute in sync. Separate from the toolbar page text |
 | `page` | `.page` | `number` | `1` | Current active page (1-based index) |
+| `blank-page-image` | `.blankPageImage` | `string \| { src, width?, height?, alt?, title? }` | none | Image shown on the final page when it is blank (Java single/double view) |
+| `animated-chars` | `.animatedChars` | `{ char, frames[], frameMs?, delayMs? }[]` | none | Characters briefly swapped for other glyphs, e.g. a blinking eye. The attribute takes a JSON array |
 | `persist-progress` | `.persistProgress` | `boolean` | `false` | Opt-in localStorage reading progress save |
 | `split-mode` | `.splitMode` | `'lossless' \| 'standard'` | `'lossless'` | Lossless split mode |
 | `base-path` | `.basePath` | `string` | `'./assets'` | Base URL where textures and fonts are located. The package ships them in `dist/assets`; from a CDN use `https://unpkg.com/blockgame-book-viewer/dist/assets`. Unifont loads automatically from `style.css` |

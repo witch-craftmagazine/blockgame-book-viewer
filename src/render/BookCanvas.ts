@@ -22,6 +22,14 @@ import { soundManager } from './SoundEffects';
 import { ResourcePackInfo, BookTextures, CompositeResourcePack } from '../engine/ResourcePackManager';
 import { BookPlugin, PageRect } from '../plugin/BookPlugin';
 import { ContinuousScrollView } from './ContinuousScrollView';
+import {
+  AnimatedCharController,
+  normalizeBlankPageImage,
+  DEFAULT_BLANK_PAGE_IMAGE_WIDTH,
+  DEFAULT_BLANK_PAGE_IMAGE_HEIGHT,
+  type AnimatedChar,
+  type BlankPageImageOptions,
+} from './EasterEggs';
 
 // Dimensions and layout
 const TWO_PAGE_OVERLAP = 40; // Exact touch at spine seam with 0 overlapping non-transparent pixels
@@ -63,7 +71,10 @@ export interface BookCanvasOptions {
   textSelectionEnabled?: boolean;
   scale?: number;
   plugins?: BookPlugin[];
-  includeWitchcraftPlugin?: boolean;
+  /** Image shown on the final page when it is blank (Java layouts, single and double view). */
+  blankPageImage?: string | BlankPageImageOptions;
+  /** Characters whose glyph is briefly swapped for other glyphs, e.g. a blinking eye. */
+  animatedChars?: AnimatedChar[];
 }
 
 export class BookCanvas {
@@ -134,24 +145,19 @@ export class BookCanvas {
   private randomCharPool = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+{}[]:;<>?,./~';
   private randomCharsByAdvance: Map<number, string[]> = new Map();
 
-  // Eye blinking animation
-  private isWitchcraftMagazine = false;
-  private isBlinkingEye = false;
-  private nextBlinkTimestamp = 0;
-  private blinkEndTimestamp = 0;
-  private hasEyeOnCurrentPage = false;
-  private eyeHitBoxes: Array<{ x: number; y: number; w: number; h: number }> = [];
-
-  // StarSweetpea Blank Page Easter Egg
-  private starSweetPeaGifUrl: string;
-  private starSweetPeaImg: HTMLImageElement | null = null;
-  private gifOverlayElement: HTMLImageElement | null = null;
+  // Easter eggs (generic, opt-in): animated characters and a blank-page image
+  private animatedChars: AnimatedCharController;
+  private animatedCharsOnPage = new Set<string>();
+  private blankPageImage: ReturnType<typeof normalizeBlankPageImage> = null;
+  private blankPageImg: HTMLImageElement | null = null;
+  private blankPageOverlayElement: HTMLImageElement | null = null;
 
   constructor(options: BookCanvasOptions) {
     this.container = options.container;
     this.atlas = options.atlas || defaultGlyphAtlas;
     this.baseAssetPath = options.baseAssetPath || './assets';
-    this.starSweetPeaGifUrl = `${this.baseAssetPath}/textures/starsweetpea.gif`;
+    this.animatedChars = new AnimatedCharController(options.animatedChars);
+    this.blankPageImage = normalizeBlankPageImage(options.blankPageImage);
     this.onPageChange = options.onPageChange;
     this.showPageIndicator = options.showPageIndicator ?? true;
     this.textSelectionEnabled = options.textSelectionEnabled ?? false;
@@ -203,23 +209,7 @@ export class BookCanvas {
     this.stageElement.appendChild(this.canvas);
     this.stageElement.appendChild(this.textLayerElement);
 
-    if (typeof document !== 'undefined') {
-      const gifEl = document.createElement('img');
-      gifEl.className = 'book-blank-page-gif';
-      gifEl.src = this.starSweetPeaGifUrl;
-      gifEl.alt = 'StarSweetpea';
-      gifEl.title = 'StarSweetpea ~ Author of Witchcraft Magazine';
-      gifEl.style.display = 'none';
-      gifEl.style.cursor = 'pointer';
-      gifEl.style.pointerEvents = 'auto';
-      gifEl.addEventListener('click', (e) => {
-        e.stopPropagation();
-        this.triggerBlink();
-        soundManager.playWink();
-      });
-      this.gifOverlayElement = gifEl;
-      this.stageElement.appendChild(this.gifOverlayElement);
-    }
+    this.syncBlankPageOverlay();
 
     this.container.appendChild(this.stageElement);
     this.setupListeners();
@@ -378,11 +368,7 @@ export class BookCanvas {
       }).catch(() => {
         // Fallback gracefully if bedrock textures not found
       }),
-      this.loadImage(this.starSweetPeaGifUrl)
-        .then((img) => {
-          this.starSweetPeaImg = img;
-        })
-        .catch(() => {}),
+      this.loadBlankPageImage(),
       soundManager.load(this.baseAssetPath),
     ]);
 
@@ -505,18 +491,14 @@ export class BookCanvas {
   public setBook(book: BlockgameBook, preservePage = false): void {
     const savedPage = this.currentPage;
     this.book = book;
-    this.isWitchcraftMagazine = this.detectWitchcraftMagazine(book);
     this.recalculatePages();
     if (preservePage) {
       this.currentPage = Math.max(0, Math.min(this.paginatedPages.length - 1, savedPage));
     } else {
       this.currentPage = 0;
     }
-    this.updateHasEyeOnCurrentPage();
-    if (this.isWitchcraftMagazine) {
-      const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
-      this.scheduleNextBlink(now);
-    }
+    this.animatedChars.reset();
+    this.updateAnimatedCharPresence();
     for (const plugin of this.plugins) {
       if (plugin.onBookChange) {
         plugin.onBookChange(this.book, this.paginatedPages);
@@ -530,71 +512,99 @@ export class BookCanvas {
     }
   }
 
-  private detectWitchcraftMagazine(book: BlockgameBook): boolean {
-    const author = (book.author || '').toLowerCase();
-    const title = (book.title || '').toLowerCase();
-    return author.includes('starsweetpea') || title.includes('witchcraft');
+  /** Replaces the animated characters. An empty list turns the feature off. */
+  public setAnimatedChars(defs: AnimatedChar[] | null | undefined): void {
+    this.animatedChars.setDefs(defs ?? []);
+    this.updateAnimatedCharPresence();
+    this.render();
   }
 
-  private scheduleNextBlink(now: number): void {
-    // Autonomous blink interval between 3.5s and 6.5s
-    this.nextBlinkTimestamp = now + 3500 + Math.random() * 3000;
+  /** Starts an animation run for `char` now. Returns false if it is not animated or not on screen. */
+  public playAnimatedChar(char: string): boolean {
+    if (!this.animatedCharsOnPage.has(char)) return false;
+    const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+    if (!this.animatedChars.play(char, now)) return false;
+    this.render();
+    return true;
   }
 
-  public updateHasEyeOnCurrentPage(): void {
-    this.hasEyeOnCurrentPage = false;
-    if (!this.isWitchcraftMagazine) return;
+  public isAnimatedCharPlaying(char?: string): boolean {
+    return this.animatedChars.isAnimating(char);
+  }
+
+  public hasAnimatedCharOnCurrentPage(): boolean {
+    return this.animatedCharsOnPage.size > 0;
+  }
+
+  /** Recomputes which animated characters appear on the visible page(s). */
+  public updateAnimatedCharPresence(): void {
+    this.animatedCharsOnPage = new Set();
+    if (this.animatedChars.size === 0) return;
 
     const pagesToCheck = [this.currentPage];
-    if (this.viewMode === 'double' && this.currentPage + 1 < this.paginatedPages.length) {
+    if ((this.viewMode === 'double' || this.appearance === 'bedrock') && this.currentPage + 1 < this.paginatedPages.length) {
       pagesToCheck.push(this.currentPage + 1);
     }
-
     for (const pIdx of pagesToCheck) {
-      const pageLines = this.paginatedPages[pIdx];
-      if (!pageLines) continue;
-      for (const line of pageLines) {
+      for (const line of this.paginatedPages[pIdx] ?? []) {
         for (const span of line.spans) {
-          if (span.text.includes('⏼')) {
-            this.hasEyeOnCurrentPage = true;
-            return;
+          for (const ch of span.text) {
+            if (this.animatedChars.has(ch)) this.animatedCharsOnPage.add(ch);
           }
         }
       }
     }
   }
 
-  public setIsWitchcraftMagazine(enabled: boolean): void {
-    this.isWitchcraftMagazine = enabled;
-    this.updateHasEyeOnCurrentPage();
-    if (this.isWitchcraftMagazine) {
-      const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
-      this.scheduleNextBlink(now);
-    } else {
-      this.isBlinkingEye = false;
+  /** Sets, replaces or (with null) clears the blank-page image. */
+  public setBlankPageImage(image: string | BlankPageImageOptions | null | undefined): void {
+    this.blankPageImage = normalizeBlankPageImage(image);
+    this.blankPageImg = null;
+    this.syncBlankPageOverlay();
+    void this.loadBlankPageImage().then(() => this.render());
+    this.render();
+  }
+
+  public getBlankPageImage(): BlankPageImageOptions | null {
+    return this.blankPageImage ? { ...this.blankPageImage } : null;
+  }
+
+  private loadBlankPageImage(): Promise<void> {
+    const cfg = this.blankPageImage;
+    if (!cfg) {
+      this.blankPageImg = null;
+      return Promise.resolve();
     }
-    this.render();
+    return this.loadImage(cfg.src)
+      .then((img) => {
+        // Ignore the result if the image was changed while loading.
+        if (this.blankPageImage?.src === cfg.src) this.blankPageImg = img;
+      })
+      .catch(() => {});
   }
 
-  public getIsWitchcraftMagazine(): boolean {
-    return this.isWitchcraftMagazine;
-  }
-
-  public getIsBlinkingEye(): boolean {
-    return this.isBlinkingEye;
-  }
-
-  public getHasEyeOnCurrentPage(): boolean {
-    return this.hasEyeOnCurrentPage;
-  }
-
-  public triggerBlink(): void {
-    if (!this.isWitchcraftMagazine || !this.hasEyeOnCurrentPage) return;
-    const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
-    this.isBlinkingEye = true;
-    this.blinkEndTimestamp = now + 160;
-    this.scheduleNextBlink(now + 160);
-    this.render();
+  /** Creates, updates or removes the DOM overlay that shows the (possibly animated) image. */
+  private syncBlankPageOverlay(): void {
+    const cfg = this.blankPageImage;
+    if (!cfg) {
+      this.blankPageOverlayElement?.remove();
+      this.blankPageOverlayElement = null;
+      return;
+    }
+    if (typeof document === 'undefined') return;
+    if (!this.blankPageOverlayElement) {
+      const el = document.createElement('img');
+      el.className = 'book-blank-page-image';
+      el.style.display = 'none';
+      el.style.pointerEvents = 'auto';
+      // Keep clicks on the image from turning the page.
+      el.addEventListener('click', (e) => e.stopPropagation());
+      this.blankPageOverlayElement = el;
+      this.stageElement.appendChild(el);
+    }
+    this.blankPageOverlayElement.src = cfg.src;
+    this.blankPageOverlayElement.alt = cfg.alt ?? '';
+    this.blankPageOverlayElement.title = cfg.title ?? '';
   }
 
   public isPageBlank(pageIndex: number): boolean {
@@ -608,52 +618,57 @@ export class BookCanvas {
     return true;
   }
 
-  public getBlankPageGifPlacement(): { x: number; y: number; w: number; h: number } | null {
-    if (!this.isWitchcraftMagazine) return null;
+  public getBlankPageImagePlacement(): { x: number; y: number; w: number; h: number } | null {
+    const cfg = this.blankPageImage;
+    if (!cfg) return null;
+    // The coordinates below describe the Java book layout in single or double view only.
+    if (this.appearance === 'bedrock') return null;
+    if (this.viewMode !== 'single' && this.viewMode !== 'double') return null;
+
     const totalPages = this.paginatedPages.length;
     if (totalPages === 0) return null;
 
-    const w = 88;
-    const h = 100;
-    const y = 43;
-    const isDouble = this.viewMode === 'double';
+    const w = cfg.width;
+    const h = cfg.height;
+    // Centre custom sizes around the default 88 x 100 slot.
+    const dx = (DEFAULT_BLANK_PAGE_IMAGE_WIDTH - w) / 2;
+    const y = 43 + (DEFAULT_BLANK_PAGE_IMAGE_HEIGHT - h) / 2;
 
-    if (!isDouble) {
-      // Single page view: only on the last page if that page is blank
+    if (this.viewMode === 'single') {
       if (this.currentPage === totalPages - 1 && this.isPageBlank(this.currentPage)) {
-        return { x: 49, y, w, h };
+        return { x: 49 + dx, y, w, h };
       }
       return null;
     }
 
-    // Double page spread view:
     const leftIdx = this.currentPage;
     const rightIdx = this.currentPage + 1;
 
-    // Case 1: Left page is the last page and is blank
+    // Left page is the last page and is blank
     if (leftIdx === totalPages - 1 && this.isPageBlank(leftIdx)) {
-      return { x: 55, y, w, h };
+      return { x: 55 + dx, y, w, h };
     }
 
-    // Case 2: Right page is the companion blank page (past totalPages when totalPages is odd)
-    // or right page is the last page and is blank
+    // Right page is the companion blank page of an odd-length book that ends with text,
+    // or is the last page and blank.
     if (rightIdx >= totalPages) {
       if (!this.isPageBlank(leftIdx)) {
-        return { x: RIGHT_PAGE_X + 49, y, w, h };
+        return { x: RIGHT_PAGE_X + 49 + dx, y, w, h };
       }
     } else if (rightIdx === totalPages - 1 && this.isPageBlank(rightIdx)) {
-      return { x: RIGHT_PAGE_X + 49, y, w, h };
+      return { x: RIGHT_PAGE_X + 49 + dx, y, w, h };
     }
 
     return null;
   }
 
-  public updateGifOverlay(): void {
-    if (!this.gifOverlayElement) return;
+  public updateBlankPageOverlay(): void {
+    const overlay = this.blankPageOverlayElement;
+    if (!overlay) return;
 
-    const placement = this.getBlankPageGifPlacement();
+    const placement = this.getBlankPageImagePlacement();
     if (!placement) {
-      this.gifOverlayElement.style.display = 'none';
+      overlay.style.display = 'none';
       return;
     }
 
@@ -681,11 +696,11 @@ export class BookCanvas {
     const scaleX = actualW / baseW;
     const scaleY = actualH / baseH;
 
-    this.gifOverlayElement.style.display = 'block';
-    this.gifOverlayElement.style.left = `${offsetX + placement.x * scaleX}px`;
-    this.gifOverlayElement.style.top = `${offsetY + placement.y * scaleY}px`;
-    this.gifOverlayElement.style.width = `${placement.w * scaleX}px`;
-    this.gifOverlayElement.style.height = `${placement.h * scaleY}px`;
+    overlay.style.display = 'block';
+    overlay.style.left = `${offsetX + placement.x * scaleX}px`;
+    overlay.style.top = `${offsetY + placement.y * scaleY}px`;
+    overlay.style.width = `${placement.w * scaleX}px`;
+    overlay.style.height = `${placement.h * scaleY}px`;
   }
 
   public getBaseDimensions(): { width: number; height: number } {
@@ -766,7 +781,7 @@ export class BookCanvas {
         if (mode === 'double' && this.currentPage % 2 !== 0) {
           this.currentPage--;
         }
-        this.updateHasEyeOnCurrentPage();
+        this.updateAnimatedCharPresence();
         this.fitToContainer();
         this.updateCanvasDimensions();
         this.notifyPageChange();
@@ -838,7 +853,7 @@ export class BookCanvas {
       if (appearance === 'bedrock' && this.currentPage % 2 !== 0) {
         this.currentPage--;
       }
-      this.updateHasEyeOnCurrentPage();
+      this.updateAnimatedCharPresence();
       this.fitToContainer();
       this.updateCanvasDimensions();
       this.notifyPageChange();
@@ -1034,7 +1049,7 @@ export class BookCanvas {
         } else if (!this.isScaleLocked) {
           this.fitToContainer();
         } else {
-          this.updateGifOverlay();
+          this.updateBlankPageOverlay();
           this.notifyPageChange();
         }
       });
@@ -1059,8 +1074,8 @@ export class BookCanvas {
     if (clamped !== this.currentPage) {
       this.currentPage = clamped;
       this.highlightedLineIndex = null;
-      this.isBlinkingEye = false;
-      this.updateHasEyeOnCurrentPage();
+      this.animatedChars.reset();
+      this.updateAnimatedCharPresence();
       soundManager.playPageTurn();
       this.notifyPageChange();
       this.render();
@@ -1077,8 +1092,8 @@ export class BookCanvas {
       }
       if (changed) {
         this.highlightedLineIndex = null;
-        this.isBlinkingEye = false;
-        this.updateHasEyeOnCurrentPage();
+        this.animatedChars.reset();
+        this.updateAnimatedCharPresence();
         soundManager.playPageTurn();
         this.notifyPageChange();
         this.render();
@@ -1098,8 +1113,8 @@ export class BookCanvas {
 
     if (changed) {
       this.highlightedLineIndex = null;
-      this.isBlinkingEye = false;
-      this.updateHasEyeOnCurrentPage();
+      this.animatedChars.reset();
+      this.updateAnimatedCharPresence();
       soundManager.playPageTurn();
       this.notifyPageChange();
       this.render();
@@ -1117,8 +1132,8 @@ export class BookCanvas {
       }
       if (changed) {
         this.highlightedLineIndex = null;
-        this.isBlinkingEye = false;
-        this.updateHasEyeOnCurrentPage();
+        this.animatedChars.reset();
+        this.updateAnimatedCharPresence();
         soundManager.playPageTurn();
         this.notifyPageChange();
         this.render();
@@ -1138,8 +1153,8 @@ export class BookCanvas {
 
     if (changed) {
       this.highlightedLineIndex = null;
-      this.isBlinkingEye = false;
-      this.updateHasEyeOnCurrentPage();
+      this.animatedChars.reset();
+      this.updateAnimatedCharPresence();
       soundManager.playPageTurn();
       this.notifyPageChange();
       this.render();
@@ -1185,7 +1200,7 @@ export class BookCanvas {
 
     this.ctx.imageSmoothingEnabled = false;
     this.updateTextLayer();
-    this.updateGifOverlay();
+    this.updateBlankPageOverlay();
   }
 
   public render(): void {
@@ -1195,7 +1210,6 @@ export class BookCanvas {
       if (!this.bookBg) return;
     }
 
-    this.eyeHitBoxes = [];
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
     this.ctx.save();
@@ -1205,7 +1219,7 @@ export class BookCanvas {
       this.renderBedrockSpread();
       this.ctx.restore();
       this.updateTextLayer();
-      this.updateGifOverlay();
+      this.updateBlankPageOverlay();
       return;
     }
 
@@ -1272,21 +1286,21 @@ export class BookCanvas {
       this.renderBookmarkRibbon(this.ctx, isDouble ? 152 : 18, 192);
     }
 
-    // Draw StarSweetpea blank page easter egg on canvas if active
-    const gifPlacement = this.getBlankPageGifPlacement();
-    if (gifPlacement && this.starSweetPeaImg) {
+    // Blank-page image (drawn on the canvas so exports include it; the overlay animates GIFs)
+    const imagePlacement = this.getBlankPageImagePlacement();
+    if (imagePlacement && this.blankPageImg) {
       this.ctx.drawImage(
-        this.starSweetPeaImg,
-        gifPlacement.x,
-        gifPlacement.y,
-        gifPlacement.w,
-        gifPlacement.h
+        this.blankPageImg,
+        imagePlacement.x,
+        imagePlacement.y,
+        imagePlacement.w,
+        imagePlacement.h
       );
     }
 
     this.ctx.restore();
     this.updateTextLayer();
-    this.updateGifOverlay();
+    this.updateBlankPageOverlay();
   }
 
   /**
@@ -1571,12 +1585,11 @@ export class BookCanvas {
 
         let glyphChar = charToDraw;
         let forceAdvance: number | null = null;
-        if (charToDraw === '⏼' && this.isWitchcraftMagazine) {
-          this.eyeHitBoxes.push({ x: cursorX - 2, y: y - 2, w: 12, h: 12 });
-          if (this.isBlinkingEye) {
-            glyphChar = '◡';
-            forceAdvance = this.atlas.getAdvance('⏼', span.bold);
-          }
+        const animatedFrame = this.animatedChars.frameFor(charToDraw);
+        if (animatedFrame !== null) {
+          // Keep the original glyph's advance so text never reflows while animating
+          glyphChar = animatedFrame;
+          forceAdvance = this.atlas.getAdvance(charToDraw, span.bold);
         }
 
         if (pageIndex !== undefined) {
@@ -1742,12 +1755,11 @@ export class BookCanvas {
 
           let glyphChar = charToDraw;
           let forceAdvance: number | null = null;
-          if (charToDraw === '⏼' && this.isWitchcraftMagazine) {
-            this.eyeHitBoxes.push({ x: cursorX - 2, y: y - 2, w: 12, h: 12 });
-            if (this.isBlinkingEye) {
-              glyphChar = '◡';
-              forceAdvance = this.atlas.getAdvance('⏼', span.bold);
-            }
+          const animatedFrame = this.animatedChars.frameFor(charToDraw);
+          if (animatedFrame !== null) {
+            // Keep the original glyph's advance so text never reflows while animating
+            glyphChar = animatedFrame;
+            forceAdvance = this.atlas.getAdvance(charToDraw, span.bold);
           }
 
           for (const plugin of this.plugins) {
@@ -2059,22 +2071,6 @@ export class BookCanvas {
         }
       }
 
-      // 1.5. Eye click interaction
-      if (this.isWitchcraftMagazine && this.hasEyeOnCurrentPage && this.eyeHitBoxes.length > 0) {
-        for (const box of this.eyeHitBoxes) {
-          if (
-            unscaledX >= box.x &&
-            unscaledX <= box.x + box.w &&
-            unscaledY >= box.y &&
-            unscaledY <= box.y + box.h
-          ) {
-            this.triggerBlink();
-            soundManager.playWink();
-            return;
-          }
-        }
-      }
-
       // 2. When text selection is enabled, prevent page turning only if user was dragging to select
       if (this.textSelectionEnabled) {
         if (Math.hypot(e.clientX - pointerDownX, e.clientY - pointerDownY) > 5) return;
@@ -2357,19 +2353,8 @@ export class BookCanvas {
         this.lastAnimTick = now;
       }
 
-      // 2. Eye blinking animation:
-      if (this.isWitchcraftMagazine && this.hasEyeOnCurrentPage) {
-        if (!this.isBlinkingEye && now >= this.nextBlinkTimestamp) {
-          this.isBlinkingEye = true;
-          this.blinkEndTimestamp = now + 160; // 160ms blink duration
-          this.scheduleNextBlink(now + 160);
-          needsRender = true;
-        } else if (this.isBlinkingEye && now >= this.blinkEndTimestamp) {
-          this.isBlinkingEye = false;
-          needsRender = true;
-        }
-      } else if (this.isBlinkingEye) {
-        this.isBlinkingEye = false;
+      // 2. Animated characters (generic easter egg)
+      if (this.animatedChars.tick(now, this.animatedCharsOnPage)) {
         needsRender = true;
       }
 
@@ -2434,9 +2419,7 @@ export class BookCanvas {
     if (this.animFrameId !== null) {
       cancelAnimationFrame(this.animFrameId);
     }
-    if (this.gifOverlayElement) {
-      this.gifOverlayElement.remove();
-    }
+    this.blankPageOverlayElement?.remove();
     this.canvas.remove();
   }
 }

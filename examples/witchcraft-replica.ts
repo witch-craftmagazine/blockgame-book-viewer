@@ -1,7 +1,7 @@
 import { BookCanvas } from '../src/render/BookCanvas';
 import { ResourcePackManager } from '../src/engine/ResourcePackManager';
 import { createCraftadiaPack } from '../src/presets/example-packs';
-import { WitchcraftPlugin } from '../src/plugins/WitchcraftPlugin';
+import { WitchcraftPlugin, witchcraftEggOptions } from '../src/demo/WitchcraftPlugin';
 import { WITCHCRAFT_MAGAZINE_ISSUES } from '../src/samples/sampleBooks';
 import { parseStendhalBook } from '../src/io/BookParser';
 import { soundManager } from '../src/render/SoundEffects';
@@ -24,16 +24,14 @@ class WitchcraftApp {
     const isNarrow = typeof window !== 'undefined' && window.innerWidth < 680;
     const initialViewMode = isNarrow ? 'single' : 'double';
 
-    const witchcraftPlugin = new WitchcraftPlugin({
-      gifUrl: '../assets/textures/starsweetpea.gif',
-      autoDetect: true,
-    });
+    const witchcraftPlugin = new WitchcraftPlugin();
 
     this.bookCanvas = new BookCanvas({
       container: this.canvasWrapper,
       baseAssetPath: '../assets',
       defaultViewMode: initialViewMode,
       plugins: [witchcraftPlugin],
+      ...witchcraftEggOptions('../assets'),
       onPageChange: (page, total) => this.updatePageIndicator(page, total),
     });
 

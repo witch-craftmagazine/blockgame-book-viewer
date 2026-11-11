@@ -1,10 +1,106 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { BookCanvas } from '../src/render/BookCanvas';
 import { BlockgameBook } from '../src/engine/types';
-import { defaultGlyphAtlas } from '../src/engine/GlyphAtlas';
 import { parseStendhalBook } from '../src/io/BookParser';
+import { AnimatedCharController, normalizeAnimatedChars, normalizeBlankPageImage } from '../src/render/EasterEggs';
 
-describe('Witchcraft Magazine Blinking Eye Easter Egg', () => {
+describe('AnimatedCharController', () => {
+  const present = new Set(['⏼']);
+  const def = { char: '⏼', frames: ['◡', '◠'], frameMs: 100, delayMs: 1000 as number };
+
+  it('ignores invalid definitions and lets the last duplicate win', () => {
+    const list = normalizeAnimatedChars([
+      { char: 'ab', frames: ['x'] }, // not a single character
+      { char: 'a', frames: [] }, // no frames
+      { char: 'a', frames: ['xy'] }, // frame not a single character
+      null,
+      'nope',
+      { char: '⏼', frames: ['x'] },
+      { char: '⏼', frames: ['◡'], frameMs: 0 },
+    ]);
+    expect(list).toHaveLength(1);
+    expect(list[0].frames).toEqual(['◡']);
+    expect(list[0].frameMs).toBe(1); // floored so a frame is always visible
+    expect(list[0].delay).toEqual([3500, 6500]); // blink-like defaults
+    expect(normalizeAnimatedChars('not an array')).toEqual([]);
+  });
+
+  it('counts an astral character as a single character', () => {
+    expect(normalizeAnimatedChars([{ char: '𝗵', frames: ['𝗮'] }])).toHaveLength(1);
+  });
+
+  it('rests, runs each frame in order, then rests again for the configured delay', () => {
+    const c = new AnimatedCharController([def]);
+    expect(c.tick(0, present)).toBe(false); // schedules the first run at t=1000
+    expect(c.frameFor('⏼')).toBeNull();
+    expect(c.tick(999, present)).toBe(false);
+    expect(c.tick(1000, present)).toBe(true);
+    expect(c.frameFor('⏼')).toBe('◡');
+    expect(c.tick(1050, present)).toBe(false); // frame still showing
+    expect(c.tick(1100, present)).toBe(true);
+    expect(c.frameFor('⏼')).toBe('◠');
+    expect(c.tick(1200, present)).toBe(true); // run finished
+    expect(c.frameFor('⏼')).toBeNull();
+    expect(c.tick(2199, present)).toBe(false);
+    expect(c.tick(2200, present)).toBe(true); // next run
+    expect(c.frameFor('⏼')).toBe('◡');
+  });
+
+  it('picks the rest delay from a [min, max] range using the injected random source', () => {
+    const c = new AnimatedCharController([{ ...def, delayMs: [1000, 3000] as any }], () => 0.5);
+    c.tick(0, present);
+    expect(c.tick(1999, present)).toBe(false);
+    expect(c.tick(2000, present)).toBe(true); // 1000 + 0.5 * 2000
+  });
+
+  it('loops continuously when the delay is 0', () => {
+    const c = new AnimatedCharController([{ char: '✧', frames: ['✦', '✧'], frameMs: 50, delayMs: 0 }]);
+    const p = new Set(['✧']);
+    c.tick(0, p);
+    expect(c.frameFor('✧')).toBe('✦');
+    c.tick(50, p);
+    expect(c.frameFor('✧')).toBe('✧');
+    c.tick(100, p); // wraps straight into the next run, never resting
+    expect(c.frameFor('✧')).toBe('✦');
+  });
+
+  it('returns to rest when the character is no longer on screen', () => {
+    const c = new AnimatedCharController([def]);
+    expect(c.play('⏼', 0)).toBe(true);
+    expect(c.isAnimating('⏼')).toBe(true);
+    expect(c.tick(10, new Set())).toBe(true);
+    expect(c.isAnimating()).toBe(false);
+    expect(c.tick(20, new Set())).toBe(false);
+  });
+
+  it('play() starts immediately and refuses unknown characters; reset() stops everything', () => {
+    const c = new AnimatedCharController([def]);
+    expect(c.play('x', 0)).toBe(false);
+    c.play('⏼', 5);
+    expect(c.frameFor('⏼')).toBe('◡');
+    c.reset();
+    expect(c.frameFor('⏼')).toBeNull();
+  });
+});
+
+describe('normalizeBlankPageImage', () => {
+  it('accepts a URL or an options object and applies default sizes', () => {
+    expect(normalizeBlankPageImage('a.gif')).toMatchObject({ src: 'a.gif', width: 88, height: 100 });
+    expect(normalizeBlankPageImage({ src: ' b.png ', width: 40, height: 0 })).toMatchObject({
+      src: 'b.png',
+      width: 40,
+      height: 100,
+    });
+  });
+
+  it('returns null for missing or blank sources', () => {
+    expect(normalizeBlankPageImage(undefined)).toBeNull();
+    expect(normalizeBlankPageImage('')).toBeNull();
+    expect(normalizeBlankPageImage({ src: '   ' })).toBeNull();
+  });
+});
+
+describe('Easter eggs: blank-page image and animated characters (canvas integration)', () => {
   let mockContainer: any;
   let mockCtx: any;
 
@@ -65,6 +161,7 @@ describe('Witchcraft Magazine Blinking Eye Easter Egg', () => {
         addEventListener() {},
         removeEventListener() {},
         closest: () => null,
+        remove() {},
       };
       if (tag === 'canvas') {
         el.getContext = () => mockCtx;
@@ -84,359 +181,208 @@ describe('Witchcraft Magazine Blinking Eye Easter Egg', () => {
     mockContainer = makeEl('div');
   });
 
-  it('detects StarSweetpea as Witchcraft Magazine and enables easter egg', () => {
+  const eye = { char: '⏼', frames: ['◡'], frameMs: 160 };
+
+  it('does nothing by default: no magazine auto-detection, even for a StarSweetpea / Witchcraft book', () => {
     const canvas = new BookCanvas({ container: mockContainer });
-    const book: BlockgameBook = {
+    canvas.setBook({
       title: 'Witchcraft Magazine Issue #1',
       author: 'StarSweetpea',
-      pages: ['Cover page with eye: /( ⏼\\'],
-    };
-
-    canvas.setBook(book);
-    expect(canvas.getIsWitchcraftMagazine()).toBe(true);
-    expect(canvas.getHasEyeOnCurrentPage()).toBe(true);
+      pages: ['Cover with eye: /( ⏼\\', ' '],
+    });
+    expect(canvas.hasAnimatedCharOnCurrentPage()).toBe(false);
+    expect(canvas.getBlankPageImagePlacement()).toBeNull();
+    expect((canvas as any).getIsWitchcraftMagazine).toBeUndefined();
+    expect(canvas.playAnimatedChar('⏼')).toBe(false);
   });
 
-  it('does NOT enable easter egg for non-Witchcraft books even if they contain the eye symbol', () => {
-    const canvas = new BookCanvas({ container: mockContainer });
-    const normalBook: BlockgameBook = {
-      title: 'Random Notes',
-      author: 'Steve',
-      pages: ['Here is a symbol /( ⏼\\ on a normal book'],
-    };
-
-    canvas.setBook(normalBook);
-    expect(canvas.getIsWitchcraftMagazine()).toBe(false);
-    expect(canvas.getHasEyeOnCurrentPage()).toBe(false);
-  });
-
-  it('allows manual override via setIsWitchcraftMagazine', () => {
-    const canvas = new BookCanvas({ container: mockContainer });
-    const book: BlockgameBook = {
-      title: 'Manual Test Book',
-      author: 'Alex',
-      pages: ['Page with eye: ☘(⏼⏼))'],
-    };
-
-    canvas.setBook(book);
-    expect(canvas.getIsWitchcraftMagazine()).toBe(false);
-    expect(canvas.getHasEyeOnCurrentPage()).toBe(false);
-
-    canvas.setIsWitchcraftMagazine(true);
-    expect(canvas.getIsWitchcraftMagazine()).toBe(true);
-    expect(canvas.getHasEyeOnCurrentPage()).toBe(true);
-
-    canvas.setIsWitchcraftMagazine(false);
-    expect(canvas.getIsWitchcraftMagazine()).toBe(false);
-    expect(canvas.getHasEyeOnCurrentPage()).toBe(false);
-  });
-
-  it('tracks eye presence accurately across pages and view modes', () => {
-    const canvas = new BookCanvas({ container: mockContainer, defaultViewMode: 'single' });
-    const book: BlockgameBook = {
-      title: 'Witchcraft Magazine Vol. 1',
-      author: 'StarSweetpea',
-      pages: [
-        'Page 1: Witch /( ⏼\\',  // page 0: has eye
-        'Page 2: Just plain text',  // page 1: no eye
-        'Page 3: Fern mascot ☘(⏼⏼))', // page 2: has eye
-      ],
-    };
-
-    canvas.setBook(book);
-    expect(canvas.getCurrentPage()).toBe(0);
-    expect(canvas.getHasEyeOnCurrentPage()).toBe(true);
-
-    // Turn to page 2 (index 1) - no eye
+  it('tracks which animated characters are on the visible page(s) across pages and view modes', () => {
+    const canvas = new BookCanvas({ container: mockContainer, defaultViewMode: 'single', animatedChars: [eye] });
+    canvas.setBook({
+      title: 'T',
+      author: 'A',
+      pages: ['Page 1: Witch /( ⏼\\', 'Page 2: Just plain text', 'Page 3: Fern ☘(⏼⏼))'],
+    });
+    expect(canvas.hasAnimatedCharOnCurrentPage()).toBe(true);
     canvas.nextPage();
-    expect(canvas.getCurrentPage()).toBe(1);
-    expect(canvas.getHasEyeOnCurrentPage()).toBe(false);
-
-    // Switch to double page mode - spread of page 1 and page 2 (index 2 has eye)
-    canvas.setViewMode('double');
-    expect(canvas.getHasEyeOnCurrentPage()).toBe(true);
-
-    // Turn back to single page mode
+    expect(canvas.hasAnimatedCharOnCurrentPage()).toBe(false);
+    canvas.setViewMode('double'); // spread of pages 2 and 3
+    expect(canvas.hasAnimatedCharOnCurrentPage()).toBe(true);
     canvas.setViewMode('single');
     canvas.setPage(1);
-    expect(canvas.getHasEyeOnCurrentPage()).toBe(false);
+    expect(canvas.hasAnimatedCharOnCurrentPage()).toBe(false);
     canvas.setPage(2);
-    expect(canvas.getHasEyeOnCurrentPage()).toBe(true);
+    expect(canvas.hasAnimatedCharOnCurrentPage()).toBe(true);
   });
 
-  it('keeps the eye advance at 8px; blinking draws ◡ with the eye advance so text never reflows', () => {
-    const atlas = defaultGlyphAtlas;
-    const eyeAdvance = atlas.getAdvance('⏼', false);
+  it('plays on demand only when the character is on screen, and stops on a page turn', () => {
+    const canvas = new BookCanvas({ container: mockContainer, animatedChars: [eye] });
+    canvas.setBook({ title: 'T', author: 'A', pages: ['/( ⏼\\ on page 1', 'Normal text on page 2'] });
 
-    expect(eyeAdvance).toBe(8);
-    // ◡ has its own (narrower) Unifont advance; the renderer forces the eye's advance when blinking
-    expect(atlas.getAdvance('◡', false)).toBe(4.5);
+    expect(canvas.playAnimatedChar('x')).toBe(false); // not configured
+    expect(canvas.isAnimatedCharPlaying('⏼')).toBe(false);
+    expect(canvas.playAnimatedChar('⏼')).toBe(true);
+    expect(canvas.isAnimatedCharPlaying('⏼')).toBe(true);
 
-    // Bold advance
-    const boldEyeAdvance = atlas.getAdvance('⏼', true);
-    expect(boldEyeAdvance).toBe(9);
-  });
-
-  it('manages blink trigger and resets on page turn', () => {
-    const canvas = new BookCanvas({ container: mockContainer });
-    const book: BlockgameBook = {
-      title: 'Witchcraft Magazine',
-      author: 'StarSweetpea',
-      pages: [
-        '/( ⏼\\ on page 1',
-        'Normal text on page 2',
-      ],
-    };
-
-    canvas.setBook(book);
-    expect(canvas.getIsBlinkingEye()).toBe(false);
-
-    // Trigger blink
-    canvas.triggerBlink();
-    expect(canvas.getIsBlinkingEye()).toBe(true);
-
-    // Turn page - blink state must cleanly reset
     canvas.nextPage();
-    expect(canvas.getIsBlinkingEye()).toBe(false);
+    expect(canvas.isAnimatedCharPlaying('⏼')).toBe(false);
+    expect(canvas.playAnimatedChar('⏼')).toBe(false); // not on page 2
   });
 
-  it('populates eye hitboxes during render for interactive winks', () => {
-    const canvas = new BookCanvas({ container: mockContainer });
-    (canvas as any).bookBg = { naturalWidth: 256, naturalHeight: 256 };
-    const book: BlockgameBook = {
-      title: 'Witchcraft Magazine',
-      author: 'StarSweetpea',
-      pages: [
-        '/( ⏼\\ on page 1',
-      ],
+  it('never reflows text while a character is animating (the original advance is kept)', () => {
+    const xs: Record<string, number[]> = { idle: [], playing: [] };
+    let bucket = 'idle';
+    const recorder = {
+      name: 'recorder',
+      onRenderChar: (_ctx: any, c: { char: string; x: number }) => {
+        if (c.char === 'b') xs[bucket].push(c.x);
+      },
     };
+    const canvas = new BookCanvas({
+      container: mockContainer,
+      animatedChars: [eye],
+      plugins: [recorder as any],
+    });
+    (canvas as any).bookBg = { naturalWidth: 256, naturalHeight: 256 };
+    canvas.setBook({ title: 'T', author: 'A', pages: ['a⏼b'] });
 
-    canvas.setBook(book);
-    const hitBoxes = (canvas as any).eyeHitBoxes;
-    expect(hitBoxes).toBeDefined();
-    expect(hitBoxes.length).toBeGreaterThan(0);
-    expect(hitBoxes[0].w).toBe(12);
-    expect(hitBoxes[0].h).toBe(12);
+    bucket = 'idle';
+    canvas.render();
+    bucket = 'playing';
+    canvas.playAnimatedChar('⏼'); // re-renders while the eye shows its alternate glyph
+    expect(xs.idle.length).toBeGreaterThan(0);
+    expect(xs.playing.length).toBeGreaterThan(0);
+    expect(xs.playing[0]).toBe(xs.idle[0]);
   });
 
-  it('verifies eye symbol in Stendhal content authored by StarSweetpea', () => {
-    const rawStendhal = `title: Witchcraft Magazine Issue #1
-author: StarSweetpea
-pages:
-#-
-             /( ⏼\\
-            /  / \\
-           /  /   \\
-          /  /     \\
-         /  /       \\
-#-
-Normal page 2 text`;
-
-    const book = parseStendhalBook(rawStendhal);
+  it('reads animated characters from Stendhal content', () => {
+    const book = parseStendhalBook(
+      'title: Any Title\nauthor: Anyone\npages:\n#-\n             /( ⏼\\\n            /  / \\\n#-\nNormal page 2 text'
+    );
     expect(book).not.toBeNull();
-    if (!book) return;
-
-    expect(book.author).toBe('StarSweetpea');
-    expect(book.pages[0]).toContain('⏼');
-
-    const canvas = new BookCanvas({ container: mockContainer });
-    canvas.setBook(book);
-    expect(canvas.getIsWitchcraftMagazine()).toBe(true);
-    expect(canvas.getHasEyeOnCurrentPage()).toBe(true);
+    const canvas = new BookCanvas({ container: mockContainer, animatedChars: [eye] });
+    canvas.setBook(book as BlockgameBook);
+    expect(canvas.hasAnimatedCharOnCurrentPage()).toBe(true);
   });
 
   it('correctly identifies blank pages (empty, whitespace, or formatting-only)', () => {
     const canvas = new BookCanvas({ container: mockContainer });
-    const book: BlockgameBook = {
-      title: 'Blank Test',
-      author: 'StarSweetpea',
-      pages: [
-        'Real content line',
-        '   \n\n   ',
-        '§6§l  §r\n',
-        '',
-      ],
-    };
-    canvas.setBook(book);
-
+    canvas.setBook({ title: 'Blank Test', author: 'A', pages: ['Real content line', '   \n\n   ', '§6§l  §r\n', ''] });
     expect(canvas.isPageBlank(0)).toBe(false);
     expect(canvas.isPageBlank(1)).toBe(true);
     expect(canvas.isPageBlank(2)).toBe(true);
     expect(canvas.isPageBlank(3)).toBe(true);
   });
 
-  it('displays StarSweetpea gif on blank page at the end of odd-numbered magazine in double-page mode', () => {
-    const canvas = new BookCanvas({ container: mockContainer, defaultViewMode: 'double' });
+  it('shows the blank-page image at the end of an odd-length book in double view', () => {
+    const canvas = new BookCanvas({ container: mockContainer, defaultViewMode: 'double', blankPageImage: '/img.gif' });
     (canvas as any).bookBg = { naturalWidth: 256, naturalHeight: 256 };
+    canvas.setBook({ title: 'T', author: 'A', pages: ['Page 1 cover text', 'Page 2 story text', '   '] });
 
-    // 3 pages total (odd number of pages: 0, 1, 2)
-    // Page 0 (left): Page 1 content
-    // Page 1 (right): Page 2 content
-    // Page 2 (left): Page 3 BLANK
-    const book: BlockgameBook = {
-      title: 'Witchcraft Magazine Issue #1',
-      author: 'StarSweetpea',
-      pages: [
-        'Page 1 cover text',
-        'Page 2 story text',
-        '   ', // Page 3 is blank
-      ],
-    };
+    expect(canvas.getBlankPageImagePlacement()).toBeNull(); // spread 0 has text on both pages
+    const overlay = (canvas as any).blankPageOverlayElement;
+    expect(overlay.className).toBe('book-blank-page-image');
+    expect(overlay.src).toBe('/img.gif');
+    expect(overlay.style.display).toBe('none');
 
-    canvas.setBook(book);
-
-    // On spread 0 (pages 0 and 1): both have text, no gif displayed
-    expect(canvas.getCurrentPage()).toBe(0);
-    expect(canvas.getBlankPageGifPlacement()).toBeNull();
-    const gifEl = (canvas as any).gifOverlayElement;
-    expect(gifEl.style.display).toBe('none');
-
-    // Turn to page 2 (spread 2): Page 3 is blank on left
     canvas.nextPage();
     expect(canvas.getCurrentPage()).toBe(2);
-
-    const placement = canvas.getBlankPageGifPlacement();
-    expect(placement).not.toBeNull();
-    expect(placement?.x).toBe(55); // Centered on left parchment
-    expect(placement?.y).toBe(43);
-    expect(placement?.w).toBe(88);
-    expect(placement?.h).toBe(100);
-
-    // Overlay is displayed
+    expect(canvas.getBlankPageImagePlacement()).toEqual({ x: 55, y: 43, w: 88, h: 100 });
     canvas.render();
-    expect(gifEl.style.display).toBe('block');
-    expect(gifEl.style.left).toBe(`${55 * canvas.getScale()}px`);
-    expect(gifEl.style.top).toBe(`${43 * canvas.getScale()}px`);
+    expect(overlay.style.display).toBe('block');
+    expect(overlay.style.left).toBe(`${55 * canvas.getScale()}px`);
+    expect(overlay.style.top).toBe(`${43 * canvas.getScale()}px`);
   });
 
-  it('displays StarSweetpea gif in single-page mode on the final blank page', () => {
+  it('shows the blank-page image in single view on the final blank page', () => {
+    const canvas = new BookCanvas({ container: mockContainer, defaultViewMode: 'single', blankPageImage: '/img.gif' });
+    (canvas as any).bookBg = { naturalWidth: 256, naturalHeight: 256 };
+    canvas.setBook({ title: 'T', author: 'A', pages: ['Page 1 text', 'Page 2 text', ' '] });
+
+    expect(canvas.getBlankPageImagePlacement()).toBeNull();
+    canvas.nextPage();
+    expect(canvas.getBlankPageImagePlacement()).toBeNull();
+    canvas.nextPage();
+    expect(canvas.getBlankPageImagePlacement()).toEqual({ x: 49, y: 43, w: 88, h: 100 });
+  });
+
+  it('shows the image on the companion right page when an odd-length book ends with text', () => {
+    const canvas = new BookCanvas({ container: mockContainer, defaultViewMode: 'double', blankPageImage: '/img.gif' });
+    canvas.setBook({ title: 'T', author: 'A', pages: ['Only 1 page of content here!'] });
+    expect(canvas.getBlankPageImagePlacement()).toEqual({ x: 201, y: 43, w: 88, h: 100 }); // RIGHT_PAGE_X + 49
+  });
+
+  it('does not show the image when the book does not end on a blank page', () => {
+    const canvas = new BookCanvas({ container: mockContainer, defaultViewMode: 'single', blankPageImage: '/img.gif' });
+    canvas.setBook({ title: 'T', author: 'A', pages: ['Found diamonds', 'Found iron'] });
+    canvas.nextPage();
+    expect(canvas.getBlankPageImagePlacement()).toBeNull();
+  });
+
+  it('centres a custom image size inside the default slot', () => {
+    const canvas = new BookCanvas({
+      container: mockContainer,
+      defaultViewMode: 'single',
+      blankPageImage: { src: '/small.png', width: 44, height: 50 },
+    });
+    canvas.setBook({ title: 'T', author: 'A', pages: [' '] });
+    // x: 49 + (88-44)/2, y: 43 + (100-50)/2
+    expect(canvas.getBlankPageImagePlacement()).toEqual({ x: 71, y: 68, w: 44, h: 50 });
+  });
+
+  it('draws nothing in Bedrock appearance or scroll modes (the coordinates are for Java single/double)', () => {
+    const bedrock = new BookCanvas({ container: mockContainer, appearance: 'bedrock', blankPageImage: '/i.gif' });
+    bedrock.setBook({ title: 'T', author: 'A', pages: [' '] });
+    expect(bedrock.getBlankPageImagePlacement()).toBeNull();
+
+    const scroll = new BookCanvas({ container: mockContainer, defaultViewMode: 'scroll-single', blankPageImage: '/i.gif' });
+    scroll.setBook({ title: 'T', author: 'A', pages: [' '] });
+    expect(scroll.getBlankPageImagePlacement()).toBeNull();
+  });
+
+  it('can set, change and clear the image at runtime', () => {
     const canvas = new BookCanvas({ container: mockContainer, defaultViewMode: 'single' });
-    (canvas as any).bookBg = { naturalWidth: 256, naturalHeight: 256 };
+    canvas.setBook({ title: 'T', author: 'A', pages: [' '] });
+    expect(canvas.getBlankPageImagePlacement()).toBeNull();
 
-    const book: BlockgameBook = {
-      title: 'Witchcraft Magazine Issue #1',
-      author: 'StarSweetpea',
-      pages: [
-        'Page 1 text',
-        'Page 2 text',
-        ' ', // Page 3 is blank
-      ],
-    };
+    canvas.setBlankPageImage('/a.gif');
+    expect(canvas.getBlankPageImagePlacement()).not.toBeNull();
+    expect((canvas as any).blankPageOverlayElement.src).toBe('/a.gif');
 
-    canvas.setBook(book);
+    canvas.setBlankPageImage({ src: '/b.gif', alt: 'Author', title: 'The author' });
+    expect((canvas as any).blankPageOverlayElement.src).toBe('/b.gif');
+    expect((canvas as any).blankPageOverlayElement.alt).toBe('Author');
+    expect(canvas.getBlankPageImage()?.src).toBe('/b.gif');
 
-    // Page 0: no gif
-    expect(canvas.getBlankPageGifPlacement()).toBeNull();
-
-    // Page 1: no gif
-    canvas.nextPage();
-    expect(canvas.getBlankPageGifPlacement()).toBeNull();
-
-    // Page 2 (last page, blank): displays gif on single page
-    canvas.nextPage();
-    expect(canvas.getCurrentPage()).toBe(2);
-    const placement = canvas.getBlankPageGifPlacement();
-    expect(placement).not.toBeNull();
-    expect(placement?.x).toBe(49); // Centered on single page
-    expect(placement?.y).toBe(43);
-    expect(placement?.w).toBe(88);
-    expect(placement?.h).toBe(100);
+    canvas.setBlankPageImage(null);
+    expect(canvas.getBlankPageImagePlacement()).toBeNull();
+    expect((canvas as any).blankPageOverlayElement).toBeNull();
   });
 
-  it('displays StarSweetpea gif on companion right page when odd-numbered magazine has text on last page', () => {
-    const canvas = new BookCanvas({ container: mockContainer, defaultViewMode: 'double' });
+  it('scales the overlay to the canvas bounding rect when the canvas is clamped smaller than scale', () => {
+    const canvas = new BookCanvas({
+      container: mockContainer,
+      defaultViewMode: 'double',
+      scale: 4,
+      blankPageImage: '/img.gif',
+    });
     (canvas as any).bookBg = { naturalWidth: 256, naturalHeight: 256 };
+    canvas.setBook({ title: 'T', author: 'A', pages: ['Only 1 page of content here!'] });
 
-    // 1 page total (odd number of pages: page 0 has text)
-    // In double mode: Left page has text, right page is the blank companion page (pageIndex 1 >= totalPages)
-    const book: BlockgameBook = {
-      title: 'Witchcraft Magazine Single Page Special',
-      author: 'StarSweetpea',
-      pages: [
-        'Only 1 page of content here!',
-      ],
-    };
-
-    canvas.setBook(book);
-    expect(canvas.getCurrentPage()).toBe(0);
-
-    const placement = canvas.getBlankPageGifPlacement();
-    expect(placement).not.toBeNull();
-    expect(placement?.x).toBe(201); // Centered on right parchment (RIGHT_PAGE_X + 49 = 152 + 49)
-    expect(placement?.y).toBe(43);
-    expect(placement?.w).toBe(88);
-    expect(placement?.h).toBe(100);
-  });
-
-  it('does NOT display StarSweetpea gif on non-Witchcraft books even if ending on a blank page', () => {
-    const canvas = new BookCanvas({ container: mockContainer, defaultViewMode: 'double' });
-    (canvas as any).bookBg = { naturalWidth: 256, naturalHeight: 256 };
-
-    const book: BlockgameBook = {
-      title: 'Steve Mining Journal',
-      author: 'Steve',
-      pages: [
-        'Found diamonds',
-        'Found iron',
-        ' ', // Blank page
-      ],
-    };
-
-    canvas.setBook(book);
-    canvas.nextPage();
-    expect(canvas.getCurrentPage()).toBe(2);
-    expect(canvas.getBlankPageGifPlacement()).toBeNull();
-  });
-
-  it('scales gif overlay matching canvas bounding rect when canvas is clamped smaller than scale', () => {
-    const canvas = new BookCanvas({ container: mockContainer, defaultViewMode: 'double', scale: 4 });
-    (canvas as any).bookBg = { naturalWidth: 256, naturalHeight: 256 };
-
-    const book: BlockgameBook = {
-      title: 'Witchcraft Magazine Clamped Test',
-      author: 'StarSweetpea',
-      pages: ['Only 1 page of content here!'],
-    };
-
-    canvas.setBook(book);
     const canvasEl = canvas.getCanvas();
     const stageEl = canvas.getStageElement();
-    const gifEl = (Array.from(stageEl.children) as any[]).find((c: any) => c.className === 'book-blank-page-gif');
-    expect(gifEl).toBeDefined();
+    const overlay = (Array.from(stageEl.children) as any[]).find((c: any) => c.className === 'book-blank-page-image');
+    expect(overlay).toBeDefined();
 
-    // Mock clamped bounding client rect: scale is 4, but container clamps canvas to 688x384 (scale 2 equivalent)
-    canvasEl.getBoundingClientRect = () => ({
-      left: 20,
-      top: 30,
-      width: 688,
-      height: 384,
-      right: 708,
-      bottom: 414,
-      x: 20,
-      y: 30,
-      toJSON: () => {},
-    });
-    stageEl.getBoundingClientRect = () => ({
-      left: 20,
-      top: 30,
-      width: 688,
-      height: 384,
-      right: 708,
-      bottom: 414,
-      x: 20,
-      y: 30,
-      toJSON: () => {},
-    });
+    const rect = { left: 20, top: 30, width: 688, height: 384, right: 708, bottom: 414, x: 20, y: 30, toJSON: () => {} };
+    canvasEl.getBoundingClientRect = () => rect;
+    stageEl.getBoundingClientRect = () => rect;
+    canvas.updateBlankPageOverlay();
 
-    canvas.updateGifOverlay();
-
-    // In double mode, baseW = 344, baseH = 192.
-    // scaleX = 688 / 344 = 2, scaleY = 384 / 192 = 2.
-    // Placement is x: 201, y: 43, w: 88, h: 100.
-    // Therefore, gif overlay should be sized to 2x (w: 176, h: 200), NOT 4x (w: 352, h: 400).
-    expect(gifEl.style.width).toBe('176px');
-    expect(gifEl.style.height).toBe('200px');
-    expect(gifEl.style.left).toBe(`${201 * 2}px`);
-    expect(gifEl.style.top).toBe(`${43 * 2}px`);
+    // Double mode base is 344 x 192, so the clamped canvas is scale 2, not 4.
+    expect(overlay.style.width).toBe('176px');
+    expect(overlay.style.height).toBe('200px');
+    expect(overlay.style.left).toBe(`${201 * 2}px`);
+    expect(overlay.style.top).toBe(`${43 * 2}px`);
   });
 });

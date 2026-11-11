@@ -3,6 +3,7 @@
 ## 1.0.0 (unreleased, never published to npm)
 
 ### Breaking
+- The Witchcraft Magazine easter egg is no longer built in. `BookCanvas` used to enable it for any book whose author contained "starsweetpea" or whose title contained "witchcraft", with a fixed `textures/starsweetpea.gif` and a hard-coded `⏼` eye. Configure `blank-page-image` and `animated-chars` instead. Removed: `BookCanvas.getIsWitchcraftMagazine()`, `setIsWitchcraftMagazine()`, `getIsBlinkingEye()`, `getHasEyeOnCurrentPage()`, `triggerBlink()`, `getBlankPageGifPlacement()`, `updateGifOverlay()`, the unused `includeWitchcraftPlugin` option, and the `WitchcraftPlugin` export. The plugin now lives in `src/demo/` as an example, and the overlay element class is `book-blank-page-image`.
 - Only the transparent theme remains. The `.mc-theme-dark`, `.mc-theme-light`, `.mc-theme-parchment` and `.mc-theme-nectar` classes are gone, so host CSS targeting them no longer matches. Theme through the `--mc-*` custom properties instead.
 - The `theme` property and `setTheme()` are deprecated no-ops.
 - Removed the deprecated Minecraft-named aliases: the `<minecraft-book>` tag, `MinecraftBookElement`, `MinecraftBookViewer`, `MinecraftBookViewerOptions`, `MinecraftBook`, `MinecraftDyeColor`, `MINECRAFT_COLORS`, `MINECRAFT_DYE_HEX`, `MINECRAFT_SYMBOL_ADVANCES` and `getMinecraftGlyphSizes`, along with the `src/ui/MinecraftBookViewer` and `src/component/minecraft-book` shim modules. Use the `Blockgame*` / `BLOCKGAME_*` names and `<blockgame-book>`.
@@ -11,6 +12,7 @@
 - Removed `BookCanvas.getBookPageRect()`. It only existed to position the site-specific ASCII backdrop, which is gone from the repo; it was never part of the web component.
 
 ### Added
+- Generic, opt-in easter eggs: `blank-page-image` (attribute, `blankPageImage` property and viewer/canvas option) and `animated-chars` (JSON attribute, `animatedChars` property and option), with `BookCanvas.playAnimatedChar()` / `setAnimatedChars()` / `setBlankPageImage()`. The blank-page image now also works in single view and with custom sizes.
 - `page-numbers` attribute, `pageNumbers` property and `pageNumbers` viewer option (plus `setPageNumbers()` / `isPageNumbersEnabled()`) control the page number drawn on the book itself: Java `Page X of Y` and Bedrock `N of M`. It is separate from the toolbar `1 / 12` text, which `controls` governs. Set `page-numbers="false"` to hide it.
 
 ### Changed

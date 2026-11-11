@@ -8,7 +8,7 @@ import {
   parseBook,
   exportToStendhal,
   exportToGiveCommandModern,
-  WitchcraftPlugin,
+  AnimatedCharController,
   defaultGlyphAtlas,
   ResourcePackManager,
   BookEditorModal,
@@ -117,7 +117,7 @@ describe('Public API', () => {
     expect(parseBook).toBeDefined();
     expect(exportToStendhal).toBeDefined();
     expect(exportToGiveCommandModern).toBeDefined();
-    expect(WitchcraftPlugin).toBeDefined();
+    expect(AnimatedCharController).toBeDefined();
     expect(defaultGlyphAtlas).toBeDefined();
     expect(ResourcePackManager).toBeDefined();
   });

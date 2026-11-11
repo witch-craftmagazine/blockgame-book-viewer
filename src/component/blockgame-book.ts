@@ -1,3 +1,4 @@
+import type { AnimatedChar, BlankPageImageOptions } from '../render/EasterEggs';
 import { BlockgameBook, ViewMode, BookAppearance, BookEngine } from '../engine/types';
 import { BlockgameBookViewer } from '../ui/BlockgameBookViewer';
 import { parseBook } from '../io/BookParser';
@@ -49,9 +50,14 @@ export class BlockgameBookElement extends BaseElement {
       'bookmark',
       'bookmark-color',
       'page-numbers',
+      'blank-page-image',
+      'animated-chars',
       'shadow',
     ];
   }
+
+  private blankPageImageValue: string | BlankPageImageOptions | null = null;
+  private animatedCharsValue: AnimatedChar[] = [];
 
   constructor() {
     super();
@@ -154,6 +160,13 @@ export class BlockgameBookElement extends BaseElement {
     const bookmarkColor = this.getAttribute('bookmark-color') || undefined;
     // Default on: only an explicit page-numbers="false" turns the on-book page numbers off.
     const pageNumbers = this.getAttribute('page-numbers') !== 'false';
+    // Properties set before connection win; otherwise fall back to the attributes.
+    if (this.blankPageImageValue === null && this.hasAttribute('blank-page-image')) {
+      this.blankPageImageValue = this.getAttribute('blank-page-image');
+    }
+    if (this.animatedCharsValue.length === 0 && this.hasAttribute('animated-chars')) {
+      this.animatedCharsValue = parseAnimatedCharsAttribute(this.getAttribute('animated-chars'));
+    }
     const persistProgress = this.hasAttribute('persist-progress') && this.getAttribute('persist-progress') !== 'false';
     const splitMode = this.getAttribute('split-mode') || 'lossless';
     const bookTitle = this.getAttribute('book-title') || undefined;
@@ -179,6 +192,8 @@ export class BlockgameBookElement extends BaseElement {
         showBookmark,
         bookmarkColor,
         pageNumbers,
+        blankPageImage: this.blankPageImageValue ?? undefined,
+        animatedChars: this.animatedCharsValue,
         persistReadingProgress: persistProgress,
         scale,
         controls: showControls,
@@ -448,6 +463,12 @@ export class BlockgameBookElement extends BaseElement {
       this.viewer.setHighContrast(newValue !== null && newValue !== 'false');
     } else if (name === 'page-numbers') {
       this.viewer.setPageNumbers(newValue !== 'false');
+    } else if (name === 'blank-page-image') {
+      this.blankPageImageValue = newValue;
+      this.viewer.setBlankPageImage(newValue);
+    } else if (name === 'animated-chars') {
+      this.animatedCharsValue = parseAnimatedCharsAttribute(newValue);
+      this.viewer.setAnimatedChars(this.animatedCharsValue);
     } else if (name === 'scale' && newValue) {
       this.viewer.getCanvas().setScale(parseInt(newValue, 10));
     }
@@ -595,6 +616,26 @@ export class BlockgameBookElement extends BaseElement {
       this.setAttribute('page-numbers', 'false');
     }
     if (this.viewer) this.viewer.setPageNumbers(val);
+  }
+
+  /** Image for the final page when it is blank. A URL string, or an options object. */
+  get blankPageImage(): string | BlankPageImageOptions | null {
+    return this.blankPageImageValue;
+  }
+
+  set blankPageImage(val: string | BlankPageImageOptions | null) {
+    this.blankPageImageValue = val;
+    if (this.viewer) this.viewer.setBlankPageImage(val);
+  }
+
+  /** Characters to animate, e.g. [{ char: '⏼', frames: ['◡'] }]. */
+  get animatedChars(): AnimatedChar[] {
+    return this.animatedCharsValue;
+  }
+
+  set animatedChars(val: AnimatedChar[]) {
+    this.animatedCharsValue = Array.isArray(val) ? val : [];
+    if (this.viewer) this.viewer.setAnimatedChars(this.animatedCharsValue);
   }
 
   get highContrast(): boolean {
@@ -833,6 +874,18 @@ export class BlockgameBookElement extends BaseElement {
 
   public async getPageBlob(pageIndex?: number): Promise<Blob | null> {
     return this.viewer ? this.viewer.getPageBlob(pageIndex) : null;
+  }
+}
+
+/** Parses the `animated-chars` attribute (a JSON array). Invalid JSON is ignored with a warning. */
+function parseAnimatedCharsAttribute(raw: string | null): AnimatedChar[] {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    console.warn('<blockgame-book>: animated-chars must be a JSON array; ignoring it.');
+    return [];
   }
 }
 

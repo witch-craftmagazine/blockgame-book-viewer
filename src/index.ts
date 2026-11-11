@@ -16,10 +16,14 @@ export { BookEditorModal } from './ui/BookEditorModal';
 export { BookCanvas, type BookCanvasOptions } from './render/BookCanvas';
 export { ContinuousScrollView, type ContinuousScrollViewOptions } from './render/ContinuousScrollView';
 export { SoundManager, soundManager } from './render/SoundEffects';
+export {
+  AnimatedCharController,
+  type AnimatedChar,
+  type BlankPageImageOptions,
+} from './render/EasterEggs';
 
 // Plugin System
 export type { BookPlugin, PageRect, CharRenderContext, CharRenderResult } from './plugin/BookPlugin';
-export { WitchcraftPlugin, type WitchcraftPluginOptions } from './plugins/WitchcraftPlugin';
 
 // Engine
 export {

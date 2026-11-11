@@ -1,5 +1,5 @@
 import { BlockgameBookViewer } from './ui/BlockgameBookViewer';
-import { WitchcraftPlugin } from './plugins/WitchcraftPlugin';
+import { WitchcraftPlugin, witchcraftEggOptions } from './demo/WitchcraftPlugin';
 import { parseBook } from './io/BookParser';
 import { exportToStendhal, exportToGiveCommandModern } from './io/BookExporter';
 
@@ -34,9 +34,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   const container = document.getElementById('viewer-container') as HTMLElement;
   if (!container) return;
 
-  const witchcraftPlugin = new WitchcraftPlugin({
-    gifUrl: './assets/textures/starsweetpea.gif'
-  });
+  const witchcraftPlugin = new WitchcraftPlugin();
 
   const pageIndicator = document.getElementById('showcase-page-indicator');
   const updatePageDisplay = (page: number, total: number) => {
@@ -52,6 +50,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     defaultViewMode: 'single', // Single-page showcase
     controls: false, // Hide toolbar for main showcase
     plugins: [witchcraftPlugin],
+    ...witchcraftEggOptions('./assets'),
     onPageChange: (page, total) => {
       updatePageDisplay(page, total);
     },

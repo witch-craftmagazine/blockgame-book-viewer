@@ -25,7 +25,7 @@ A modular, pixel-perfect, zero-dependency blockgame written book web emulator, r
   - **URL Hash Sharing** (zero-backend instant link sharing)
 - 🧩 **Extensible Plugin System**:
   - Lifecycle hooks for custom rendering, animations, character replacements, and click handling.
-  - Ships with `WitchcraftPlugin` (custom animated ending page celebration GIF and interactive hooks).
+  - Built-in, opt-in easter eggs: animated characters (a blinking eye) and an image on a blank final page.
 - 🌐 **Web Component `<blockgame-book>`**:
   - Drop a single `<script>` tag on any HTML page, React, Vue, Svelte, or WordPress site.
 - 🔊 **Web Audio Sound Effects**: Realistic page-turn sounds with synthesized audio fallback.
@@ -82,6 +82,24 @@ Include the script and stylesheet, then use the `<blockgame-book>` tag:
 | `controls` | boolean (`true` \| `false`) | `true` | Built-in reader toolbar |
 | `scale` | integer | auto | Canvas scaling factor |
 | `page` | 1-indexed number | `1` | Initial active page number |
+| `blank-page-image` | URL | none | Image shown on the final page when it is blank (Java layouts, single and double view) |
+| `animated-chars` | JSON array | none | Characters whose glyph is briefly swapped for other glyphs (see below) |
+
+#### Easter eggs
+
+Both are off until you configure them. Nothing is enabled by book title or author.
+
+```html
+<blockgame-book
+  src="/books/issue.stendhal"
+  blank-page-image="/img/author.gif"
+  animated-chars='[{ "char": "⏼", "frames": ["◡"], "frameMs": 160 }]'>
+</blockgame-book>
+```
+
+- **`blank-page-image`**: shown when the last page is blank, including the empty right page of an odd-length spread. It is an overlay, so animated GIFs play. From JavaScript, set `el.blankPageImage` to a URL or `{ src, width, height, alt, title }` (default size 88 x 100 book pixels). It is not drawn in Bedrock appearance or scroll modes.
+- **`animated-chars`**: each entry swaps one character for the glyphs in `frames`, each shown for `frameMs` (default 160), then restores it. The character keeps its original width, so text never reflows. `delayMs` is the rest time between runs: a number, or `[min, max]` for a random pause (default `[3500, 6500]`); `0` loops continuously. Frames and `char` must each be a single character. From JavaScript use `el.animatedChars = [...]`.
+- Click behaviour is not built in. `BookCanvas.playAnimatedChar(char)` starts a run on demand, so a plugin can wire it to a click; `src/demo/WitchcraftPlugin.ts` is a worked example.
 
 #### Experimental features
 
