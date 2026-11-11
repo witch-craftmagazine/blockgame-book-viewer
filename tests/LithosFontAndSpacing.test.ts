@@ -9,8 +9,11 @@ describe('Lithos Font Textures & Spacing Fidelity', () => {
     const atlas = new GlyphAtlas();
     expect(atlas.getAdvance(' ', false)).toBe(4);
     expect(atlas.getAdvance(' ', true)).toBe(5);
-    expect(atlas.getAdvance('\u00a0', false)).toBe(4);
-    expect(atlas.getAdvance('\u00a0', true)).toBe(5);
+    // NBSP is not in the space provider, so it resolves through Unifont (blank 8-bit glyph: 5.5)
+    expect(atlas.getAdvance('\u00a0', false)).toBe(5.5);
+    expect(atlas.getAdvance('\u00a0', true)).toBe(6); // Unifont glyphs bold by 0.5
+    // ZWNJ is in the space provider with a 0 advance
+    expect(atlas.getAdvance('\u200c', false)).toBe(0);
 
     // Regular characters still expand by 1px when bolded
     expect(atlas.getAdvance('A', false)).toBe(6);

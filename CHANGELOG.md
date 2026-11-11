@@ -14,6 +14,8 @@
 - `style.css` no longer bundles Unifont (it was 6 MB of base64). Load `@fontsource/unifont` or `unifont.css` alongside it; without it, uncommon glyphs fall back to monospace.
 - Assets ship once, in `dist/assets`.
 
+- Glyph advances now follow vanilla 26.2's font providers exactly: space provider, then the bitmap sheets, then an exact `UnihexProvider` table for Unifont (half-pixel advances such as `✧` 8.5 and `ₑ` 3.5), then the missing glyph (6). Unifont glyphs bold by 0.5, other glyphs by 1. This replaces the legacy `glyph_sizes.bin` lookup, the canvas-measured fallback and the hand-calibrated symbol overrides. Text containing non-bitmap symbols can wrap differently: NBSP is 5.5 (was 4), `▁▂▃▅▆▇` are 5 (were 9), combining marks advance instead of being zero-width, and `✧ ✦` are 8.5 (were 5). `getBlockgameGlyphSizes()` is still exported but no longer used by the engine.
+
 ### Fixed
 - Bold spaces are now 5px wide instead of 4px. The emulator under-measured bold lines, so text that wrapped in Minecraft 26.3 (for example a bold `II. The Ink of Souls`) stayed on one line in the viewer.
 - `/give` export produced books showing raw JSON and stripped colours in Minecraft 1.21.5+ (including 26.x). Pages were JSON wrapped in strings, which 1.21.5+ treats as plain text, and `§` codes were typed into the command, which the chat box strips. `exportToGiveCommandModern` now emits SNBT text components with colours and styles as properties and never writes `§`. Titles are capped at 32 characters and `generation` is written when set.

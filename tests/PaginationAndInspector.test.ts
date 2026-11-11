@@ -52,15 +52,16 @@ Line 2
     expect(layouts.length).toBe(3);
   });
 
-  it('fits horoscope border lines within 114px without wrapping', () => {
+  it('wraps the horoscope border at exact Unifont widths (✧ is 8.5px, ⋄ ⋆ are 3.5px)', () => {
     const border = '✧⋄⋆⋅⋆⋄✧⋄⋆⋅⋆⋄✧✧⋄⋆⋅⋆⋄✧⋄⋆⋅⋆⋄✧';
     const lines = splitTextToLines(border, BOOK_TEXT_WIDTH, defaultGlyphAtlas);
-    expect(lines.length).toBe(1);
+    expect(lines.length).toBe(2);
     expect(lines[0].width).toBeLessThanOrEqual(BOOK_TEXT_WIDTH);
-    expect(lines[0].width).toBe(102);
+    expect(lines[0].width).toBe(110.5);
+    expect(lines[1].width).toBe(8.5);
   });
 
-  it('formats Page 52 horoscopes into exactly 14 lines', () => {
+  it('lays Page 52 horoscopes out in 17 lines at exact widths (3 more than the 14-line page holds)', () => {
     const p52Text = `§5♈ Aries
 §d✧⋄⋆⋅⋆⋄✧⋄⋆⋅⋆⋄✧✧⋄⋆⋅⋆⋄✧⋄⋆⋅⋆⋄✧
 §8Help me... i'm poor!
@@ -77,7 +78,7 @@ Line 2
 §8Wait a day or two...`;
 
     const lines = splitTextToLines(p52Text, BOOK_TEXT_WIDTH, defaultGlyphAtlas);
-    expect(lines.length).toBe(14);
+    expect(lines.length).toBe(17);
 
     for (const line of lines) {
       expect(line.width).toBeLessThanOrEqual(BOOK_TEXT_WIDTH);

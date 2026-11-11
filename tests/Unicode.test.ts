@@ -13,7 +13,7 @@ describe('Unicode & Unifont Support', () => {
   });
 
   it('provides exact accurate advances for Minecraft box drawing and magazine symbols', () => {
-    // Box drawing and borders (matching Minecraft official glyphs.json and glyph_sizes.bin)
+    // Box drawing and borders mapped by vanilla's ascii.png bitmap provider (width + 1; bitmap wins over Unifont)
     expect(defaultGlyphAtlas.getAdvance('╔')).toBe(9);
     expect(defaultGlyphAtlas.getAdvance('═')).toBe(9);
     expect(defaultGlyphAtlas.getAdvance('╗')).toBe(8);
@@ -24,13 +24,14 @@ describe('Unicode & Unifont Support', () => {
     expect(defaultGlyphAtlas.getAdvance('╚')).toBe(9);
     expect(defaultGlyphAtlas.getAdvance('╝')).toBe(8);
 
-    // Blocks and shades (vanilla Minecraft Unifont & BitmapProvider: 8px glyph width + 1px side-bearing padding = 9px advance)
+    // Blocks and shades in ascii.png (8px glyph width + 1px padding = 9px advance)
     expect(defaultGlyphAtlas.getAdvance('█')).toBe(9);
-    expect(defaultGlyphAtlas.getAdvance('▃')).toBe(9);
     expect(defaultGlyphAtlas.getAdvance('▄')).toBe(9);
-    expect(defaultGlyphAtlas.getAdvance('▅')).toBe(9);
-    expect(defaultGlyphAtlas.getAdvance('▆')).toBe(9);
-    expect(defaultGlyphAtlas.getAdvance('▇')).toBe(9);
+    // U+2581-U+2583 and U+2585-U+2587 are not in a bitmap sheet, so they use Unifont: 8 columns = 4 + 1 = 5
+    expect(defaultGlyphAtlas.getAdvance('▃')).toBe(5);
+    expect(defaultGlyphAtlas.getAdvance('▅')).toBe(5);
+    expect(defaultGlyphAtlas.getAdvance('▆')).toBe(5);
+    expect(defaultGlyphAtlas.getAdvance('▇')).toBe(5);
     expect(defaultGlyphAtlas.getAdvance('▓')).toBe(9);
     expect(defaultGlyphAtlas.getAdvance('▒')).toBe(9);
     expect(defaultGlyphAtlas.getAdvance('░')).toBe(8);
@@ -45,7 +46,7 @@ describe('Unicode & Unifont Support', () => {
     const playerBar = ' 0:00 ━❍───── 9:05';
     const lines = splitTextToLines(playerBar, BOOK_TEXT_WIDTH, defaultGlyphAtlas);
     expect(lines).toHaveLength(1);
-    expect(lines[0].width).toBe(109);
+    expect(lines[0].width).toBe(109.5);
     expect(lines[0].width).toBeLessThanOrEqual(BOOK_TEXT_WIDTH);
 
     // Title skull line: fits on single line
@@ -55,22 +56,22 @@ describe('Unicode & Unifont Support', () => {
     expect(skullLines[0].width).toBe(113);
     expect(skullLines[0].width).toBeLessThanOrEqual(BOOK_TEXT_WIDTH);
 
-    // Subscripts used in magazine lore
-    expect(defaultGlyphAtlas.getAdvance('ᵢ')).toBe(3);
-    expect(defaultGlyphAtlas.getAdvance('ₑ')).toBe(3);
-    expect(defaultGlyphAtlas.getAdvance('ₐ')).toBe(3);
-    expect(defaultGlyphAtlas.getAdvance('ᵤ')).toBe(4);
+    // Subscripts used in magazine lore (Unifont: 5 columns wide = 2.5 + 1)
+    expect(defaultGlyphAtlas.getAdvance('ᵢ')).toBe(3.5);
+    expect(defaultGlyphAtlas.getAdvance('ₑ')).toBe(3.5);
+    expect(defaultGlyphAtlas.getAdvance('ₐ')).toBe(3.5);
+    expect(defaultGlyphAtlas.getAdvance('ᵤ')).toBe(3.5);
 
-    // Combining diacritical marks must have 0 advance in Minecraft
-    expect(defaultGlyphAtlas.getAdvance('҉')).toBe(0);
-    expect(defaultGlyphAtlas.getAdvance('͍')).toBe(0);
-    expect(defaultGlyphAtlas.getAdvance('̤')).toBe(0);
+    // Combining marks are ordinary Unifont glyphs in vanilla: they advance by their bitmap width
+    expect(defaultGlyphAtlas.getAdvance('҉')).toBe(8);
+    expect(defaultGlyphAtlas.getAdvance('͍')).toBe(4.5);
+    expect(defaultGlyphAtlas.getAdvance('̤')).toBe(4);
 
     // Heavy box drawing corners
-    expect(defaultGlyphAtlas.getAdvance('┏')).toBe(3);
-    expect(defaultGlyphAtlas.getAdvance('┓')).toBe(3);
-    expect(defaultGlyphAtlas.getAdvance('┗')).toBe(3);
-    expect(defaultGlyphAtlas.getAdvance('┛')).toBe(3);
+    expect(defaultGlyphAtlas.getAdvance('┏')).toBe(3.5);
+    expect(defaultGlyphAtlas.getAdvance('┓')).toBe(3.5);
+    expect(defaultGlyphAtlas.getAdvance('┗')).toBe(3.5);
+    expect(defaultGlyphAtlas.getAdvance('┛')).toBe(3.5);
   });
 
   it('measures CJK multilingual characters properly', () => {
@@ -164,7 +165,7 @@ describe('Unicode & Unifont Support', () => {
     await atlas.loadBitmapProviders(providers, mockResolver);
 
     // ✯ should NOT be registered as a custom bitmap glyph
-    expect(atlas.getAdvance('✯')).toBe(8); // default Unicode star width from glyph_sizes.bin, not 24/32px weapon
+    expect(atlas.getAdvance('✯')).toBe(8.5); // default Unifont star width, not the 24/32px weapon
   });
 
   it('aligns all rows of Enderman pixel art on Issue 2 Page 42 with 5 leading spaces', () => {
@@ -185,6 +186,7 @@ describe('Unicode & Unifont Support', () => {
     const volumeLine = '§8Volume: §c▃▄▅▆▇ 100%';
     const lines = splitTextToLines(volumeLine, 114, defaultGlyphAtlas);
     expect(lines.length).toBe(1);
-    expect(lines[0].width).toBe(112);
+    // ▄ is a 9px bitmap glyph; ▃▅▆▇ are 5px Unifont glyphs
+    expect(lines[0].width).toBe(96);
   });
 });
