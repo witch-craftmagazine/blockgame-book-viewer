@@ -10,3 +10,7 @@ pnpm-debug.log*
 
 *.zip
 __MACOSX/
+
+# Local guidelines
+CLAUDE.md
+
