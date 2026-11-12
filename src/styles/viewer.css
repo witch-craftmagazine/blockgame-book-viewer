@@ -343,6 +343,39 @@ blockgame-book {
   border-color: var(--mc-accent);
 }
 
+@media (max-width: 640px) {
+  .mc-book-toolbar {
+    flex-direction: column;
+    max-width: 96%;
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 14px;
+    gap: 8px;
+    margin: 6px auto 12px;
+    box-sizing: border-box;
+  }
+
+  .mc-toolbar-group {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .mc-toolbar-left {
+    border-bottom: 1px solid var(--mc-border);
+    padding-bottom: 6px;
+  }
+
+  .mc-btn {
+    padding: 6px 10px;
+    font-size: 13px;
+    min-height: 32px;
+    min-width: 32px;
+    touch-action: manipulation;
+  }
+}
+
 /* Modals */
 .modal-backdrop {
   position: fixed;

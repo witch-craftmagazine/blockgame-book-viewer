@@ -98,7 +98,7 @@
     :focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
 
     .wrap {
-      max-width: 1140px;
+      max-width: 1260px;
       margin: 0 auto;
       padding: 0 clamp(16px, 4vw, 32px);
     }
@@ -294,16 +294,16 @@
     /* Showcase Workbench Layout */
     .showcase-workbench {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 28px;
+      grid-template-columns: minmax(0, 1.22fr) minmax(0, 1fr);
+      gap: 32px;
       align-items: stretch;
       width: 100%;
       margin: 1.5rem auto 0;
     }
-    @media (max-width: 920px) {
+    @media (max-width: 960px) {
       .showcase-workbench {
         grid-template-columns: 1fr;
-        gap: 28px;
+        gap: 24px;
       }
     }
 
@@ -317,20 +317,20 @@
       border: 1px solid var(--gold);
       outline: 1px solid var(--gold);
       outline-offset: -5px;
-      padding: 18px 20px;
+      padding: 20px 22px;
       box-shadow: 6px 6px 0 -1px var(--rule);
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       height: 100%;
       box-sizing: border-box;
-      gap: 12px;
+      gap: 14px;
     }
 
     .showcase-reader-frame {
       width: 100%;
       flex: 1;
-      min-height: 440px;
+      min-height: 590px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -359,6 +359,7 @@
 
     .showcase-reader-frame .book-stage {
       height: 100%;
+      width: 100%;
       max-width: 100%;
       max-height: 100%;
       display: flex;
@@ -374,6 +375,9 @@
       max-width: 100% !important;
       max-height: 100% !important;
       object-fit: contain;
+      image-rendering: pixelated;
+      image-rendering: -moz-crisp-edges;
+      image-rendering: crisp-edges;
     }
 
     .showcase-nav {
@@ -402,7 +406,7 @@
     .palette-group {
       display: flex;
       flex-wrap: wrap;
-      gap: 4px;
+      gap: 5px;
       align-items: center;
     }
 
@@ -413,7 +417,7 @@
     .tag-btn {
       font-family: ui-monospace, SFMono-Regular, monospace;
       font-size: 11px;
-      padding: 3px 6px;
+      padding: 4px 7px;
       border-radius: 3px;
       border: 1px solid var(--rule);
       background: var(--paper);
@@ -424,6 +428,7 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      touch-action: manipulation;
     }
 
     .tag-btn:hover {
@@ -433,7 +438,7 @@
 
     .pill-color {
       font-weight: bold;
-      min-width: 24px;
+      min-width: 25px;
       text-shadow: 0 1px 2px rgba(0,0,0,0.4);
     }
 
@@ -446,8 +451,9 @@
 
     .live-markup-textarea {
       width: 100%;
-      height: 420px;
-      min-height: 320px;
+      flex: 1;
+      height: 100%;
+      min-height: 380px;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       font-size: 0.92rem;
       line-height: 1.5;
@@ -556,10 +562,94 @@
       padding: clamp(24px, 4vw, 40px) 0 clamp(32px, 5vw, 56px);
     }
 
+    @media (max-width: 960px) {
+      .showcase-reader-frame {
+        min-height: clamp(360px, 75vw, 540px);
+      }
+    }
+
     @media (max-width: 860px) {
       .grid { grid-template-columns: 1fr; }
-      .bar .in { justify-content: center; }
+      .bar .in { justify-content: space-between; }
       .reader-frame { height: 460px; }
+    }
+
+    @media (max-width: 580px) {
+      .wrap { padding: 0 12px; }
+      .bar .in {
+        padding: 6px 0;
+        gap: 8px;
+      }
+      .brand { font-size: 1.1rem; gap: 6px; }
+      .brand b { font-size: 1.05rem; }
+      .bar-nav { gap: 8px; }
+      .theme-toggle-btn { padding: 4px 8px; font-size: 0.85rem; }
+      .hero-text h1 { font-size: clamp(2.2rem, 8vw, 3.2rem); }
+      .cta {
+        flex-direction: column;
+        gap: 10px;
+      }
+      .cta .btn {
+        width: 100%;
+        text-align: center;
+        justify-content: center;
+      }
+      .live-viewer-card,
+      .live-editor-card {
+        padding: 14px 12px;
+        gap: 10px;
+      }
+      .showcase-reader-frame {
+        min-height: clamp(320px, 85vw, 440px);
+      }
+      .showcase-nav {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        gap: 8px;
+        width: 100%;
+        align-items: center;
+      }
+      .showcase-nav .btn {
+        padding: 7px 10px;
+        font-size: 0.9rem;
+      }
+      .showcase-nav .showcase-page-text {
+        font-size: 0.95rem;
+        min-width: 76px;
+      }
+      .showcase-nav #showcase-export-btn {
+        grid-column: 1 / -1;
+        width: 100%;
+        margin-top: 4px;
+        justify-content: center;
+      }
+      .tag-btn {
+        min-height: 30px;
+        padding: 5px 8px;
+        font-size: 12px;
+      }
+      .tag-btn.pill-color {
+        min-width: 28px;
+      }
+      .tag-break {
+        width: 100%;
+        margin-top: 3px;
+        text-align: center;
+        justify-content: center;
+      }
+      .live-markup-textarea {
+        min-height: 320px;
+      }
+      .live-editor-footer {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        width: 100%;
+      }
+      .live-editor-footer .btn {
+        width: 100%;
+        justify-content: center;
+      }
     }
   </style>
 </head>

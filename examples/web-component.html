@@ -376,6 +376,69 @@
       transform: rotate(45deg);
       box-shadow: 0 0 0 3px var(--paper), 0 0 0 4px var(--gold);
     }
+
+    @media (max-width: 768px) {
+      .bar .in {
+        gap: 10px;
+      }
+      .brand span {
+        font-size: 1.1rem;
+      }
+      .bar-nav a {
+        font-size: 0.88rem;
+      }
+      .configurator-card {
+        padding: 16px 14px;
+        gap: 12px;
+      }
+      .config-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+      .config-checkbox-group {
+        gap: 8px 12px;
+      }
+      .api-actions {
+        gap: 6px;
+      }
+      .api-actions .btn {
+        flex: 1 1 calc(50% - 6px);
+        text-align: center;
+        justify-content: center;
+      }
+      .component-viewport {
+        height: 520px;
+        max-height: 75vh;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .bar .in {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+        padding: 6px 0;
+      }
+      .bar-nav {
+        width: 100%;
+        justify-content: space-between;
+      }
+      .api-actions .btn {
+        flex: 1 1 100%;
+      }
+      .component-viewport {
+        height: 420px;
+      }
+      .code-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+      }
+      .code-card-header .btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
   </style>
 </head>
 <body>
