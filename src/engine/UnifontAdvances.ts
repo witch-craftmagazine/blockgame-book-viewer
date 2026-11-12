@@ -44,12 +44,19 @@ function getTable(): Uint8Array {
 }
 
 /**
- * Exact vanilla Unifont advance for a code point (a multiple of 0.5), or undefined when the
+ * Vanilla Unifont advance for a code point (a whole number of pixels), or undefined when the
  * Unifont providers have no glyph for it. Covers Unifont only: the space provider and the
  * bitmap sheets take priority over it and are handled by GlyphAtlas.
+ *
+ * The stored table holds `width / 2 + 1` in half pixels, which is exact for glyphs with an even
+ * ink width and a half pixel too wide for odd ones. Layout uses integer division
+ * (`floor(width / 2) + 1`), so odd widths are rounded down here. Evidence: in the Witchcraft
+ * issues 1 and 17, 22 hand-typeset lines that overflow 114px by 1 to 9px under the half-pixel
+ * rule fit exactly under this one (the 14-flower line is 14 * 8 + 2 = 114). Unverified against
+ * the vanilla source: check `UnihexProvider`'s advance arithmetic before relying on it.
  */
 export function getUnifontAdvance(codePoint: number): number | undefined {
   if (codePoint < 0 || codePoint >= TABLE_SIZE) return undefined;
   const halves = getTable()[codePoint];
-  return halves === 0 ? undefined : halves / 2;
+  return halves === 0 ? undefined : Math.floor(halves / 2);
 }

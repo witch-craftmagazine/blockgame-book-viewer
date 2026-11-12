@@ -52,16 +52,14 @@ Line 2
     expect(layouts.length).toBe(3);
   });
 
-  it('wraps the horoscope border at exact Unifont widths (✧ is 8.5px, ⋄ ⋆ are 3.5px)', () => {
+  it('fits the horoscope border on one line at Unifont widths (✧ is 8px, ⋄ ⋆ are 3px)', () => {
     const border = '✧⋄⋆⋅⋆⋄✧⋄⋆⋅⋆⋄✧✧⋄⋆⋅⋆⋄✧⋄⋆⋅⋆⋄✧';
     const lines = splitTextToLines(border, BOOK_TEXT_WIDTH, defaultGlyphAtlas);
-    expect(lines.length).toBe(2);
-    expect(lines[0].width).toBeLessThanOrEqual(BOOK_TEXT_WIDTH);
-    expect(lines[0].width).toBe(110.5);
-    expect(lines[1].width).toBe(8.5);
+    expect(lines.length).toBe(1);
+    expect(lines[0].width).toBe(112);
   });
 
-  it('lays Page 52 horoscopes out in 17 lines at exact widths (3 more than the 14-line page holds)', () => {
+  it('lays Page 52 horoscopes out in 14 lines, a full page (it needed an impossible 17 under half-pixel advances)', () => {
     const p52Text = `§5♈ Aries
 §d✧⋄⋆⋅⋆⋄✧⋄⋆⋅⋆⋄✧✧⋄⋆⋅⋆⋄✧⋄⋆⋅⋆⋄✧
 §8Help me... i'm poor!
@@ -78,11 +76,31 @@ Line 2
 §8Wait a day or two...`;
 
     const lines = splitTextToLines(p52Text, BOOK_TEXT_WIDTH, defaultGlyphAtlas);
-    expect(lines.length).toBe(17);
+    expect(lines.length).toBe(14);
 
     for (const line of lines) {
       expect(line.width).toBeLessThanOrEqual(BOOK_TEXT_WIDTH);
     }
+  });
+
+  it('keeps lines that were hand-typeset to fit in game on one line (issue 1 page 16, issue 17 page 2)', () => {
+    // 14 flowers + a dot: 14 * 8 + 2 = 114, exactly the line width. Under half-pixel advances it was 121.
+    const flowers = '✿✿❀❀❀✿✿.✿✿❀❀❀✿✿';
+    const flowerLines = splitTextToLines(`${flowers}\n${flowers}`, BOOK_TEXT_WIDTH, defaultGlyphAtlas);
+    expect(flowerLines.map((l) => l.width)).toEqual([114, 114]);
+
+    // Leading space + math-sans letters and digits: 109 here, it measured 116 under half-pixel advances.
+    const title = ' §c*{𝗵𝗮𝗹𝗹𝗼𝘄𝗲𝗲𝗻 𝗲𝗱𝗶𝘁𝗶𝗼𝗻 𝟮𝟬𝟮𝟰}*§r§r';
+    const titleLines = splitTextToLines(title, BOOK_TEXT_WIDTH, defaultGlyphAtlas);
+    expect(titleLines).toHaveLength(1);
+    expect(titleLines[0].width).toBe(109);
+  });
+
+  it('still wraps plain text that really is too wide (the rule must not over-correct)', () => {
+    // Vanilla bitmap glyphs only: 116px, so it wraps in game too.
+    const lines = splitTextToLines('Heavy and suffocating.', BOOK_TEXT_WIDTH, defaultGlyphAtlas);
+    expect(lines).toHaveLength(2);
+    expect(lines[0].width).toBeLessThanOrEqual(BOOK_TEXT_WIDTH);
   });
 
   it('trims trailing empty lines from page ends while preserving intermediate empty lines', () => {

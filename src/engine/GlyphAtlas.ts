@@ -105,7 +105,7 @@ export class GlyphAtlas {
    * vanilla's font providers, in order:
    *   1. space provider (' ' = 4, U+200C = 0), then custom resource pack glyphs
    *   2. bitmap sheets (width + 1) and control characters
-   *   3. Unifont via the exact UnihexProvider table (multiples of 0.5)
+   *   3. Unifont via the advance table (whole pixels; bold adds 0.5)
    *   4. the missing glyph (6)
    * Bold adds 1 for space, bitmap and missing glyphs, and 0.5 for Unifont glyphs.
    */

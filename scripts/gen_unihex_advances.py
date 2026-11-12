@@ -8,6 +8,8 @@ Mirrors net.minecraft.client.gui.font.providers.UnihexProvider (26.2):
   - otherwise bounds come from the set bits: left = leading zeros, right = 31 - trailing zeros
   - blank glyph: left = 0, right = bitWidth  (so width = bitWidth + 1)
   - width = right - left + 1, advance = width / 2.0 + 1.0, bold offset = 0.5
+  - NOTE: this script stores the half-pixel value. The runtime (src/engine/UnifontAdvances.ts) rounds it
+    down to floor(width / 2) + 1, which is what real hand-typeset books need. See that file for the evidence.
 Providers are read from include/unifont.json in order; filtered providers (e.g. {"jp": true}) are skipped by default.
 Not modelled here: the space provider (' ' = 4, U+200C = 0), the bitmap sheets (they win over Unifont), and
 the MISSING glyph (advance 6) for code points no provider has.
