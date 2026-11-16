@@ -1,6 +1,6 @@
 {
   "name": "blockgame-book-viewer",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "High-fidelity, modular blockgame written book web emulator, renderer, and web component.",
   "repository": {
     "type": "git",
