@@ -45,7 +45,7 @@ jobs:
 
       - name: Bump version
         if: github.event_name == 'workflow_dispatch'
-        run: npm version ${{ github.event.inputs.version }} --no-git-tag-version
+        run: npm version ${{ github.event.inputs.version }} --no-git-tag-version --allow-same-version
 
       - name: Build library
         run: bun run build:lib
