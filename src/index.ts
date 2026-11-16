@@ -52,6 +52,17 @@ export {
 } from './engine/Formatting';
 
 export {
+  MINECRAFT_LINES_PER_PAGE,
+  MINECRAFT_PAGE_MAX_CHARS,
+  MINECRAFT_MAX_PAGES,
+  JAVA_MAX_CHARS_PER_PAGE,
+  BEDROCK_MAX_CHARS_PER_PAGE,
+  detectUnsupportedMinecraftChars,
+  solveBoldSpaces,
+  centerLineText,
+} from './engine/Typography';
+
+export {
   GlyphAtlas,
   defaultGlyphAtlas,
   type GlyphMapEntry,
@@ -105,6 +116,8 @@ export {
   exportToCocoapebblesJson,
   exportToUrlHash,
   importFromUrlHash,
+  formatSinglePage,
+  type SinglePageExportFormat,
 } from './io/BookExporter';
 
 // Types

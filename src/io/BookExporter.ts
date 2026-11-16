@@ -209,6 +209,44 @@ export function exportToGiveCommandLegacy(book: BlockgameBook): string {
   return `/give @p written_book{title:'${escapeSnbtSingleQuoted(bookTitle(book))}',author:'${escapeSnbtSingleQuoted(stripFormatting(book.author))}'${generation},pages:[${pages}]} 1`;
 }
 
+/** Supported clipboard export formats for single pages */
+export type SinglePageExportFormat = 'raw' | 'ampersand' | 'give' | 'plain';
+
+/**
+ * Formats a single page's lines or text for clipboard copying or in-game pasting.
+ *
+ * Formats:
+ * - 'raw': Preserves exact line-breaks and '§' formatting codes for Book & Quill paste.
+ * - 'ampersand': Replaces '§' with '&' for Essentials / CMI server plugins.
+ * - 'give': Produces a complete modern /give command (Java 1.20.5+ SNBT components) containing this single page.
+ * - 'plain': Strips all formatting codes for clean vanilla chat or unmodded paste.
+ */
+export function formatSinglePage(
+  pageLinesOrText: string[] | string,
+  format: SinglePageExportFormat = 'raw',
+  meta: { title?: string; author?: string } = {}
+): string {
+  const pageText = Array.isArray(pageLinesOrText) ? pageLinesOrText.join('\n') : pageLinesOrText;
+  if (!pageText.trim()) return '';
+
+  switch (format) {
+    case 'raw':
+      return pageText;
+    case 'ampersand':
+      return pageText.replace(/§([0-9a-fk-or])/g, '&$1');
+    case 'give':
+      return exportToGiveCommandModern({
+        title: meta.title || 'Page Preview',
+        author: meta.author || 'Player',
+        pages: [pageText],
+      });
+    case 'plain':
+      return stripFormatting(pageText);
+    default:
+      return pageText;
+  }
+}
+
 /**
  * Encodes book into a shareable URL hash string.
  */
