@@ -56,6 +56,15 @@ export interface BlockgameBookViewerOptions {
   /** Characters whose glyph is briefly swapped for other glyphs (a blink, a twinkle). */
   animatedChars?: AnimatedChar[];
   persistReadingProgress?: boolean;
+  /**
+   * Whether the book is in interactive edit mode (matching Minecraft BookEditScreen).
+   * In edit mode, the advance/forward button remains visible on the last page up to maxPages,
+   * and clicking it appends a blank page to the book.
+   */
+  editable?: boolean;
+  /** Maximum number of pages permitted (Minecraft default is 100). */
+  maxPages?: number;
+  onAddPage?: (newPageIndex: number, book: BlockgameBook) => void;
   onPageChange?: (page: number, total: number) => void;
   onBookChange?: (book: BlockgameBook, viewer?: BlockgameBookViewer) => void;
 }
@@ -82,7 +91,7 @@ export class BlockgameBookViewer {
   constructor(container: HTMLElement, options: BlockgameBookViewerOptions = {}) {
     this.container = container;
     this.options = options;
-    const baseAssetPath = options.baseAssetPath || './assets';
+    const baseAssetPath = options.baseAssetPath;
     this.packManager = new ResourcePackManager(baseAssetPath);
     this.pageMemory = new PageMemoryManager({ enabled: options.persistReadingProgress ?? false });
 
@@ -110,6 +119,23 @@ export class BlockgameBookViewer {
       plugins: this.options.plugins,
       blankPageImage: this.options.blankPageImage,
       animatedChars: this.options.animatedChars,
+      editable: this.options.editable,
+      maxPages: this.options.maxPages,
+      onAddPage: (newPageIndex, updatedBook) => {
+        this.currentBook = updatedBook;
+        if (this.options.onAddPage) {
+          this.options.onAddPage(newPageIndex, updatedBook);
+        }
+        if (this.options.onBookChange) {
+          this.options.onBookChange(updatedBook, this);
+        }
+      },
+      onBookChange: (updatedBook) => {
+        this.currentBook = updatedBook;
+        if (this.options.onBookChange) {
+          this.options.onBookChange(updatedBook, this);
+        }
+      },
       onProgressSave: (page) => {
         if (this.pageMemory.isEnabled()) {
           this.pageMemory.save(this.currentBook, page);
@@ -316,6 +342,16 @@ export class BlockgameBookViewer {
 
   public openEditor(): void {
     this.editorModal?.open(this.currentBook);
+  }
+
+  public setEditable(editable: boolean): void {
+    this.options.editable = editable;
+    this.bookCanvas.setEditable(editable);
+  }
+
+  public setMaxPages(max: number): void {
+    this.options.maxPages = max;
+    this.bookCanvas.setMaxPages(max);
   }
 
   public setBook(book: BlockgameBook, preservePage = false): void {

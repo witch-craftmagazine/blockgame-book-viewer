@@ -7,7 +7,7 @@
 [![Bun](https://img.shields.io/badge/Bun-1.2+-black?logo=bun)](https://bun.sh)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7+-blue?logo=typescript)](https://www.typescriptlang.org/)
 
-A modular, pixel-perfect, zero-dependency blockgame written book web emulator, renderer, and Web Component. Designed to allow any website to embed and render authentic written books with custom resource packs, accurate typography, page-turn sounds, and multi-format import/export.
+A modular, pixel-perfect blockgame written book web emulator, renderer, and Web Component. Designed to allow any website to embed and render authentic written books with custom resource packs, accurate typography, page-turn sounds, and multi-format import/export.
 
 [**Explore Live Demo & Interactive Workbench →**](https://witch-craftmagazine.github.io/blockgame-book-viewer/)
 

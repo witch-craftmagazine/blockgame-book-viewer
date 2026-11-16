@@ -121,3 +121,6 @@ export type {
 } from './engine/types';
 
 export { BLOCKGAME_DYE_HEX } from './engine/types';
+
+// Core Inlined Assets
+export { CORE_ASSETS } from './assets/core';

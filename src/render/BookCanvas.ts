@@ -22,6 +22,7 @@ import { soundManager } from './SoundEffects';
 import { ResourcePackInfo, BookTextures, CompositeResourcePack } from '../engine/ResourcePackManager';
 import { BookPlugin, PageRect } from '../plugin/BookPlugin';
 import { ContinuousScrollView } from './ContinuousScrollView';
+import { CORE_ASSETS } from '../assets/core';
 import {
   AnimatedCharController,
   normalizeBlankPageImage,
@@ -75,6 +76,16 @@ export interface BookCanvasOptions {
   blankPageImage?: string | BlankPageImageOptions;
   /** Characters whose glyph is briefly swapped for other glyphs, e.g. a blinking eye. */
   animatedChars?: AnimatedChar[];
+  /**
+   * Whether the book is in interactive edit mode (matching Minecraft BookEditScreen).
+   * In edit mode, the advance/forward button remains visible on the last page up to maxPages,
+   * and clicking it appends a blank page to the book.
+   */
+  editable?: boolean;
+  /** Maximum number of pages permitted (Minecraft default is 100). */
+  maxPages?: number;
+  onAddPage?: (newPageIndex: number, book: BlockgameBook) => void;
+  onBookChange?: (book: BlockgameBook) => void;
 }
 
 export class BookCanvas {
@@ -84,9 +95,13 @@ export class BookCanvas {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
   private atlas: GlyphAtlas;
-  private baseAssetPath: string;
+  private baseAssetPath?: string;
   private plugins: BookPlugin[] = [];
   private continuousScrollView?: ContinuousScrollView;
+  private editable = false;
+  private maxPages = 100;
+  private onAddPage?: (newPageIndex: number, book: BlockgameBook) => void;
+  private onBookChange?: (book: BlockgameBook) => void;
 
   // Aesthetic & Art Extensions (Scholar covers & bookmarks) — experimental only
   private experimental = false;
@@ -155,7 +170,7 @@ export class BookCanvas {
   constructor(options: BookCanvasOptions) {
     this.container = options.container;
     this.atlas = options.atlas || defaultGlyphAtlas;
-    this.baseAssetPath = options.baseAssetPath || './assets';
+    this.baseAssetPath = options.baseAssetPath;
     this.animatedChars = new AnimatedCharController(options.animatedChars);
     this.blankPageImage = normalizeBlankPageImage(options.blankPageImage);
     this.onPageChange = options.onPageChange;
@@ -169,6 +184,10 @@ export class BookCanvas {
     this.showBookmark = options.showBookmark ?? false;
     this.bookmarkColor = options.bookmarkColor;
     this.onClose = options.onClose;
+    this.editable = options.editable ?? false;
+    this.maxPages = options.maxPages ?? 100;
+    this.onAddPage = options.onAddPage;
+    this.onBookChange = options.onBookChange;
     if (options.defaultViewMode) {
       this.viewMode = options.defaultViewMode;
     }
@@ -347,25 +366,49 @@ export class BookCanvas {
   }
 
   public async init(): Promise<void> {
+    const bp = this.baseAssetPath;
+    const javaPaths = bp
+      ? {
+          book: `${bp}/textures/gui/book.png`,
+          pageForward: `${bp}/textures/gui/page_forward.png`,
+          pageForwardHover: `${bp}/textures/gui/page_forward_highlighted.png`,
+          pageBackward: `${bp}/textures/gui/page_backward.png`,
+          pageBackwardHover: `${bp}/textures/gui/page_backward_highlighted.png`,
+        }
+      : {
+          book: CORE_ASSETS.textures.gui.book,
+          pageForward: CORE_ASSETS.textures.gui.pageForward,
+          pageForwardHover: CORE_ASSETS.textures.gui.pageForwardHighlighted,
+          pageBackward: CORE_ASSETS.textures.gui.pageBackward,
+          pageBackwardHover: CORE_ASSETS.textures.gui.pageBackwardHighlighted,
+        };
+
+    const bedrockPaths = bp
+      ? {
+          background: `${bp}/textures/gui/bedrock/view_background.png`,
+          backgroundHc: `${bp}/textures/gui/bedrock/view_background_hc.png`,
+          close: `${bp}/textures/gui/bedrock/close.png`,
+          closeHover: `${bp}/textures/gui/bedrock/close_hover.png`,
+          pageForward: `${bp}/textures/gui/bedrock/page_forward.png`,
+          pageForwardHover: `${bp}/textures/gui/bedrock/page_forward_hover.png`,
+          pageBackward: `${bp}/textures/gui/bedrock/page_backward.png`,
+          pageBackwardHover: `${bp}/textures/gui/bedrock/page_backward_hover.png`,
+        }
+      : {
+          background: CORE_ASSETS.textures.gui.bedrock.background,
+          backgroundHc: CORE_ASSETS.textures.gui.bedrock.backgroundHc,
+          close: CORE_ASSETS.textures.gui.bedrock.close,
+          closeHover: CORE_ASSETS.textures.gui.bedrock.closeHover,
+          pageForward: CORE_ASSETS.textures.gui.bedrock.pageForward,
+          pageForwardHover: CORE_ASSETS.textures.gui.bedrock.pageForwardHover,
+          pageBackward: CORE_ASSETS.textures.gui.bedrock.pageBackward,
+          pageBackwardHover: CORE_ASSETS.textures.gui.bedrock.pageBackwardHover,
+        };
+
     await Promise.all([
       this.atlas.load(this.baseAssetPath),
-      this.loadTexturesFromPaths({
-        book: `${this.baseAssetPath}/textures/gui/book.png`,
-        pageForward: `${this.baseAssetPath}/textures/gui/page_forward.png`,
-        pageForwardHover: `${this.baseAssetPath}/textures/gui/page_forward_highlighted.png`,
-        pageBackward: `${this.baseAssetPath}/textures/gui/page_backward.png`,
-        pageBackwardHover: `${this.baseAssetPath}/textures/gui/page_backward_highlighted.png`,
-      }),
-      this.loadBedrockTextures({
-        background: `${this.baseAssetPath}/textures/gui/bedrock/view_background.png`,
-        backgroundHc: `${this.baseAssetPath}/textures/gui/bedrock/view_background_hc.png`,
-        close: `${this.baseAssetPath}/textures/gui/bedrock/close.png`,
-        closeHover: `${this.baseAssetPath}/textures/gui/bedrock/close_hover.png`,
-        pageForward: `${this.baseAssetPath}/textures/gui/bedrock/page_forward.png`,
-        pageForwardHover: `${this.baseAssetPath}/textures/gui/bedrock/page_forward_hover.png`,
-        pageBackward: `${this.baseAssetPath}/textures/gui/bedrock/page_backward.png`,
-        pageBackwardHover: `${this.baseAssetPath}/textures/gui/bedrock/page_backward_hover.png`,
-      }).catch(() => {
+      this.loadTexturesFromPaths(javaPaths),
+      this.loadBedrockTextures(bedrockPaths).catch(() => {
         // Fallback gracefully if bedrock textures not found
       }),
       this.loadBlankPageImage(),
@@ -442,12 +485,13 @@ export class BookCanvas {
     pageBackward: string;
     pageBackwardHover: string;
   }): Promise<void> {
+    const core = CORE_ASSETS.textures.gui;
     const [bg, fwd, fwdH, bwd, bwdH] = await Promise.all([
-      this.loadImage(paths.book),
-      this.loadImage(paths.pageForward),
-      this.loadImage(paths.pageForwardHover),
-      this.loadImage(paths.pageBackward),
-      this.loadImage(paths.pageBackwardHover),
+      this.loadImage(paths.book).catch(() => this.loadImage(core.book)),
+      this.loadImage(paths.pageForward).catch(() => this.loadImage(core.pageForward)),
+      this.loadImage(paths.pageForwardHover).catch(() => this.loadImage(core.pageForwardHighlighted)),
+      this.loadImage(paths.pageBackward).catch(() => this.loadImage(core.pageBackward)),
+      this.loadImage(paths.pageBackwardHover).catch(() => this.loadImage(core.pageBackwardHighlighted)),
     ]);
 
     this.bookBg = bg;
@@ -467,15 +511,16 @@ export class BookCanvas {
     pageBackward: string;
     pageBackwardHover: string;
   }): Promise<void> {
+    const core = CORE_ASSETS.textures.gui.bedrock;
     const [bg, bgHc, close, closeH, fwd, fwdH, bwd, bwdH] = await Promise.all([
-      this.loadImage(paths.background),
-      this.loadImage(paths.backgroundHc),
-      this.loadImage(paths.close),
-      this.loadImage(paths.closeHover),
-      this.loadImage(paths.pageForward),
-      this.loadImage(paths.pageForwardHover),
-      this.loadImage(paths.pageBackward),
-      this.loadImage(paths.pageBackwardHover),
+      this.loadImage(paths.background).catch(() => this.loadImage(core.background)),
+      this.loadImage(paths.backgroundHc).catch(() => this.loadImage(core.backgroundHc)),
+      this.loadImage(paths.close).catch(() => this.loadImage(core.close)),
+      this.loadImage(paths.closeHover).catch(() => this.loadImage(core.closeHover)),
+      this.loadImage(paths.pageForward).catch(() => this.loadImage(core.pageForward)),
+      this.loadImage(paths.pageForwardHover).catch(() => this.loadImage(core.pageForwardHover)),
+      this.loadImage(paths.pageBackward).catch(() => this.loadImage(core.pageBackward)),
+      this.loadImage(paths.pageBackwardHover).catch(() => this.loadImage(core.pageBackwardHover)),
     ]);
 
     this.bedrockBg = bg;
@@ -486,6 +531,16 @@ export class BookCanvas {
     this.bedrockForwardHoverBtn = fwdH;
     this.bedrockBackwardBtn = bwd;
     this.bedrockBackwardHoverBtn = bwdH;
+  }
+
+  public setEditable(editable: boolean): void {
+    this.editable = editable;
+    this.render();
+  }
+
+  public setMaxPages(max: number): void {
+    this.maxPages = max;
+    this.render();
   }
 
   public setBook(book: BlockgameBook, preservePage = false): void {
@@ -1089,6 +1144,13 @@ export class BookCanvas {
       if (leftIdx + 2 < this.paginatedPages.length) {
         this.currentPage = leftIdx + 2;
         changed = true;
+      } else if (this.editable && this.paginatedPages.length < this.maxPages) {
+        this.book.pages.push('');
+        this.recalculatePages();
+        this.currentPage = Math.min(this.paginatedPages.length - 1, leftIdx + 2);
+        changed = true;
+        this.onAddPage?.(this.currentPage, this.book);
+        this.onBookChange?.(this.book);
       }
       if (changed) {
         this.highlightedLineIndex = null;
@@ -1109,6 +1171,19 @@ export class BookCanvas {
     } else if (this.viewMode === 'double' && this.currentPage + 1 < this.paginatedPages.length) {
       this.currentPage += 1;
       changed = true;
+    } else if (this.editable && this.paginatedPages.length < this.maxPages) {
+      // Minecraft BookEditScreen behavior: advance to next page to append a blank page
+      this.book.pages.push('');
+      this.recalculatePages();
+      if (this.viewMode === 'double') {
+        const nextIdx = this.currentPage + (this.currentPage % 2 === 0 ? 1 : 2);
+        this.currentPage = Math.min(this.paginatedPages.length - 1, nextIdx);
+      } else {
+        this.currentPage = this.paginatedPages.length - 1;
+      }
+      changed = true;
+      this.onAddPage?.(this.currentPage, this.book);
+      this.onBookChange?.(this.book);
     }
 
     if (changed) {
@@ -1276,6 +1351,14 @@ export class BookCanvas {
         const srcW = Math.round(this.bookBg.naturalWidth * 0.75);
         const srcH = Math.round(this.bookBg.naturalHeight * 0.75);
         this.ctx.drawImage(this.bookBg, 0, 0, srcW, srcH, RIGHT_PAGE_X, 0, 192, 192);
+
+        // In edit mode, allow advancing to append page from the blank right page
+        if (this.editable && this.paginatedPages.length < this.maxPages) {
+          const fwdImg = (this.hoveredButton === 'forward') ? this.pageForwardHoverBtn : this.pageForwardBtn;
+          if (fwdImg) {
+            this.ctx.drawImage(fwdImg, 0, 0, fwdImg.naturalWidth, fwdImg.naturalHeight, RIGHT_PAGE_X + 116, 157, 23, 13);
+          }
+        }
       }
     }
 
@@ -1879,7 +1962,7 @@ export class BookCanvas {
       }
     }
 
-    const canGoForward = pageIndex < this.paginatedPages.length - 1;
+    const canGoForward = pageIndex < this.paginatedPages.length - 1 || (this.editable && this.paginatedPages.length < this.maxPages);
     if (allowForward && canGoForward) {
       const fwdImg = (this.hoveredButton === 'forward') ? this.pageForwardHoverBtn : this.pageForwardBtn;
       if (fwdImg) {
@@ -2120,7 +2203,8 @@ export class BookCanvas {
         return 'backward';
       }
       // 3. Forward button at (277, 159, 24, 24)
-      if (leftIdx + 2 < this.paginatedPages.length && x >= 277 && x <= 277 + 24 && y >= 159 && y <= 159 + 24) {
+      const canFwdBedrock = (leftIdx + 2 < this.paginatedPages.length) || (this.editable && this.paginatedPages.length < this.maxPages);
+      if (canFwdBedrock && x >= 277 && x <= 277 + 24 && y >= 159 && y <= 159 + 24) {
         return 'forward';
       }
       return null;
@@ -2132,7 +2216,8 @@ export class BookCanvas {
       if (this.currentPage > 0 && x >= 43 && x <= 43 + 23 && y >= 157 && y <= 157 + 13) {
         return 'backward';
       }
-      if (this.currentPage < this.paginatedPages.length - 1 && x >= 116 && x <= 116 + 23 && y >= 157 && y <= 157 + 13) {
+      const canFwd = (this.currentPage < this.paginatedPages.length - 1) || (this.editable && this.paginatedPages.length < this.maxPages);
+      if (canFwd && x >= 116 && x <= 116 + 23 && y >= 157 && y <= 157 + 13) {
         return 'forward';
       }
     } else {
@@ -2143,7 +2228,8 @@ export class BookCanvas {
       // Right Page forward button at (RIGHT_PAGE_X + 116, 157, 23, 13) -> (266, 157, 23, 13)
       const rightPageIndex = this.currentPage + 1;
       const rightBtnX = RIGHT_PAGE_X + 116;
-      if (rightPageIndex < this.paginatedPages.length - 1 && x >= rightBtnX && x <= rightBtnX + 23 && y >= 157 && y <= 157 + 13) {
+      const canFwd = (rightPageIndex < this.paginatedPages.length - 1) || (this.editable && this.paginatedPages.length < this.maxPages);
+      if (canFwd && x >= rightBtnX && x <= rightBtnX + 23 && y >= 157 && y <= 157 + 13) {
         return 'forward';
       }
     }
@@ -2178,7 +2264,7 @@ export class BookCanvas {
       this.textLayerElement.appendChild(leftSection);
 
       // 2. Right Page (Bedrock text start X = 169)
-      if (rightPageIndex < totalPages) {
+      if (rightPageIndex < totalPages || (this.editable && totalPages < this.maxPages)) {
         const rightSection = this.buildAccessiblePageSection({
           pageIndex: rightPageIndex,
           totalPages,
@@ -2186,7 +2272,7 @@ export class BookCanvas {
           backwardButtonX: null,
           forwardButtonX: 277,
           allowBackward: false,
-          allowForward: leftPageIndex + 2 < totalPages,
+          allowForward: leftPageIndex + 2 < totalPages || (this.editable && totalPages < this.maxPages),
         });
         this.textLayerElement.appendChild(rightSection);
       }
@@ -2205,7 +2291,7 @@ export class BookCanvas {
         backwardButtonX: 43,
         forwardButtonX: 116,
         allowBackward: pageIndex > 0,
-        allowForward: pageIndex < totalPages - 1,
+        allowForward: pageIndex < totalPages - 1 || (this.editable && totalPages < this.maxPages),
       });
       this.textLayerElement.appendChild(pageSection);
     } else {
@@ -2226,7 +2312,7 @@ export class BookCanvas {
       this.textLayerElement.appendChild(leftSection);
 
       // 2. Right Page
-      if (rightPageIndex < totalPages) {
+      if (rightPageIndex < totalPages || (this.editable && totalPages < this.maxPages)) {
         const rightSection = this.buildAccessiblePageSection({
           pageIndex: rightPageIndex,
           totalPages,
@@ -2234,7 +2320,7 @@ export class BookCanvas {
           backwardButtonX: null,
           forwardButtonX: RIGHT_PAGE_X + 116,
           allowBackward: false,
-          allowForward: rightPageIndex < totalPages - 1,
+          allowForward: rightPageIndex < totalPages - 1 || (this.editable && totalPages < this.maxPages),
         });
         this.textLayerElement.appendChild(rightSection);
       }

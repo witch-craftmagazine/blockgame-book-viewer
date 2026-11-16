@@ -1,4 +1,5 @@
 import JSZip from 'jszip';
+import { CORE_ASSETS } from '../assets/core';
 
 export interface FontTexturePaths {
   ascii?: string | HTMLImageElement;
@@ -41,9 +42,9 @@ export interface CompositeResourcePack extends ResourcePackInfo {
 export class ResourcePackManager {
   private activeStack: string[] = ['vanilla'];
   private packs: Map<string, ResourcePackInfo> = new Map();
-  private baseAssetPath: string;
+  private baseAssetPath?: string;
 
-  constructor(baseAssetPath = './assets') {
+  constructor(baseAssetPath?: string) {
     this.baseAssetPath = baseAssetPath;
     this.registerBuiltInPacks();
   }
@@ -52,22 +53,23 @@ export class ResourcePackManager {
    * Registers standard Vanilla Minecraft (16x) baseline textures.
    */
   private registerBuiltInPacks(): void {
+    const bp = this.baseAssetPath;
     this.packs.set('vanilla', {
       id: 'vanilla',
       name: 'Vanilla (Default 16x)',
       description: 'Classic Minecraft written book texture and 16x font',
-      iconUrl: `${this.baseAssetPath}/textures/gui/book.png`,
+      iconUrl: bp ? `${bp}/textures/gui/book.png` : CORE_ASSETS.textures.gui.book,
       textures: {
-        book: `${this.baseAssetPath}/textures/gui/book.png`,
-        pageForward: `${this.baseAssetPath}/textures/gui/page_forward.png`,
-        pageForwardHover: `${this.baseAssetPath}/textures/gui/page_forward_highlighted.png`,
-        pageBackward: `${this.baseAssetPath}/textures/gui/page_backward.png`,
-        pageBackwardHover: `${this.baseAssetPath}/textures/gui/page_backward_highlighted.png`,
+        book: bp ? `${bp}/textures/gui/book.png` : CORE_ASSETS.textures.gui.book,
+        pageForward: bp ? `${bp}/textures/gui/page_forward.png` : CORE_ASSETS.textures.gui.pageForward,
+        pageForwardHover: bp ? `${bp}/textures/gui/page_forward_highlighted.png` : CORE_ASSETS.textures.gui.pageForwardHighlighted,
+        pageBackward: bp ? `${bp}/textures/gui/page_backward.png` : CORE_ASSETS.textures.gui.pageBackward,
+        pageBackwardHover: bp ? `${bp}/textures/gui/page_backward_highlighted.png` : CORE_ASSETS.textures.gui.pageBackwardHighlighted,
       },
       fontTextures: {
-        ascii: `${this.baseAssetPath}/textures/font/ascii.png`,
-        accented: `${this.baseAssetPath}/textures/font/accented.png`,
-        nonlatin: `${this.baseAssetPath}/textures/font/nonlatin_european.png`,
+        ascii: bp ? `${bp}/textures/font/ascii.png` : CORE_ASSETS.textures.font.ascii,
+        accented: bp ? `${bp}/textures/font/accented.png` : CORE_ASSETS.textures.font.accented,
+        nonlatin: bp ? `${bp}/textures/font/nonlatin_european.png` : CORE_ASSETS.textures.font.nonlatin,
       },
     });
   }
@@ -191,12 +193,13 @@ export class ResourcePackManager {
    */
   public getCompositePack(): CompositeResourcePack {
     const vanilla = this.packs.get('vanilla')!;
+    const bp = this.baseAssetPath;
     const resolvedTextures: BookTextures = {
-      book: vanilla.textures?.book || `${this.baseAssetPath}/textures/gui/book.png`,
-      pageForward: vanilla.textures?.pageForward || `${this.baseAssetPath}/textures/gui/page_forward.png`,
-      pageForwardHover: vanilla.textures?.pageForwardHover || `${this.baseAssetPath}/textures/gui/page_forward_highlighted.png`,
-      pageBackward: vanilla.textures?.pageBackward || `${this.baseAssetPath}/textures/gui/page_backward.png`,
-      pageBackwardHover: vanilla.textures?.pageBackwardHover || `${this.baseAssetPath}/textures/gui/page_backward_highlighted.png`,
+      book: vanilla.textures?.book || (bp ? `${bp}/textures/gui/book.png` : CORE_ASSETS.textures.gui.book),
+      pageForward: vanilla.textures?.pageForward || (bp ? `${bp}/textures/gui/page_forward.png` : CORE_ASSETS.textures.gui.pageForward),
+      pageForwardHover: vanilla.textures?.pageForwardHover || (bp ? `${bp}/textures/gui/page_forward_highlighted.png` : CORE_ASSETS.textures.gui.pageForwardHighlighted),
+      pageBackward: vanilla.textures?.pageBackward || (bp ? `${bp}/textures/gui/page_backward.png` : CORE_ASSETS.textures.gui.pageBackward),
+      pageBackwardHover: vanilla.textures?.pageBackwardHover || (bp ? `${bp}/textures/gui/page_backward_highlighted.png` : CORE_ASSETS.textures.gui.pageBackwardHighlighted),
     };
 
     let resolvedFontTextures: FontTexturePaths | undefined;

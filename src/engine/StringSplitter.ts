@@ -118,14 +118,6 @@ export function splitTextToLines(
     // Flatten into styled character stream (matching StringDecomposer.iterateFormatted)
     const chars: StyledChar[] = [];
     for (const span of spans) {
-      carriedStyle = {
-        color: span.color,
-        bold: span.bold,
-        italic: span.italic,
-        underlined: span.underlined,
-        strikethrough: span.strikethrough,
-        obfuscated: span.obfuscated,
-      };
       for (const ch of span.text) {
         chars.push({
           char: ch,

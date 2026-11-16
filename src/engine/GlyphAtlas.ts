@@ -1,6 +1,7 @@
 import { GlyphDrawInfo } from './types';
 import glyphsData from '../../public/assets/font/glyphs.json';
 import { getUnifontAdvance, UNIFONT_BOLD_OFFSET } from './UnifontAdvances';
+import { CORE_ASSETS, CORE_FONT_CONFIGS } from '../assets/core';
 
 export interface GlyphMapEntry {
   sheet: 'ascii' | 'accented' | 'nonlatin';
@@ -137,18 +138,49 @@ export class GlyphAtlas {
 
   /**
    * Initializes and loads all font textures and character maps.
+   * If basePath is omitted or fails, loads inlined core assets (zero network requests).
    */
-  public async load(basePath = './assets'): Promise<void> {
+  public async load(basePath?: string): Promise<void> {
     if (this.isLoaded) return;
     if (this.loadPromise) return this.loadPromise;
 
     this.loadPromise = (async () => {
-      const [asciiImg, accentedImg, nonlatinImg, defaultJson] = await Promise.all([
-        this.loadImage(`${basePath}/textures/font/ascii.png`),
-        this.loadImage(`${basePath}/textures/font/accented.png`).catch(() => null),
-        this.loadImage(`${basePath}/textures/font/nonlatin_european.png`).catch(() => null),
-        fetch(`${basePath}/font/default.json`).then(r => r.json()).catch(() => null),
-      ]);
+      let asciiImg: HTMLImageElement | null = null;
+      let accentedImg: HTMLImageElement | null = null;
+      let nonlatinImg: HTMLImageElement | null = null;
+      let defaultJson: any = null;
+
+      if (!basePath) {
+        [asciiImg, accentedImg, nonlatinImg] = await Promise.all([
+          this.loadImage(CORE_ASSETS.textures.font.ascii),
+          this.loadImage(CORE_ASSETS.textures.font.accented).catch(() => null),
+          this.loadImage(CORE_ASSETS.textures.font.nonlatin).catch(() => null),
+        ]);
+        defaultJson = CORE_FONT_CONFIGS.defaultJson;
+      } else {
+        try {
+          [asciiImg, accentedImg, nonlatinImg, defaultJson] = await Promise.all([
+            this.loadImage(`${basePath}/textures/font/ascii.png`).catch(() => null),
+            this.loadImage(`${basePath}/textures/font/accented.png`).catch(() => null),
+            this.loadImage(`${basePath}/textures/font/nonlatin_european.png`).catch(() => null),
+            fetch(`${basePath}/font/default.json`).then(r => r.json()).catch(() => null),
+          ]);
+        } catch {
+          // Fall through to inlined assets fallback
+        }
+        if (!asciiImg) {
+          asciiImg = await this.loadImage(CORE_ASSETS.textures.font.ascii);
+        }
+        if (!accentedImg) {
+          accentedImg = await this.loadImage(CORE_ASSETS.textures.font.accented).catch(() => null);
+        }
+        if (!nonlatinImg) {
+          nonlatinImg = await this.loadImage(CORE_ASSETS.textures.font.nonlatin).catch(() => null);
+        }
+        if (!defaultJson) {
+          defaultJson = CORE_FONT_CONFIGS.defaultJson;
+        }
+      }
 
       this.sheets['ascii'] = asciiImg;
       if (accentedImg) this.sheets['accented'] = accentedImg;

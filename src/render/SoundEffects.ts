@@ -1,9 +1,11 @@
+import { CORE_ASSETS } from '../assets/core';
+
 export class SoundManager {
   private ctx: AudioContext | null = null;
   private enabled = true;
   private soundBuffers: AudioBuffer[] = [];
   private isLoading = false;
-  private baseAssetPath = './assets';
+  private baseAssetPath?: string;
 
   constructor() {
     // Lazily initialized on first user gesture
@@ -38,23 +40,46 @@ export class SoundManager {
 
       // Minecraft authentic item.book.page_turn sound variants (open_flip1, open_flip2, open_flip3)
       const variants = ['open_flip1', 'open_flip2', 'open_flip3'];
+      const inlinedSounds = [
+        CORE_ASSETS.sounds.openFlip1,
+        CORE_ASSETS.sounds.openFlip2,
+        CORE_ASSETS.sounds.openFlip3,
+      ];
       const loaded: AudioBuffer[] = [];
 
-      for (const name of variants) {
-        try {
-          let resp = await fetch(`${this.baseAssetPath}/sounds/${name}.ogg`);
-          if (!resp.ok) {
-            resp = await fetch(`${this.baseAssetPath}/sounds/${name}.mp3`);
-          }
-          if (resp.ok) {
-            const arrayBuffer = await resp.arrayBuffer();
-            const decoded = await ctx.decodeAudioData(arrayBuffer);
-            if (decoded) {
-              loaded.push(decoded);
+      for (let i = 0; i < variants.length; i++) {
+        const name = variants[i];
+        let decodedBuf: AudioBuffer | null = null;
+
+        if (this.baseAssetPath) {
+          try {
+            let resp = await fetch(`${this.baseAssetPath}/sounds/${name}.ogg`);
+            if (!resp.ok) {
+              resp = await fetch(`${this.baseAssetPath}/sounds/${name}.mp3`);
             }
+            if (resp.ok) {
+              const arrayBuffer = await resp.arrayBuffer();
+              decodedBuf = await ctx.decodeAudioData(arrayBuffer);
+            }
+          } catch {
+            // Fall through to inlined fallback
           }
-        } catch {
-          // Fall through to synthesis if network or decoding is unavailable
+        }
+
+        if (!decodedBuf && inlinedSounds[i]) {
+          try {
+            const resp = await fetch(inlinedSounds[i]);
+            if (resp.ok) {
+              const arrayBuffer = await resp.arrayBuffer();
+              decodedBuf = await ctx.decodeAudioData(arrayBuffer);
+            }
+          } catch {
+            // Fall through to synthesis
+          }
+        }
+
+        if (decodedBuf) {
+          loaded.push(decodedBuf);
         }
       }
 

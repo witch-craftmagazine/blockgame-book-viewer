@@ -146,7 +146,7 @@ export class BlockgameBookElement extends BaseElement {
       this.internalRoot = null;
     }
 
-    const basePath = this.getAttribute('base-path') || './assets';
+    const basePath = this.getAttribute('base-path') || undefined;
     const viewMode = (this.getAttribute('view-mode') || 'auto') as ViewMode | 'auto';
     const scaleAttr = this.getAttribute('scale');
     const scale = scaleAttr ? parseInt(scaleAttr, 10) : undefined;
@@ -580,7 +580,7 @@ export class BlockgameBookElement extends BaseElement {
   }
 
   get basePath(): string {
-    return this.getAttribute('base-path') || './assets';
+    return this.getAttribute('base-path') || '';
   }
 
   set basePath(val: string) {
