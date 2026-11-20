@@ -1,5 +1,6 @@
 import { BOOK_TEXT_WIDTH, measureLineWidth } from './StringSplitter';
 import { parseFormattedText, type StyleState } from './Formatting';
+import { getUnifontAdvance } from './UnifontAdvances';
 
 /** Canonical Minecraft Java Edition book line & page constraints */
 export const MINECRAFT_LINES_PER_PAGE = 14;
@@ -11,15 +12,24 @@ export const JAVA_MAX_CHARS_PER_PAGE = MINECRAFT_PAGE_MAX_CHARS;
 export const BEDROCK_MAX_CHARS_PER_PAGE = MINECRAFT_PAGE_MAX_CHARS;
 
 /**
- * Checks if a string contains Unicode characters above U+FFFF (Supplementary Multilingual Plane, SMP).
- * In vanilla Minecraft Java Edition, bitmap/unifont providers only render 16-bit BMP characters (U+0000 to U+FFFF).
- * Characters above U+FFFF (modern emoji like 😀, 🍎, 🔥, 💀, etc.) render as missing glyph boxes ([]).
+ * Checks if a string contains Unicode characters that cannot be rendered by Minecraft Java Edition font providers.
+ * In modern Minecraft Java Edition (1.20+), UnihexProvider includes GNU Unifont covering both BMP and extensive SMP (Plane 1)
+ * characters (such as mathematical stylized letters and supported emojis).
+ * Characters that have no defined glyph in any active font provider render as missing glyph boxes ([]).
  */
 export function detectUnsupportedMinecraftChars(text: string): { count: number; chars: string[] } {
   const chars: string[] = [];
   for (const ch of text) {
     const code = ch.codePointAt(0);
-    if (code && code > 0xFFFF) {
+    // Control characters §, \n, \r are handled by formatting and line-splitting
+    if (!code || ch === '§' || ch === '\n' || ch === '\r') continue;
+
+    // Check if character has a valid advance in Minecraft's font providers
+    // Standard ASCII and European accented/nonlatin sheets cover U+0020..U+00FF
+    if (code >= 0x20 && code <= 0x00FF) continue;
+
+    // For all other characters, check if covered by Minecraft's Unifont table
+    if (getUnifontAdvance(code) === undefined) {
       if (!chars.includes(ch)) chars.push(ch);
     }
   }

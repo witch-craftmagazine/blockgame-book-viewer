@@ -15,18 +15,17 @@ describe('Typography & Minecraft Engine Utilities', () => {
   });
 
   describe('detectUnsupportedMinecraftChars', () => {
-    it('passes standard ASCII and BMP symbols', () => {
-      const res = detectUnsupportedMinecraftChars('Hello world! ⚔ ✦ █ ░ ╔═╗');
+    it('passes standard ASCII, BMP symbols, and supported SMP Unifont characters', () => {
+      const res = detectUnsupportedMinecraftChars('Hello world! ⚔ ✦ █ ░ ╔═╗ ◯ ○ 😀 🔥 💀 𝒯𝔢𝔞');
       expect(res.count).toBe(0);
       expect(res.chars).toEqual([]);
     });
 
-    it('identifies SMP characters > U+FFFF', () => {
-      const res = detectUnsupportedMinecraftChars('Test 😀 with 🔥 and 💀');
-      expect(res.count).toBe(3);
-      expect(res.chars).toContain('😀');
-      expect(res.chars).toContain('🔥');
-      expect(res.chars).toContain('💀');
+    it('identifies unassigned or missing codepoints not in Minecraft font providers', () => {
+      const unassignedChar = String.fromCodePoint(0x2ffff);
+      const res = detectUnsupportedMinecraftChars(`Test ${unassignedChar}`);
+      expect(res.count).toBe(1);
+      expect(res.chars).toContain(unassignedChar);
     });
   });
 
