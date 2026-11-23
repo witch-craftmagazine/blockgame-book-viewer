@@ -999,6 +999,44 @@ export class BookCanvas {
     return this.canvas;
   }
 
+  /**
+   * Computes the viewport bounding rectangle occupied strictly by the book's parchment pages
+   * (excluding transparent canvas padding), useful for positioning ambient backdrops or HUD layers.
+   */
+  public getBookPageRect(): DOMRect | null {
+    if (!this.canvas) return null;
+    const canvasRect = this.canvas.getBoundingClientRect();
+    if (!canvasRect || canvasRect.width === 0 || canvasRect.height === 0) return null;
+
+    const isDouble = this.viewMode === 'double';
+    const baseW = isDouble ? TWO_PAGE_WIDTH : 192;
+    const baseH = 192;
+    const scaleX = canvasRect.width / baseW;
+    const scaleY = canvasRect.height / baseH;
+
+    const minLocalY = 1;
+    const maxLocalY = 181;
+    const minLocalX = isDouble ? 26 : 20;
+    const maxLocalX = isDouble ? 318 : 166;
+
+    const left = canvasRect.left + minLocalX * scaleX;
+    const right = canvasRect.left + maxLocalX * scaleX;
+    const top = canvasRect.top + minLocalY * scaleY;
+    const bottom = canvasRect.top + maxLocalY * scaleY;
+
+    return {
+      left,
+      right,
+      top,
+      bottom,
+      x: left,
+      y: top,
+      width: right - left,
+      height: bottom - top,
+      toJSON: () => ({ left, right, top, bottom, x: left, y: top, width: right - left, height: bottom - top }),
+    };
+  }
+
   public setShowPageIndicator(show: boolean): void {
     if (this.showPageIndicator !== show) {
       this.showPageIndicator = show;

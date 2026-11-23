@@ -393,4 +393,34 @@ describe('BookCanvas interaction and accessibility text layer', () => {
     bookCanvas.nextPage();
     expect((bookCanvas as any).highlightedLineIndex).toBeNull();
   });
+
+  it('computes parchment bounding rectangle via getBookPageRect', () => {
+    const bookCanvas = new BookCanvas({
+      container: mockContainer,
+      defaultViewMode: 'double',
+    });
+    const canvas = bookCanvas.getCanvas();
+    canvas.getBoundingClientRect = () => ({
+      left: 100,
+      right: 444,
+      top: 50,
+      bottom: 242,
+      width: 344,
+      height: 192,
+      x: 100,
+      y: 50,
+      toJSON: () => ({}),
+    } as DOMRect);
+
+    const rect = bookCanvas.getBookPageRect();
+    expect(rect).not.toBeNull();
+    if (rect) {
+      expect(rect.left).toBe(126); // 100 + 26 * 1
+      expect(rect.right).toBe(418); // 100 + 318 * 1
+      expect(rect.top).toBe(51); // 50 + 1 * 1
+      expect(rect.bottom).toBe(231); // 50 + 181 * 1
+      expect(rect.width).toBe(292); // 418 - 126
+      expect(rect.height).toBe(180); // 231 - 51
+    }
+  });
 });
